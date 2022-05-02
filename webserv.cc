@@ -1,7 +1,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <cstring>
-#include <stdio.h>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+#include <unistd.h>
 #include <iostream>
 
 
@@ -17,6 +20,7 @@ int main()
 {
 	struct sockaddr_in	address;
 	const int PORT = 8081;
+	socklen_t addr_size = sizeof(address);
 
 	memset(&address, 0, sizeof(address));
 	/*
@@ -27,7 +31,7 @@ int main()
 	address.sin_family = AF_INET; // Internet protocol
 	address.sin_addr.s_addr = htonl(INADDR_ANY); 	address.sin_port = htons(PORT);
 
-	// create the socket
+	// creates the socket
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_fd < 0)
 	{
@@ -35,24 +39,46 @@ int main()
 		return 1;
 	}
 
+	// binds the socket to a porn number
 	if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
 	{
 		perror("Bind failed");
 		return 2;
 	}
 	
+	// listens to incoming connections
 	if (listen(socket_fd, SOMAXCONN) < 0)
 	{
 		perror("Listen failed");
 		return 3;
 	}
-	socklen_t addr_size = sizeof(address);
-	int new_socket = accept(socket_fd, (struct sockaddr *)& address, &addr_size);
-	if (new_socket < 0)
+
+	char *hello_message = "Hello from the server";
+
+	while (true)
 	{
-		perror("Accept failed");
-		return 4;
+		std::cout << "====== Waiting for incoming new connections ======\n";
+
+		// accept incoming connections
+		int new_socket = accept(socket_fd, (struct sockaddr *)& address, &addr_size);
+		if (new_socket < 0)
+		{
+			perror("Accept failed");
+			return 4;
+		}
+
+		#define BUFFER_SIZE 4096
+		char buffer[BUFFER_SIZE] = {0};
+		int val_read = read(socket_fd, buffer, BUFFER_SIZE - 1);
+		// std::cout << "Reading from server: "	
+		if (val_read <= 0)
+			std::cout << "No bytes to read" << std::endl;
+
+		write(socket_fd, hello_message, strlen(hello_message));
+
+		std::cout << "Closing socket_fd" << std::endl;
+		close(new_socket);
+
 	}
-	std::cout << "This is socket_fd " << socket_fd << std::endl;
 	return 0;
 }
