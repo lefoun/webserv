@@ -12,7 +12,8 @@ NAME = prog
 ifeq ($(NOFLAGS), 1)
 	FLAGS = 
 else
-	FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
+	FLAGS = -std=c++98 -pedantic
+#	#  FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
 endif
 
 ifeq ($(debug), 1)
