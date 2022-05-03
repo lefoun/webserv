@@ -9,6 +9,8 @@
 #include <fstream>
 #include <sstream>
 #include <istream>
+#include <fcntl.h>
+
 #define BUFFER_SIZE 4096
 
 
@@ -64,6 +66,7 @@ int main()
 		perror("Can't create socket");
 		return 1;
 	}
+	fcntl(socket_fd, F_SETFL, O_NONBLOCK);
 	std::cout << "Created the socket " << socket_fd << std::endl;
 	// binds the socket to a porn number
 	if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
@@ -103,8 +106,6 @@ int main()
 		else if (val_read < 0)
 			std::cout << "No bytes to read" << std::endl;
 
-		// write(new_socket, hello_message, strlen(hello_message));
-		// write(new_socket, serv_response, strlen(serv_response));
 		write(new_socket, response_str.c_str(), response_str.length());
 
 		std::cout << "====== Closing socket_fd ======" << std::endl;

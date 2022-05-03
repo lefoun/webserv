@@ -30,12 +30,7 @@ int main()
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
 	server_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
-	// server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	// if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0)
-	// {
-	// 	perror("Invalid address for inet_pton");
-	// 	return 4;
-	// }
+
 	if (server_addr.sin_addr.s_addr == (in_addr_t)(-1))
 	{
 		perror("Converting IP address from char* to uint failed");
@@ -48,8 +43,9 @@ int main()
 		return 3;
 	}
 	std::cout << "====== Client connected to server ======" << std::endl;
+
 	int sent_bytes = send(socket_fd, hello_client, strlen(hello_client), 0);
-	// int sent_bytes = write(socket_fd, hello_client, strlen(hello_client));
+
 	std::cout << "====== Client sent a message of size " << sent_bytes << ":======" << std::endl;
 	value_read = read(socket_fd, buffer, 1024);
 	for (size_t i = 0; buffer[i]; ++i)
