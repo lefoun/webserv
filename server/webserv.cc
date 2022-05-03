@@ -6,6 +6,9 @@
 #include <cstdio>
 #include <unistd.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <istream>
 #define BUFFER_SIZE 4096
 
 
@@ -20,9 +23,21 @@
 int main()
 {
 	struct sockaddr_in	address;
-	const int PORT = 8081;
-	socklen_t addr_size = sizeof(address);
-	char *hello_message = "Hello from the server";
+	const int 			PORT = 8081;
+	socklen_t 			addr_size = sizeof(address);
+	char 				*hello_message = "Hello from the server";
+	// char				*serv_response = "HTTP/1.1 200 OK\nContent-Type:"
+						// " text/plain\nContent-Length: 20\n\nResponse form Serv";
+	std::ifstream		fin("cat_img.jpeg", std::ios::in | std::ios::binary);		
+
+	std::ostringstream	oss;
+	oss << fin.rdbuf();
+	std::string			data(oss.str());
+	std::string			len = std::to_string(data.length());
+	std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: image/jpeg\nContent-Length: ";
+	response_str.append(len);
+	response_str.append("\n\n");
+	response_str.append(data);
 
 	/*
 	* sin_family = Protocol for this socket. (internet in this case)
@@ -33,7 +48,7 @@ int main()
 	address.sin_family = AF_INET; // Internet protocol
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(PORT);
-	// address.sin_addr.s_addr = inet_addr("127.0.0.1");
+
 	memset(address.sin_zero, 0, sizeof(address.sin_zero));
 
 	if (address.sin_addr.s_addr == (in_addr_t)(-1))
@@ -79,19 +94,20 @@ int main()
 		char buffer[BUFFER_SIZE + 1] = {0};
 		int val_read = read(new_socket, buffer, BUFFER_SIZE - 1);
 		// int val_received = recv(socket_fd, buffer, BUFFER_SIZE - 1, 0);
-		// std::cout << "Reading from server: "	
+		std::cout << "Reading from server: " << std::endl;
+		for (size_t i = 0; buffer[i]; ++i)
+			std::cout << buffer[i];
+		std::cout << std::endl;
 		if (val_read == 0)
 			std::cout << "Connection closed received 0 bytes\n";
 		else if (val_read < 0)
 			std::cout << "No bytes to read" << std::endl;
-		// if (val_received == 0)
-			// std::cout << "Connection closed received 0 bytes\n";
-		// else if (val_received < 0)
-			// std::cout << "No bytes to read" << std::endl;
 
-		write(new_socket, hello_message, strlen(hello_message));
+		// write(new_socket, hello_message, strlen(hello_message));
+		// write(new_socket, serv_response, strlen(serv_response));
+		write(new_socket, response_str.c_str(), response_str.length());
 
-		std::cout << "Closing socket_fd" << std::endl;
+		std::cout << "====== Closing socket_fd ======" << std::endl;
 		close(new_socket);
 	}
 	return 0;

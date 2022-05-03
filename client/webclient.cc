@@ -18,7 +18,7 @@ int main()
 	char		*hello_client = "Hello from client";
 	char		buffer[BUFFER_SIZE + 1] = {0};
 
-	memset(&server_addr, '0', sizeof(server_addr));
+	memset(&server_addr, 0, sizeof(server_addr));
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_fd < 0)
 	{
@@ -29,12 +29,13 @@ int main()
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
+	server_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
 	// server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0)
-	{
-		perror("Invalid address for inet_pton");
-		return 4;
-	}
+	// if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0)
+	// {
+	// 	perror("Invalid address for inet_pton");
+	// 	return 4;
+	// }
 	if (server_addr.sin_addr.s_addr == (in_addr_t)(-1))
 	{
 		perror("Converting IP address from char* to uint failed");
