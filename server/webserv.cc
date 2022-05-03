@@ -1,11 +1,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <cstring>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <unistd.h>
 #include <iostream>
+#define BUFFER_SIZE 4096
 
 
 /*
@@ -21,15 +23,18 @@ int main()
 	struct sockaddr_in	address;
 	const int PORT = 8081;
 	socklen_t addr_size = sizeof(address);
+	char buffer[BUFFER_SIZE + 1] = {0};
 
 	memset(&address, 0, sizeof(address));
 	/*
-	* IP address for this socket.
+	* sin_family = Protocol for this socket. (internet in this case)
+	* sin_addr.s_addr = the IP address for this socket
 	* INADDR_ANY = let the os decide
 	* htons converts host to network short and htonl to long.
 	*/
 	address.sin_family = AF_INET; // Internet protocol
-	address.sin_addr.s_addr = htonl(INADDR_ANY); 	address.sin_port = htons(PORT);
+	address.sin_addr.s_addr = htonl(INADDR_ANY);
+	address.sin_port = htons(PORT);
 
 	// creates the socket
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -38,7 +43,7 @@ int main()
 		perror("Can't create socket");
 		return 1;
 	}
-
+	std::cout << "Created the socket " << socket_fd << std::endl;
 	// binds the socket to a porn number
 	if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
 	{
@@ -67,8 +72,6 @@ int main()
 			return 4;
 		}
 
-		#define BUFFER_SIZE 4096
-		char buffer[BUFFER_SIZE] = {0};
 		int val_read = read(socket_fd, buffer, BUFFER_SIZE - 1);
 		// std::cout << "Reading from server: "	
 		if (val_read <= 0)
@@ -78,7 +81,6 @@ int main()
 
 		std::cout << "Closing socket_fd" << std::endl;
 		close(new_socket);
-
 	}
 	return 0;
 }

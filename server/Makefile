@@ -7,7 +7,7 @@ CC = c++
 INCLUDES = 
 OBJS = $(SRCS:.cc=.o)
 DEPS = $(SRCS:.cc=.d)
-NAME = prog
+NAME = server 
 
 ifeq ($(NOFLAGS), 1)
 	FLAGS = 
