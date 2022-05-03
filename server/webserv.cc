@@ -2,7 +2,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstring>
-#include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <unistd.h>
@@ -23,9 +22,8 @@ int main()
 	struct sockaddr_in	address;
 	const int PORT = 8081;
 	socklen_t addr_size = sizeof(address);
-	char buffer[BUFFER_SIZE + 1] = {0};
+	char *hello_message = "Hello from the server";
 
-	memset(&address, 0, sizeof(address));
 	/*
 	* sin_family = Protocol for this socket. (internet in this case)
 	* sin_addr.s_addr = the IP address for this socket
@@ -33,12 +31,20 @@ int main()
 	* htons converts host to network short and htonl to long.
 	*/
 	address.sin_family = AF_INET; // Internet protocol
-	address.sin_addr.s_addr = htonl(INADDR_ANY);
+	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(PORT);
+	// address.sin_addr.s_addr = inet_addr("127.0.0.1");
+	memset(address.sin_zero, 0, sizeof(address.sin_zero));
+
+	if (address.sin_addr.s_addr == (in_addr_t)(-1))
+	{
+		perror("Converting IP address from char* to uint failed");
+		return 2;
+	}
 
 	// creates the socket
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (socket_fd < 0)
+	if (socket_fd <= 0)
 	{
 		perror("Can't create socket");
 		return 1;
@@ -58,26 +64,32 @@ int main()
 		return 3;
 	}
 
-	char *hello_message = "Hello from the server";
-
 	while (true)
 	{
 		std::cout << "====== Waiting for incoming new connections ======\n";
 
 		// accept incoming connections
-		int new_socket = accept(socket_fd, (struct sockaddr *)& address, &addr_size);
+		int new_socket = accept(socket_fd, (struct sockaddr *)&address, &addr_size);
 		if (new_socket < 0)
 		{
 			perror("Accept failed");
 			return 4;
 		}
 
-		int val_read = read(socket_fd, buffer, BUFFER_SIZE - 1);
+		char buffer[BUFFER_SIZE + 1] = {0};
+		int val_read = read(new_socket, buffer, BUFFER_SIZE - 1);
+		// int val_received = recv(socket_fd, buffer, BUFFER_SIZE - 1, 0);
 		// std::cout << "Reading from server: "	
-		if (val_read <= 0)
+		if (val_read == 0)
+			std::cout << "Connection closed received 0 bytes\n";
+		else if (val_read < 0)
 			std::cout << "No bytes to read" << std::endl;
+		// if (val_received == 0)
+			// std::cout << "Connection closed received 0 bytes\n";
+		// else if (val_received < 0)
+			// std::cout << "No bytes to read" << std::endl;
 
-		write(socket_fd, hello_message, strlen(hello_message));
+		write(new_socket, hello_message, strlen(hello_message));
 
 		std::cout << "Closing socket_fd" << std::endl;
 		close(new_socket);
