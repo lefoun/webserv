@@ -10,6 +10,8 @@
 #include <sstream>
 #include <istream>
 #include <fcntl.h>
+#include <sys/select.h>
+
 
 #define BUFFER_SIZE 4096
 
@@ -25,21 +27,25 @@
 int main()
 {
 	struct sockaddr_in	address;
-	const int 			PORT = 8081;
+	// const int 			PORT = 8081;
+	const int 			PORT = 42420;
 	socklen_t 			addr_size = sizeof(address);
-	char 				*hello_message = "Hello from the server";
+	// char 				*hello_message = "Hello from the server";
 	// char				*serv_response = "HTTP/1.1 200 OK\nContent-Type:"
 						// " text/plain\nContent-Length: 20\n\nResponse form Serv";
-	std::ifstream		fin("cat_img.jpeg", std::ios::in | std::ios::binary);		
+	// std::ifstream		fin("cat_img.jpeg", std::ios::in | std::ios::binary);		
+	std::ifstream		fin("elisa.html", std::ios::in);		
 
 	std::ostringstream	oss;
 	oss << fin.rdbuf();
 	std::string			data(oss.str());
 	std::string			len = std::to_string(data.length());
-	std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: image/jpeg\nContent-Length: ";
+	// std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: image/jpeg\nContent-Length: ";
+	std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
 	response_str.append(len);
 	response_str.append("\n\n");
 	response_str.append(data);
+	
 
 	/*
 	* sin_family = Protocol for this socket. (internet in this case)
@@ -60,13 +66,14 @@ int main()
 	}
 
 	// creates the socket
-	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // last argument for the
+													// protocol. IPPROTO_TCP
 	if (socket_fd <= 0)
 	{
 		perror("Can't create socket");
 		return 1;
 	}
-	fcntl(socket_fd, F_SETFL, O_NONBLOCK);
+	// fcntl(socket_fd, F_SETFL, O_NONBLOCK);
 	std::cout << "Created the socket " << socket_fd << std::endl;
 	// binds the socket to a porn number
 	if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
@@ -74,7 +81,7 @@ int main()
 		perror("Bind failed");
 		return 2;
 	}
-	
+
 	// listens to incoming connections
 	if (listen(socket_fd, SOMAXCONN) < 0)
 	{

@@ -1,6 +1,17 @@
 {
     "files.associations": {
         "sstream": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "vector": "cpp",
+        "map": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp",
+        "algorithm": "cpp",
+        "deque": "cpp",
+        "iterator": "cpp",
+        "locale": "cpp",
+        "memory": "cpp",
+        "set": "cpp",
+        "unordered_map": "cpp"
     }
 }

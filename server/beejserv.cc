@@ -1,0 +1,117 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <string>
+#include <iostream>
+
+#define PORT 8081
+#define BUFFER_SIZE 4096
+
+void	read_buf(char buffer[], int size)
+{
+	for (size_t i = 0; i < size; ++i)
+		std::cout << buffer[i];
+	std::cout << std::endl;
+}
+
+int	error_ret(const std::string &err)
+{
+	perror(err.c_str());
+	exit (1);
+	return 1;
+}
+
+int main()
+{
+	fd_set				fd_master, read_fds;
+	struct sockaddr_in	socket_addr;
+	struct sockaddr_in	client_addr;
+	socklen_t			socket_len = sizeof(socket_addr);
+	char				buffer[BUFFER_SIZE + 1];
+
+	memset(buffer, 0, BUFFER_SIZE);
+	FD_ZERO(&fd_master);
+	FD_ZERO(&read_fds);
+	int listening_s = socket(AF_INET, SOCK_STREAM, 0);
+	if (listening_s < 0)
+		return error_ret("Socket()");
+
+	if (fcntl(listening_s, F_SETFL, O_NONBLOCK) == -1)
+		return error_ret("Fcntl()");
+
+	memset(&socket_addr.sin_zero, 0, sizeof(socket_addr.sin_zero));
+	socket_addr.sin_family = AF_INET;
+	socket_addr.sin_addr.s_addr = INADDR_ANY;
+	socket_addr.sin_port = htons(PORT);
+	memset(&client_addr, 0, sizeof(client_addr));
+
+	int yes = 1;
+	setsockopt(listening_s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
+	if (bind(listening_s, (struct sockaddr *)&socket_addr, socket_len) < 0)
+		return error_ret("Bind()");
+
+	if (listen(listening_s, SOMAXCONN) < 0)
+		return error_ret("Listen()");
+
+	FD_SET(listening_s, &fd_master);
+	int new_socket;
+	int fdmax = listening_s;
+	while (true) // main loop
+	{
+		read_fds = fd_master;
+		if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1)
+			return error_ret("Select inside loop");
+		
+		for (int i = 0; i <= fdmax; ++i)
+		{
+			if (FD_ISSET(i, &read_fds))
+			{
+				if (i == listening_s)
+				{
+					socklen_t client_len = sizeof(client_addr);					
+					new_socket = accept(listening_s, (struct sockaddr *)&client_addr, &client_len);	
+					fcntl(new_socket, F_SETFL, O_NONBLOCK);
+					if (new_socket == -1)
+						perror("Accept() failed to accept new connection");
+					else
+					{
+						FD_SET(new_socket, &fd_master);
+						if (new_socket > fdmax)
+							fdmax = new_socket;
+						std::cout << "Server accepted new connection " << new_socket
+							<< std::endl;
+					}
+				}
+				else
+				{
+					int nbytes = recv(i, buffer, BUFFER_SIZE, 0);
+					if (nbytes <= 0)
+					{
+						if (nbytes == 0)
+							std::cout << "Connection closed from Socket " << i << std::endl;
+						else if (nbytes < 0)
+							perror("Recv failed");
+						close(i);
+						FD_CLR(i, &fd_master);
+					}
+					else
+					{
+						std::cout << "Received data from client " << i << ":\n";
+						read_buf(buffer, nbytes);
+						std::cout << "Received byte " << nbytes << std::endl;
+						memset(buffer, 0, BUFFER_SIZE);
+					}
+				}
+			}
+		}
+	} // end main loop
+	return 0;
+}
