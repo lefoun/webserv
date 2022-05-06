@@ -48,19 +48,35 @@ int main()
 
 	memset(&socket_addr.sin_zero, 0, sizeof(socket_addr.sin_zero));
 	socket_addr.sin_family = AF_INET;
-	socket_addr.sin_addr.s_addr = INADDR_ANY;
+	// socket_addr.sin_addr.s_addr = INADDR_ANY;
+	// socket_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
+	int listening_s2 = socket(AF_INET, SOCK_STREAM, 0);
+	if (listening_s2 < 0)
+		return error_ret("Socket() 2");
+	// socket_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
+	socket_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
 	socket_addr.sin_port = htons(PORT);
+
 	memset(&client_addr, 0, sizeof(client_addr));
+	client_addr.sin_family = AF_INET;
+	client_addr.sin_addr.s_addr = INADDR_ANY;
+	client_addr.sin_port = htons(PORT);
 
 	int yes = 1;
 	setsockopt(listening_s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+	setsockopt(listening_s2, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
 	if (bind(listening_s, (struct sockaddr *)&socket_addr, socket_len) < 0)
 		return error_ret("Bind()");
 
+	if (bind(listening_s2, (struct sockaddr *)&client_addr, socket_len) < 0)
+		return error_ret("Bind() number 2");
+		
 	if (listen(listening_s, SOMAXCONN) < 0)
 		return error_ret("Listen()");
 
+	if (listen(listening_s2, SOMAXCONN) < 0)
+		return error_ret("Listen()2");
 	FD_SET(listening_s, &fd_master);
 	int new_socket;
 	int fdmax = listening_s;
@@ -106,6 +122,13 @@ int main()
 					{
 						std::cout << "Received data from client " << i << ":\n";
 						read_buf(buffer, nbytes);
+						std::string serv_response("HTTP/1.1 200 OK\nContent-Type:"
+						" text/html\nContent-Length: ");
+						std::string header_res(" \n\n<html><header>Response form Serv<header><body> Hello World! </body></html>");
+						serv_response.append(std::to_string(header_res.length()));
+						serv_response.append(header_res);
+						int sent = send(i, serv_response.c_str(), strlen(serv_response.c_str()), 0);
+						std::cout << "Sent " << sent << " data\n";
 						std::cout << "Received byte " << nbytes << std::endl;
 						memset(buffer, 0, BUFFER_SIZE);
 					}
