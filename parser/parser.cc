@@ -176,14 +176,15 @@ bool	parse_config_file(const std::string& file_name)
 	if (!config_file.is_open() || config_file.fail())
 		throw config_file.exceptions();
 
-	std::istream_iterator<std::string>	token(config_file);
 	std::vector<Server>	servers;
 	std::stack<std::string> context;
+	std::istream_iterator<std::string> token(config_file);
+	std::istream_iterator<std::string> end_of_file;
 	const std::vector<std::string> directives = init_directives();
 
-	while (true)
+	while (token != end_of_file)
 	{
-		if (*token == "server")
+		if (*token == "serverr")
 		{
 			context.push("server");
 			servers.push_back(Server());
@@ -198,8 +199,9 @@ bool	parse_config_file(const std::string& file_name)
 				return false;
 			}
 		}
+		++token;
 	}
-	return true;	
+	return false;	
 }
 
 int main()
