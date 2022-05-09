@@ -22,7 +22,8 @@ enum DIRECTIVES {
 	SERVER,
 	LISTEN,
 	SERVER_NAME,
-	ROOT = -2,
+	ROOT,
+	INDEX,
 	UNKNOWN_DIRECTIVE
 };
 
@@ -37,24 +38,42 @@ enum DIRECTIVES {
  * launch main loop
 */
 
-/* Structure of the code
- * f: opens the config file
- * f: reads the file and returns a token
- * f: that puts the tokens in order (or recognises their syntaxique meaning)
+/* En parsant le fichier on doit trouver:
+	* Directive[server] ... 
+	* server : Listen 
 */
+
+bool	parse_config_file(const std::string& file_name)
+{
+	std::ifstream	config_file(file_name);
+
+	if (!config_file.is_open() || config_file.fail())
+		throw config_file.exceptions();
+	std::istream_iterator<std::string>	it(config_file);
+	std::vector<Server>	servers;
+	while (true)
+	{
+		
+	}
+
+	return true;	
+}
 
 int main()
 {
-	Server	server;	
-	Location	location(std::string("/"), std::vector<std::string>(), true);
-
-	std::cout << location.get_path() << std::endl;
-	std::ifstream	config_file("server_config.conf");
-	std::string		hello_string;
-	std::istream_iterator<std::string>	it(config_file);
-
-	std::cout << *it;
-	std::cout << *++it;
+	// std::istream_iterator<std::string>	it(config_file);
+	try 
+	{
+		parse_config_file("server_config.conf//");
+		std::cout << "File is good\n";
+	}
+	catch (unsigned int)
+	{
+		std::cout << "File failed to open. Please provide a valid file.\n";
+		return 1;
+	}
+	// std::cout << *it;
+	// std::cout << *++it;
 	// config_file >> hello_string;
 	// std::cout << hello_string;
 	return 0;
