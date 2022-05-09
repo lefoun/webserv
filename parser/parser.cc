@@ -28,6 +28,7 @@ enum DIRECTIVES {
 	CGI_PY,
 	CGI_PHP,
 	AUTO_INDEX,
+	LOCATION,
 	UNKNOWN_DIRECTIVE,
 	DIRECTIVES_NB
 };
@@ -128,17 +129,28 @@ void	handle_cgi_php(std::istream_iterator<std::string>& token,
 void	handle_auto_index(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-
-(void)token; (void)context; (void)server;
+	(void)token; (void)context; (void)server;
 }
 
+void	handle_location(std::istream_iterator<std::string>& token,
+						std::stack<std::string>& context, Server& server)
+{
+	(void)token; (void)context; (void)server;
+}
 void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					std::stack<std::string>& context,
 					const std::vector<std::string>& directives_vec)
 {
+
+	const std::istream_iterator<std::string> end_of_file;
+	if (*token == "{")
+		++token;
+
 	int directive;
 	while (true)
 	{
+		if (*token == "}")
+			return ;
 		directive = find_directive(directives_vec, *token);
 		if (directive == UNKNOWN_DIRECTIVE)
 			std::cout << "Not found " << *token<< "\n";
@@ -148,7 +160,7 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 			switch (directive)
 			{
 				case SERVER:
-					handle_server(token, context, server); break;
+					throw std::invalid_argument("Found nested servers");
 				case LISTEN:
 					handle_listen(token, context, server); break;
 				case SERVER_NAME:
@@ -163,6 +175,8 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					handle_cgi_php(token, context, server); break;
 				case AUTO_INDEX:
 					handle_auto_index(token, context, server); break;
+				case LOCATION:
+					handle_location(token, context, server); break;
 			}
 		}
 		++token;	
@@ -179,23 +193,25 @@ bool	parse_config_file(const std::string& file_name)
 	std::vector<Server>	servers;
 	std::stack<std::string> context;
 	std::istream_iterator<std::string> token(config_file);
-	std::istream_iterator<std::string> end_of_file;
+	const std::istream_iterator<std::string> end_of_file;
 	const std::vector<std::string> directives = init_directives();
 
 	while (token != end_of_file)
 	{
-		if (*token == "serverr")
+		if (*token == "server")
 		{
 			context.push("server");
 			servers.push_back(Server());
+			if (*(++token) != "{")
+				return false;
 			try
 			{
 				get_server(token, servers.back(), context, directives);
-				return true;
+				context.pop();
 			}
 			catch (std::exception& e)
 			{
-				std::cout << e.what() << "Failed to parse config file\n";
+				std::cout << "Failed to parse config file\n" << e.what() << "\n";
 				return false;
 			}
 		}
@@ -209,7 +225,7 @@ int main()
 	if (parse_config_file("server_config.conf"))
 		std::cout << "File is good\n";
 	else
-		std::cout << "File failed to open. Please provide a valid file.\n";
+		std::cout << "Error\n";
 	return 0;
 }
 
