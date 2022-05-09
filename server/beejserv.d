@@ -1,0 +1,1 @@
+beejserv.o: beejserv.cc

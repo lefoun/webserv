@@ -33,6 +33,29 @@ enum DIRECTIVES {
 	DIRECTIVES_NB
 };
 
+static bool is_number(const string& s)
+{
+    if(s.size() == 0)
+		return false;
+    for (size_t i = 0; i < s.size(); i++) {
+        if ((s[i]>='0' && s[i]<='9') == false) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void	set_port(const std::string& port_str, Server& server)
+{
+	int	port_num;
+	if (port_str.size() > 5)
+		throw std::invalid_argument("Port number out of range");
+	port_num = atoi(port_str.c_str());
+	if (port_num > 65535)
+		throw std::invalid_argument("Invalid Port number");
+	(server.get_listening_ports()).push_back(atoi(port_str.c_str());
+}
+
 /* Config file parsing
  * Input is a  file
  * need to open it and have it as a stream
@@ -78,11 +101,40 @@ int	find_directive(const std::vector<std::string>& directives,
 	return UNKNOWN_DIRECTIVE;
 }
 
+static void	set_ip(const std::string& host, Server& server)
+{
+	/* if host == an ip address -> le mettre directement dans get_listening ip*/
+	/* sinon si c'est un host -> ouvrir le fichier /etc/host et verif si il exist
+	si oui prendre l'ip correspodente et la mettre dedans sinon throw */
+}
+
 void	handle_listen(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-
-(void)token; (void)context; (void)server;
+	(void)context;
+	std::istream_iterator<std::string> end_of_file;
+	if (++token == end_of_file)
+		throw std::invalid_argument("Unexpected end of file");
+	if (*(--(*token).end()) != std::string(";"))	
+		throw std::invalid_argument("Excpected token ';'");
+	token->erase(token->size() - 1);
+	/* Listen either to a Host, a Port number or a Host:Port pair */
+	std::string::size_type	pos = token->find(":");
+	if (pos == std::string::npos) /* Means that it's either a Host or a Port */
+	{
+		if (is_number(*token))
+			set_port(*token, server);
+		else
+			set_ip(*token, server);
+	}
+	else
+	{
+		std::pair<uint16_t, std::string>	ip_port_pair;
+		std::string	tmp_port = token->substr(0, pos);
+		std::string	tmp_host = token->substr(pos, std::string::npos);
+		set_port(tmp_port, server);
+		set_ip(tmp_host, server);
+	}
 }
 
 void	handle_server_name(std::istream_iterator<std::string>& token,
