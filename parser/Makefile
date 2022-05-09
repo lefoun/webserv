@@ -4,7 +4,7 @@ GREEN        = \033[1;32m
 RESET		 = \033[0m
 
 CC = c++
-INCLUDES = 
+INCLUDES = Server.hpp Location.hpp
 OBJS = $(SRCS:.cc=.o)
 DEPS = $(SRCS:.cc=.d)
 NAME = parser 
