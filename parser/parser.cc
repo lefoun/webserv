@@ -78,13 +78,6 @@ int	find_directive(const std::vector<std::string>& directives,
 	return UNKNOWN_DIRECTIVE;
 }
 
-void	handle_server(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
-{
-
-(void)token; (void)context; (void)server;
-}
-
 void	handle_listen(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
@@ -143,15 +136,20 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 {
 
 	const std::istream_iterator<std::string> end_of_file;
-	if (*token == "{")
-		++token;
+	if (*(++token) != "{")
+		throw std::invalid_argument("Excpected token '{'");
+	++token;
 
 	int directive;
 	while (true)
 	{
 		if (*token == "}")
 			return ;
+		else if (token == end_of_file)
+			throw std::invalid_argument("Excepted token '}'");
+
 		directive = find_directive(directives_vec, *token);
+		std::cout << "This is token " << *token << std::endl;
 		if (directive == UNKNOWN_DIRECTIVE)
 			std::cout << "Not found " << *token<< "\n";
 		else
@@ -179,8 +177,7 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					handle_location(token, context, server); break;
 			}
 		}
-		++token;	
-		return ;
+		++token;
 	}
 }
 
@@ -202,8 +199,6 @@ bool	parse_config_file(const std::string& file_name)
 		{
 			context.push("server");
 			servers.push_back(Server());
-			if (*(++token) != "{")
-				return false;
 			try
 			{
 				get_server(token, servers.back(), context, directives);
