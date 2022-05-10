@@ -107,6 +107,17 @@ static void	set_ip(const std::string& host, Server& server)
 	/* sinon si c'est un host -> ouvrir le fichier /etc/host et verif si il exist
 	si oui prendre l'ip correspodente et la mettre dedans sinon throw */
 
+	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
+	std::istream_iterator<std::string> parser_hosts(hosts_file);
+	std::istream_iterator<std::string> end_of_file;
+
+	std::string::const_iterator it = host.begin();
+	while (it != host.end()){
+		if (!std::isdigit(*it) && *it != '.'){
+			
+		}
+	}
+	
 	ssize_t pos = 0;
 	ssize_t i = 0;
 	uint16_t nb_octets = 0;
@@ -125,10 +136,6 @@ static void	set_ip(const std::string& host, Server& server)
 	if (host[i] != *host.end())
 		throw std::invalid_argument("Find invalid ip format.");
 	std::cout<< "ip ok" << std::endl;
-
-	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
-	std::istream_iterator<std::string> parser_hosts(hosts_file);
-	std::istream_iterator<std::string> end_of_file;
 
 	while (parser_hosts != end_of_file){//on check si l'ip est dans le ficher host
 		if(*parser_hosts == host){
