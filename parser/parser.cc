@@ -106,6 +106,46 @@ static void	set_ip(const std::string& host, Server& server)
 	/* if host == an ip address -> le mettre directement dans get_listening ip*/
 	/* sinon si c'est un host -> ouvrir le fichier /etc/host et verif si il exist
 	si oui prendre l'ip correspodente et la mettre dedans sinon throw */
+
+	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
+	std::istream_iterator<std::string> parser_hosts(hosts_file);
+	std::istream_iterator<std::string> end_of_file;
+
+	std::string::const_iterator it = host.begin();
+	while (it != host.end()){
+		if (!std::isdigit(*it) && *it != '.'){
+			
+		}
+	}
+	
+	ssize_t pos = 0;
+	ssize_t i = 0;
+	uint16_t nb_octets = 0;
+	while (nb_octets < 4){ 
+		pos = host.find('.', i);
+		if (pos == std::string::npos && nb_octets != 3)
+			throw std::invalid_argument("Find invalid ip format."); //si on ne trouve pas de '.' et que l'adresse n'a pas 4 octet;
+		++nb_octets;
+		std::string octet = host.substr(i, pos - i);
+		if (atoi(octet.c_str()) < 0 || atoi(octet.c_str()) > 255) // si l'octet est inferieur a 0 ou superieur a 255
+			throw std::invalid_argument("Find invalid ip format.");
+		i = (pos + 1);
+		octet.clear();
+	//	std::cout << "octet =" << octet << " i =" << i  << std::endl;
+	}
+	if (host[i] != *host.end())
+		throw std::invalid_argument("Find invalid ip format.");
+	std::cout<< "ip ok" << std::endl;
+
+	while (parser_hosts != end_of_file){//on check si l'ip est dans le ficher host
+		if(*parser_hosts == host){
+			(server.get_listening_ips()).push_back(host.c_str());
+			return;
+		}
+		++parser_hosts;		
+	}
+	throw std::invalid_argument("Unable to find host.");
+
 }
 
 void	handle_listen(std::istream_iterator<std::string>& token,
