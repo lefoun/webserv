@@ -50,7 +50,12 @@ static bool	is_ip_address(const std::string &ip_str)
 int main(int ac, char **av)
 {
 	(void)ac;
+	(void)av;
 	std::cout << std::boolalpha;
-	// std::cout << is_ip_address(std::string(av[1])) << std::endl;
-	std::cout << is_valid_host_name(std::string(av[1]), Server()) << std::endl;
+	std::string	root;
+	std::string non_root("");
+	std::cout << root.empty() << std::endl;
+	std::cout << non_root.empty() << std::endl;
+	std::cout << is_ip_address(std::string(av[1])) << std::endl;
+	// std::cout << is_valid_host_name(std::string(av[1]), Server()) << std::endl;
 }

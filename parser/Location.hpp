@@ -7,19 +7,28 @@ class Location
 {
 	private:
 		/* contains [location =/ /some_location] */
-		bool						_is_strict_location; 
+		typedef std::pair<std::string, std::string>	str_str_pair;
+
 		std::string					_path;
-		std::vector<std::string>	_root_paths;
+		std::string					_root_path;
+		std::string					_index;
+		std::vector<str_str_pair>	_redirections;
+		std::vector<std::string>	_allowed_requests;
 	
 	public:
-		Location(std::string& path,
-				std::vector<std::string>& root_paths,
-				const bool& is_strict = false)
-		: _is_strict_location(is_strict), _path(path), _root_paths(root_paths)
+		Location(const std::string& path, const std::string& root_path, 
+				const std::string& index)
+		: _path(path), _root_path(root_path), _index(index)
 		{}
 
-		bool	is_strict_location() { return _is_strict_location; }
-		std::string&	get_path() { return _path; }
-		std::vector<std::string>&	get_root_paths() { return _root_paths; }
-		
+		std::string&				get_path()
+		{ return _path; }
+		std::string&				get_root_path()
+		{ return _root_path; }
+		std::string&				get_index()
+		{ return _index; }
+		std::vector<str_str_pair>&	get_redirections()
+		{return _redirections; }
+		std::vector<std::string>&	get_allowed_requestes()
+		{ return _allowed_requests; }
 };

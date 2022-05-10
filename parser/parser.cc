@@ -96,6 +96,15 @@ static bool is_number(const std::string& s)
     return true;
 }
 
+static void	check_valid_token(std::istream_iterator<std::string>& token)
+{
+	std::istream_iterator<std::string> end_of_file;
+	if (++token == end_of_file)
+		throw std::invalid_argument("Unexpected end of file");
+	if (*(token->begin()) == ';')
+		throw std::invalid_argument("Unexcpected token ';'");
+}
+
 static void	set_port(const std::string& port_str, Server& server)
 {
 	if (port_str.size() > 5)
@@ -168,14 +177,9 @@ static void	set_ip(const std::string& host, Server& server)
 
 void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 {
-	std::istream_iterator<std::string> end_of_file;
-	if (++token == end_of_file)
-		throw std::invalid_argument("Unexpected end of file");
+	check_valid_token(token);
 	if (*(--(*token).end()) != ';')	
-		throw std::invalid_argument("Excpected token ';'");
-	if (*(token->begin()) == ';')
-		throw std::invalid_argument("Unxcpected token ';'");
-
+		throw std::invalid_argument("Expected token ';'");
 	std::string	trimmed_token = *token;
 	trimmed_token.erase((trimmed_token.size() - 1)); /* Erase the trailing ';' */
 	/* Listen either to a Host, a Port number or a Host:Port pair */
@@ -203,11 +207,7 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 void	handle_server_name(std::istream_iterator<std::string>& token,
 							Server& server)
 {
-	std::istream_iterator<std::string> end_of_file;
-	if (++token == end_of_file)
-		throw std::invalid_argument("Unexpected end of file");
-	if (*(token->begin()) == ';')
-		throw std::invalid_argument("Unexcpected token ';'");
+	check_valid_token(token);
 	while (*(--(*token).end()) != ';')
 		server.get_server_names().push_back(*token++);
 	std::cout << "This is sever_nme " << *token << std::endl;
@@ -218,8 +218,26 @@ void	handle_server_name(std::istream_iterator<std::string>& token,
 void	handle_root(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-
-(void)token; (void)context; (void)server;
+	check_valid_token(token);
+	if (*(--(*token).end()) != ';')
+		throw std::invalid_argument("Expected token ';'");
+	std::string	trimmed_token = token->substr(0, token->size() - 1);
+	if (trimmed_token == "\"\"")
+		throw std::invalid_argument("Invalid root path \"\"");
+	std::cout << "This is root " << trimmed_token << std::endl;
+	if (context.top() == "server")
+	{
+		if (!server.get_root_path().empty())
+			throw std::invalid_argument("Multiple Root directives is not allowed");
+		server.get_root_path() = trimmed_token;
+	}
+	else /*the context is a location block */
+	{
+		if (!server.get_locations().back().get_root_path().empty())
+			throw std::invalid_argument("Multiple Root directives is not allowed");
+		server.get_locations().back().get_root_path() = trimmed_token;
+	}
+	++token;
 }
 
 void	handle_index(std::istream_iterator<std::string>& token,
