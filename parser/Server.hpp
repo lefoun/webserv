@@ -15,7 +15,7 @@ class Server
 		std::vector<std::string>				_listening_ips;
 		std::vector<ip_port_pair>				_listening_port_ip_pairs;
 		std::vector<Location>					_locations;
-		std::vector<std::string>				_index_files;
+		std::string								_index_file;
 		std::vector<std::string>				_error_files;
 		std::vector<str_str_pair>				_redirections;
 		std::string								_root_path;
@@ -31,8 +31,8 @@ class Server
 		{ return _listening_port_ip_pairs; }
 		std::vector<Location>&				get_locations()
 		{ return _locations; }
-		std::vector<std::string>&			get_index_files()
-		{ return _index_files; }
+		std::string&						get_index_file()
+		{ return _index_file; }
 		std::vector<std::string>&			get_error_files()
 		{ return _error_files; }
 		std::vector<str_str_pair>&			get_redirections()

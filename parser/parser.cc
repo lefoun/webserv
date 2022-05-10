@@ -243,8 +243,26 @@ void	handle_root(std::istream_iterator<std::string>& token,
 void	handle_index(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-
-(void)token; (void)context; (void)server;
+	check_valid_token(token);
+	if (*(--(*token).end()) != ';')
+		throw std::invalid_argument("Expected token ';'");
+	std::string	trimmed_token = token->substr(0, token->size() - 1);
+	if (trimmed_token == "\"\"")
+		throw std::invalid_argument("Invalid index \"\"");
+	std::cout << "This is index " << trimmed_token << std::endl;
+	if (context.top() == "server")
+	{
+		if (!server.get_index_file().empty())
+			throw std::invalid_argument("Multiple Index directives is not allowed");
+		server.get_index_file() = trimmed_token;
+	}
+	else /*the context is a location block */
+	{
+		if (!server.get_locations().back().get_index_file().empty())
+			throw std::invalid_argument("Multiple Index directives is not allowed");
+		server.get_locations().back().get_index_file() = trimmed_token;
+	}
+	++token;
 }
 
 void	handle_cgi_py(std::istream_iterator<std::string>& token,
