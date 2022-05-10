@@ -33,29 +33,6 @@ enum DIRECTIVES {
 	DIRECTIVES_NB
 };
 
-static bool is_number(const string& s)
-{
-    if(s.size() == 0)
-		return false;
-    for (size_t i = 0; i < s.size(); i++) {
-        if ((s[i]>='0' && s[i]<='9') == false) {
-            return false;
-        }
-    }
-    return true;
-}
-
-static void	set_port(const std::string& port_str, Server& server)
-{
-	int	port_num;
-	if (port_str.size() > 5)
-		throw std::invalid_argument("Port number out of range");
-	port_num = atoi(port_str.c_str());
-	if (port_num > 65535)
-		throw std::invalid_argument("Invalid Port number");
-	(server.get_listening_ports()).push_back(atoi(port_str.c_str());
-}
-
 /* Config file parsing
  * Input is a  file
  * need to open it and have it as a stream
@@ -101,77 +78,115 @@ int	find_directive(const std::vector<std::string>& directives,
 	return UNKNOWN_DIRECTIVE;
 }
 
-static void	set_ip(const std::string& host, Server& server)
+template <typename T>
+static bool	in_range(T low, T high, T num)
 {
-	/* if host == an ip address -> le mettre directement dans get_listening ip*/
-	/* sinon si c'est un host -> ouvrir le fichier /etc/host et verif si il exist
-	si oui prendre l'ip correspodente et la mettre dedans sinon throw */
-
-	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
-	std::istream_iterator<std::string> parser_hosts(hosts_file);
-	std::istream_iterator<std::string> end_of_file;
-
-	std::string::const_iterator it = host.begin();
-	while (it != host.end()){
-		if (!std::isdigit(*it) && *it != '.'){
-			
-		}
-	}
-	
-	ssize_t pos = 0;
-	ssize_t i = 0;
-	uint16_t nb_octets = 0;
-	while (nb_octets < 4){ 
-		pos = host.find('.', i);
-		if (pos == std::string::npos && nb_octets != 3)
-			throw std::invalid_argument("Find invalid ip format."); //si on ne trouve pas de '.' et que l'adresse n'a pas 4 octet;
-		++nb_octets;
-		std::string octet = host.substr(i, pos - i);
-		if (atoi(octet.c_str()) < 0 || atoi(octet.c_str()) > 255) // si l'octet est inferieur a 0 ou superieur a 255
-			throw std::invalid_argument("Find invalid ip format.");
-		i = (pos + 1);
-		octet.clear();
-	//	std::cout << "octet =" << octet << " i =" << i  << std::endl;
-	}
-	if (host[i] != *host.end())
-		throw std::invalid_argument("Find invalid ip format.");
-	std::cout<< "ip ok" << std::endl;
-
-	while (parser_hosts != end_of_file){//on check si l'ip est dans le ficher host
-		if(*parser_hosts == host){
-			(server.get_listening_ips()).push_back(host.c_str());
-			return;
-		}
-		++parser_hosts;		
-	}
-	throw std::invalid_argument("Unable to find host.");
-
+	return num >= low && num <= high;
 }
 
-void	handle_listen(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
+static bool is_number(const std::string& s)
 {
-	(void)context;
+    if(s.size() == 0)
+		return false;
+    for (size_t i = 0; i < s.size(); i++)
+	{
+        if ((s[i]>= '0' && s[i] <='9') == false)
+            return false;
+    }
+    return true;
+}
+
+static void	set_port(const std::string& port_str, Server& server)
+{
+	if (port_str.size() > 5)
+		throw std::invalid_argument("Port number out of range");
+	if (!in_range(0, 65535, atoi(port_str.c_str())))
+		throw std::invalid_argument("Invalid Port number");
+	(server.get_listening_ports()).push_back(atoi(port_str.c_str()));
+}
+
+static bool	is_ip_address(const std::string &ip_str)
+{
+	if (std::count(ip_str.begin(), ip_str.end(), '.') != 3)
+		return false;
+
+	std::stringstream			ip_ss(ip_str);
+	std::string					split_ip;
+	std::vector<std::string>	ip_octet_holder;
+	while (std::getline(ip_ss, split_ip, '.'))
+	{
+		ip_octet_holder.push_back(split_ip);
+		std::string octect = ip_octet_holder.back();
+		if (!is_number(octect) || octect.size() > 3
+			|| !in_range(0, 255, atoi(octect.c_str())))
+			return false;
+	}
+	if (ip_octet_holder.size() != 4)
+		return false;
+	return true;
+}
+
+static bool set_valid_host_name(const std::string& host, Server& server)
+{
+	std::ifstream	hosts_file(std::string("/etc/hosts"));	//open hosts file
+	if (hosts_file.fail())
+		throw std::invalid_argument("Failed to open hosts file");
+
+	std::string	line;
+	while (std::getline(hosts_file, line))
+	{
+		if (std::isdigit(line[0]) && line.find(host) != std::string::npos)
+		{
+			std::istringstream tmp(line);
+			std::string ip_addr;
+			tmp >> ip_addr;
+			server.get_listening_ips().push_back(ip_addr);
+			return true;
+		}
+	}
+	return false;
+}
+
+static void	set_ip(const std::string& host, Server& server)
+{
+	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
+	if (hosts_file.fail())
+		throw std::invalid_argument("Failed to open hosts file");
+	
+	if (is_ip_address(host))
+	{
+		server.get_listening_ips().push_back(host);
+		return ;
+	}
+
+	if (!set_valid_host_name(host, server))
+		throw std::invalid_argument("Unable to find host");
+}
+
+void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
+{
 	std::istream_iterator<std::string> end_of_file;
 	if (++token == end_of_file)
 		throw std::invalid_argument("Unexpected end of file");
-	if (*(--(*token).end()) != std::string(";"))	
+	if (*(--(*token).end()) != ';')	
 		throw std::invalid_argument("Excpected token ';'");
-	token->erase(token->size() - 1);
+
+	std::string	trimmed_token = *token;
+	trimmed_token.erase((trimmed_token.size() - 1)); /* Erase the trailing ';' */
 	/* Listen either to a Host, a Port number or a Host:Port pair */
-	std::string::size_type	pos = token->find(":");
+	std::string::size_type	pos = trimmed_token->find(":");
 	if (pos == std::string::npos) /* Means that it's either a Host or a Port */
 	{
-		if (is_number(*token))
-			set_port(*token, server);
+		if (is_number(trimmed_token))
+			set_port(trimmed_token, server);
 		else
-			set_ip(*token, server);
+			set_ip(trimmed_token, server);
 	}
-	else
+	else /* It's a host:port pair */
 	{
 		std::pair<uint16_t, std::string>	ip_port_pair;
-		std::string	tmp_port = token->substr(0, pos);
-		std::string	tmp_host = token->substr(pos, std::string::npos);
+		std::string	tmp_port = trimmed_token.substr(0, pos);
+		std::string	tmp_host = trimmed_token.substr(pos, std::string::npos);
 		set_port(tmp_port, server);
 		set_ip(tmp_host, server);
 	}
@@ -252,7 +267,7 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 				case SERVER:
 					throw std::invalid_argument("Found nested servers");
 				case LISTEN:
-					handle_listen(token, context, server); break;
+					handle_listen(token, server); break;
 				case SERVER_NAME:
 					handle_server_name(token, context, server); break;
 				case ROOT:
