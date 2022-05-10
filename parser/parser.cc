@@ -122,6 +122,8 @@ static void	set_ip(const std::string& host, Server& server)
 		octet.clear();
 	//	std::cout << "octet =" << octet << " i =" << i  << std::endl;
 	}
+	if (host[i] != *host.end())
+		throw std::invalid_argument("Find invalid ip format.");
 	std::cout<< "ip ok" << std::endl;
 
 	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
