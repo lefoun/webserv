@@ -99,7 +99,9 @@ static bool is_number(const std::string& s)
 static void	set_port(const std::string& port_str, Server& server)
 {
 	if (port_str.size() > 5)
+	{
 		throw std::invalid_argument("Port number out of range");
+	}
 	if (!in_range(0, 65535, atoi(port_str.c_str())))
 		throw std::invalid_argument("Invalid Port number");
 	(server.get_listening_ports()).push_back(atoi(port_str.c_str()));
@@ -174,7 +176,7 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 	std::string	trimmed_token = *token;
 	trimmed_token.erase((trimmed_token.size() - 1)); /* Erase the trailing ';' */
 	/* Listen either to a Host, a Port number or a Host:Port pair */
-	std::string::size_type	pos = trimmed_token->find(":");
+	std::string::size_type	pos = trimmed_token.find(':');
 	if (pos == std::string::npos) /* Means that it's either a Host or a Port */
 	{
 		if (is_number(trimmed_token))
@@ -185,11 +187,12 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 	else /* It's a host:port pair */
 	{
 		std::pair<uint16_t, std::string>	ip_port_pair;
-		std::string	tmp_port = trimmed_token.substr(0, pos);
-		std::string	tmp_host = trimmed_token.substr(pos, std::string::npos);
+		std::string	tmp_host = trimmed_token.substr(0, pos);
+		std::string	tmp_port = trimmed_token.substr(pos, std::string::npos);
 		set_port(tmp_port, server);
 		set_ip(tmp_host, server);
 	}
+	++token;
 }
 
 void	handle_server_name(std::istream_iterator<std::string>& token,
