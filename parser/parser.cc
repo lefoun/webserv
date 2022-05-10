@@ -29,6 +29,9 @@ enum DIRECTIVES {
 	CGI_PHP,
 	AUTO_INDEX,
 	LOCATION,
+	ERROR_DIRECTIVE,
+	REDIRECTION,
+	ALLOW,
 	UNKNOWN_DIRECTIVE,
 	DIRECTIVES_NB
 };
@@ -289,6 +292,24 @@ void	handle_location(std::istream_iterator<std::string>& token,
 {
 	(void)token; (void)context; (void)server;
 }
+
+void	handle_redirection(std::istream_iterator<std::string>& token,
+						std::stack<std::string>& context, Server& server)
+{
+	(void)token; (void)context; (void)server;
+}
+
+void	handle_error_directive(std::istream_iterator<std::string>& token,
+						std::stack<std::string>& context, Server& server)
+{
+	(void)token; (void)context; (void)server;
+}
+
+void	handle_allow(std::istream_iterator<std::string>& token,
+						std::stack<std::string>& context, Server& server)
+{
+	(void)token; (void)context; (void)server;
+}
 void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					std::stack<std::string>& context,
 					const std::vector<std::string>& directives_vec)
@@ -336,6 +357,12 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					handle_auto_index(token, context, server); break;
 				case LOCATION:
 					handle_location(token, context, server); break;
+				case ERROR_DIRECTIVE:
+					handle_error_directive(token, context, server); break;
+				case REDIRECTION:
+					handle_redirection(token, context, server); break;
+				case ALLOW:
+					handle_allow(token, context, server); break;
 			}
 		}
 	}
