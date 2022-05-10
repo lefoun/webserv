@@ -173,6 +173,8 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 		throw std::invalid_argument("Unexpected end of file");
 	if (*(--(*token).end()) != ';')	
 		throw std::invalid_argument("Excpected token ';'");
+	if (*(token->begin()) == ';')
+		throw std::invalid_argument("Unxcpected token ';'");
 
 	std::string	trimmed_token = *token;
 	trimmed_token.erase((trimmed_token.size() - 1)); /* Erase the trailing ';' */
@@ -204,6 +206,8 @@ void	handle_server_name(std::istream_iterator<std::string>& token,
 	std::istream_iterator<std::string> end_of_file;
 	if (++token == end_of_file)
 		throw std::invalid_argument("Unexpected end of file");
+	if (*(token->begin()) == ';')
+		throw std::invalid_argument("Unexcpected token ';'");
 	while (*(--(*token).end()) != ';')
 		server.get_server_names().push_back(*token++);
 	std::cout << "This is sever_nme " << *token << std::endl;
