@@ -100,6 +100,7 @@ static void	set_port(const std::string& port_str, Server& server)
 {
 	if (port_str.size() > 5)
 	{
+		std::cout << port_str << std::endl;
 		throw std::invalid_argument("Port number out of range");
 	}
 	if (!in_range(0, 65535, atoi(port_str.c_str())))
@@ -179,6 +180,7 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 	std::string::size_type	pos = trimmed_token.find(':');
 	if (pos == std::string::npos) /* Means that it's either a Host or a Port */
 	{
+		std::cout << "This is either a port or a host " << trimmed_token << std::endl;
 		if (is_number(trimmed_token))
 			set_port(trimmed_token, server);
 		else
@@ -186,9 +188,10 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 	}
 	else /* It's a host:port pair */
 	{
+		std::cout << "This is a ip:port pair " << trimmed_token << std::endl;
 		std::pair<uint16_t, std::string>	ip_port_pair;
 		std::string	tmp_host = trimmed_token.substr(0, pos);
-		std::string	tmp_port = trimmed_token.substr(pos, std::string::npos);
+		std::string	tmp_port = trimmed_token.substr(pos + 1, std::string::npos);
 		set_port(tmp_port, server);
 		set_ip(tmp_host, server);
 	}
@@ -196,10 +199,16 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 }
 
 void	handle_server_name(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
+							Server& server)
 {
-
-(void)token; (void)context; (void)server;
+	std::istream_iterator<std::string> end_of_file;
+	if (++token == end_of_file)
+		throw std::invalid_argument("Unexpected end of file");
+	while (*(--(*token).end()) != ';')
+		server.get_server_names().push_back(*token++);
+	std::cout << "This is sever_nme " << *token << std::endl;
+	server.get_server_names().push_back((*token).substr(0, (*token).size() - 1));
+	++token;
 }
 
 void	handle_root(std::istream_iterator<std::string>& token,
@@ -244,7 +253,6 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					std::stack<std::string>& context,
 					const std::vector<std::string>& directives_vec)
 {
-
 	const std::istream_iterator<std::string> end_of_file;
 	if (*(++token) != "{")
 		throw std::invalid_argument("Excpected token '{'");
@@ -261,7 +269,10 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 		directive = find_directive(directives_vec, *token);
 		std::cout << "This is token " << *token << std::endl;
 		if (directive == UNKNOWN_DIRECTIVE)
-			std::cout << "Not found " << *token<< "\n";
+		{
+			++token;
+			// std::cout << "Not found " << *token<< "\n";
+		}
 		else
 		{
 			std::cout << "Found " << *token << std::endl;
@@ -272,7 +283,7 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 				case LISTEN:
 					handle_listen(token, server); break;
 				case SERVER_NAME:
-					handle_server_name(token, context, server); break;
+					handle_server_name(token, server); break;
 				case ROOT:
 					handle_root(token, context, server); break;
 				case INDEX:
@@ -287,7 +298,6 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					handle_location(token, context, server); break;
 			}
 		}
-		++token;
 	}
 }
 
