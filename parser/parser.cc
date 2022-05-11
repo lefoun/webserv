@@ -178,9 +178,12 @@ static void	set_ip(const std::string& host, Server& server)
 		throw std::invalid_argument("Unable to find host");
 }
 
-void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
+void	handle_listen(std::istream_iterator<std::string>& token,
+						const std::stack<std::string>&context, Server& server)
 {
 	check_valid_token(token);
+	if (context.top() != "server")
+		throw std::invalid_argument("Unexpected token inside location block");
 	if (*(--(*token).end()) != ';')	
 		throw std::invalid_argument("Expected token ';'");
 	std::string	trimmed_token = *token;
@@ -208,18 +211,24 @@ void	handle_listen(std::istream_iterator<std::string>& token, Server& server)
 }
 
 void	handle_server_name(std::istream_iterator<std::string>& token,
+							const std::stack<std::string>& context,
 							Server& server)
 {
 	check_valid_token(token);
-	while (*(--(*token).end()) != ';')
+	std::istream_iterator<std::string> end_of_file;
+	if (context.top() != "server")
+		throw std::invalid_argument("Unexpected token inside server block");
+	while (*(--(*token).end()) != ';' && token != end_of_file)
 		server.get_server_names().push_back(*token++);
+	if (token == end_of_file)
+		throw std::invalid_argument("Unexpected end of file");
 	std::cout << "This is sever_nme " << *token << std::endl;
 	server.get_server_names().push_back((*token).substr(0, (*token).size() - 1));
 	++token;
 }
 
 void	handle_root(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
+						const std::stack<std::string>& context, Server& server)
 {
 	check_valid_token(token);
 	if (*(--(*token).end()) != ';')
@@ -244,7 +253,7 @@ void	handle_root(std::istream_iterator<std::string>& token,
 }
 
 void	handle_index(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
+						const std::stack<std::string>& context, Server& server)
 {
 	check_valid_token(token);
 	if (*(--(*token).end()) != ';')
@@ -271,7 +280,7 @@ void	handle_index(std::istream_iterator<std::string>& token,
 }
 
 void	handle_auto_index(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
+						const std::stack<std::string>& context, Server& server)
 {
 	check_valid_token(token);
 	if (*(--(*token).end()) != ';')
@@ -291,7 +300,7 @@ void	handle_auto_index(std::istream_iterator<std::string>& token,
 	}
 	else /* the context is a location block */
 	{
-		if (server.get_locations().back().get_is_auto_index_set())
+		if (!server.get_locations().back().get_is_auto_index_set())
 			throw std::invalid_argument(
 				"Multiple auto_index directives in location block is not allowed");
 		server.get_locations().back().get_is_auto_index_set() = true;
@@ -321,21 +330,39 @@ void	handle_location(std::istream_iterator<std::string>& token,
 }
 
 void	handle_redirection(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
+						const std::stack<std::string>& context, Server& server)
 {
 	(void)token; (void)context; (void)server;
 }
 
 void	handle_error_directive(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
+						const std::stack<std::string>& context, Server& server)
 {
 	(void)token; (void)context; (void)server;
+}
+
+void	set_allowed_method(const std::string& method,
+						 const std::string& context, Server& server)
+{
+	if (context == "server")
+		server.get_allowd_methods().push_back(method);
+	else
+		server.get_locations().back().get_allowed_methods().push_back(method);
 }
 
 void	handle_allow(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-	(void)token; (void)context; (void)server;
+	check_valid_token(token);
+	std::istream_iterator<std::string>	end_of_file;
+	std::cout << "This is allowd method " << *token << std::endl;
+	while (*(--(token->end())) != ';' && token != end_of_file)
+		set_allowed_method(*token++, context.top(), server);
+	if (token == end_of_file)
+		throw std::invalid_argument("Unexpected end of file");
+	set_allowed_method(token->substr(0, token->size() - 1), context.top(),
+						server);
+	++token;
 }
 void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					std::stack<std::string>& context,
@@ -378,9 +405,9 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 				case SERVER:
 					throw std::invalid_argument("Found nested servers");
 				case LISTEN:
-					handle_listen(token, server); break;
+					handle_listen(token, context, server); break;
 				case SERVER_NAME:
-					handle_server_name(token, server); break;
+					handle_server_name(token, context, server); break;
 				case ROOT:
 					handle_root(token, context, server); break;
 				case INDEX:

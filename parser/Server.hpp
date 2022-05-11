@@ -18,6 +18,7 @@ class Server
 		std::string								_index_file;
 		std::vector<std::string>				_error_files;
 		std::vector<str_str_pair>				_redirections;
+		std::vector<std::string>				_allowd_methods;
 		std::string								_root_path;
 		bool									_auto_index;
 		bool									_is_auto_index_set;
@@ -39,6 +40,8 @@ class Server
 		{ return _error_files; }
 		std::vector<str_str_pair>&			get_redirections()
 		{ return _redirections; }
+		std::vector<std::string>&			get_allowd_methods()
+		{ return _allowd_methods; }
 		std::string&						get_root_path()
 		{ return _root_path; }
 		bool&								get_auto_index()

@@ -13,7 +13,7 @@ class Location
 		std::string					_root_path;
 		std::string					_index_file;
 		std::vector<str_str_pair>	_redirections;
-		std::vector<std::string>	_allowed_requests;
+		std::vector<std::string>	_allowed_methods;
 		bool						_auto_index;
 		bool						_is_auto_index_set;
 	
@@ -32,8 +32,8 @@ class Location
 		{ return _index_file; }
 		std::vector<str_str_pair>&	get_redirections()
 		{return _redirections; }
-		std::vector<std::string>&	get_allowed_requestes()
-		{ return _allowed_requests; }
+		std::vector<std::string>&	get_allowed_methods()
+		{ return _allowed_methods; }
 		bool&						get_auto_index()
 		{return _auto_index;}
 		bool&						get_is_auto_index_set()
