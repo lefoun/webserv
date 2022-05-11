@@ -54,7 +54,7 @@ int main()
 	if (listening_s2 < 0)
 		return error_ret("Socket() 2");
 	// socket_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
-	socket_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
+	socket_addr.sin_addr.s_addr = INADDR_ANY;
 	socket_addr.sin_port = htons(PORT);
 
 	memset(&client_addr, 0, sizeof(client_addr));
@@ -69,8 +69,8 @@ int main()
 	if (bind(listening_s, (struct sockaddr *)&socket_addr, socket_len) < 0)
 		return error_ret("Bind()");
 
-	if (bind(listening_s2, (struct sockaddr *)&client_addr, socket_len) < 0)
-		return error_ret("Bind() number 2");
+	// if (bind(listening_s2, (struct sockaddr *)&client_addr, socket_len) < 0)
+		// return error_ret("Bind() number 2");
 		
 	if (listen(listening_s, SOMAXCONN) < 0)
 		return error_ret("Listen()");

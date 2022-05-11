@@ -290,7 +290,9 @@ void	handle_auto_index(std::istream_iterator<std::string>& token,
 void	handle_location(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-	(void)token; (void)context; (void)server;
+	server.get_locations().back();
+	context.push("location");
+
 }
 
 void	handle_redirection(std::istream_iterator<std::string>& token,
@@ -349,10 +351,10 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					handle_root(token, context, server); break;
 				case INDEX:
 					handle_index(token, context, server); break;
-				case CGI_PY:
-					handle_cgi_py(token, context, server); break;
-				case CGI_PHP:
-					handle_cgi_php(token, context, server); break;
+				// case CGI_PY:
+				// 	handle_cgi_py(token, context, server); break;
+				// case CGI_PHP:
+				// 	handle_cgi_php(token, context, server); break;
 				case AUTO_INDEX:
 					handle_auto_index(token, context, server); break;
 				case LOCATION:

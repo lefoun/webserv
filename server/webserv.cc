@@ -33,15 +33,15 @@ int main()
 	// char 				*hello_message = "Hello from the server";
 	// char				*serv_response = "HTTP/1.1 200 OK\nContent-Type:"
 						// " text/plain\nContent-Length: 20\n\nResponse form Serv";
-	// std::ifstream		fin("cat_img.jpeg", std::ios::in | std::ios::binary);		
-	std::ifstream		fin("elisa.html", std::ios::in);		
+	std::ifstream		fin("cat_img.jpeg", std::ios::in | std::ios::binary);		
+	// std::ifstream		fin("elisa.html", std::ios::in);		
 
 	std::ostringstream	oss;
 	oss << fin.rdbuf();
 	std::string			data(oss.str());
 	std::string			len = std::to_string(data.length());
-	// std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: image/jpeg\nContent-Length: ";
-	std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+	std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: image/jpeg\nContent-Length: ";
+	// std::string			response_str = "HTTP/1.1 200 OK\nContent-Type: /html\nContent-Length: ";
 	response_str.append(len);
 	response_str.append("\n\n");
 	response_str.append(data);
@@ -68,6 +68,8 @@ int main()
 	// creates the socket
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // last argument for the
 													// protocol. IPPROTO_TCP
+	int yes = 1;
+	setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 	if (socket_fd <= 0)
 	{
 		perror("Can't create socket");
