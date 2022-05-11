@@ -16,6 +16,7 @@ class Location
 		std::vector<std::string>	_allowed_requests;
 	
 	public:
+		Location (const std::string& path) : _path(path) {}
 		Location(const std::string& path, const std::string& root_path, 
 				const std::string& index)
 		: _path(path), _root_path(root_path), _index_file(index)

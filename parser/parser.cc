@@ -69,6 +69,10 @@ const std::vector<std::string> init_directives()//std::vector<std::string>& dire
 	directives[CGI_PY] = "cgi_py";
 	directives[CGI_PHP] = "cgi_php";
 	directives[AUTO_INDEX] = "auto_index";
+	directives[LOCATION] = "location";
+	directives[ERROR_DIRECTIVE] = "error_directive";
+	directives[REDIRECTION] = "redirection";
+	directives[ALLOW] = "allow";
 	return directives;
 }
 
@@ -256,14 +260,16 @@ void	handle_index(std::istream_iterator<std::string>& token,
 	if (context.top() == "server")
 	{
 		if (!server.get_index_file().empty())
-			throw std::invalid_argument("Multiple Index directives is not allowed");
+			throw std::invalid_argument(
+				"Multiple Index directives is not allowed in server block");
 		server.get_index_file() = trimmed_token;
 	}
 	else /*the context is a location block */
 	{
 		if (!server.get_locations().back().get_index_file().empty())
-			throw std::invalid_argument("Multiple Index directives is not allowed");
-		server.get_locations().back().get_index_file() = trimmed_token;
+			throw std::invalid_argument(
+				"Multiple Index directives is not allowed in location block");
+		(server.get_locations().back()).get_index_file() = trimmed_token;
 	}
 	++token;
 }
@@ -290,9 +296,20 @@ void	handle_auto_index(std::istream_iterator<std::string>& token,
 void	handle_location(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-	server.get_locations().back();
+	check_valid_token(token);
+	if (*(token->begin()) == '{') /* in case location is empty */
+		throw std::invalid_argument("Expected path near location block");
+	server.get_locations().push_back(Location(*token));
+	std::cout << "This is location " << *token  << "\n\n" << std::endl;
+	// server.get_locations().back().get_path() = *token;
+	++token;
+	if (*(token->begin()) != '{')
+		throw std::invalid_argument("Expected token '{' near location block");
+	std::istream_iterator<std::string> end_of_file;
+	if (++token == end_of_file)
+		throw std::invalid_argument(
+			"Unexpected end of file near location block"); 
 	context.push("location");
-
 }
 
 void	handle_redirection(std::istream_iterator<std::string>& token,
@@ -324,8 +341,17 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 	int directive;
 	while (true)
 	{
-		if (*token == "}")
-			return ;
+		if (*(token->begin()) == '}')
+		{
+			if (context.top() == "server")
+			{
+				std::cout << "Exiting Server block\n";
+				return ;
+			}
+			context.pop(); /*out of the location block */
+			++token;
+			continue ;
+		}
 		else if (token == end_of_file)
 			throw std::invalid_argument("Excepted token '}'");
 
@@ -334,7 +360,7 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 		if (directive == UNKNOWN_DIRECTIVE)
 		{
 			++token;
-			// std::cout << "Not found " << *token<< "\n";
+			std::cout << "Not found " << *token<< "\n";
 		}
 		else
 		{
