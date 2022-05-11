@@ -41,8 +41,8 @@ class Server
 		{ return _redirections; }
 		std::string&						get_root_path()
 		{ return _root_path; }
-		bool								get_auto_index()
+		bool&								get_auto_index()
 		{return _auto_index;}
-		bool								get_is_auto_index_set()
+		bool&								get_is_auto_index_set()
 		{return _is_auto_index_set;}
 };

@@ -34,8 +34,8 @@ class Location
 		{return _redirections; }
 		std::vector<std::string>&	get_allowed_requestes()
 		{ return _allowed_requests; }
-		bool								get_auto_index()
+		bool&						get_auto_index()
 		{return _auto_index;}
-		bool								get_is_auto_index_set()
+		bool&						get_is_auto_index_set()
 		{return _is_auto_index_set;}
 };

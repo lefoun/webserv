@@ -273,28 +273,30 @@ void	handle_index(std::istream_iterator<std::string>& token,
 void	handle_auto_index(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
-	(void)token; (void)context; (void)server;
 	check_valid_token(token);
 	if (*(--(*token).end()) != ';')
 		throw std::invalid_argument("Expected token ';'");
 	std::string	trimmed_token = token->substr(0, token->size() - 1);
+	std::cout << "Auto index is " << trimmed_token << std::endl;
 	if (trimmed_token != "off" && trimmed_token != "on")
 		throw std::invalid_argument("Bad argument for auto_index");
 	if (context.top() == "server")
 	{
 		if (server.get_is_auto_index_set())
-			throw std::invalid_argument("Multiple auto_index directives is not allowed");
-		server.get_is_auto_index_set() = 1;
+			throw std::invalid_argument(
+				"Multiple auto_index directives in server block is not allowed");
+		server.get_is_auto_index_set() = true;
 		if (trimmed_token == "on")
-			server.get_auto_index() = 1;
+			server.get_auto_index() = true;
 	}
-	else /*the context is a location block */
+	else /* the context is a location block */
 	{
-		if (!server.get_locations().back().get_is_auto_index_set())
-			throw std::invalid_argument("Multiple auto_index directives is not allowed");
-		server.get_locations().back().get_is_auto_index_set() = 1;
+		if (server.get_locations().back().get_is_auto_index_set())
+			throw std::invalid_argument(
+				"Multiple auto_index directives in location block is not allowed");
+		server.get_locations().back().get_is_auto_index_set() = true;
 		if (trimmed_token == "on")
-			server.get_locations().back().get_auto_index() = 1;
+			server.get_locations().back().get_auto_index() = true;
 	}
 	++token;
 }
@@ -302,6 +304,7 @@ void	handle_auto_index(std::istream_iterator<std::string>& token,
 void	handle_location(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
+	std::cout << "Inside Location block\n";
 	check_valid_token(token);
 	if (*(token->begin()) == '{') /* in case location is empty */
 		throw std::invalid_argument("Expected path near location block");
@@ -361,11 +364,11 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 			throw std::invalid_argument("Excepted token '}'");
 
 		directive = find_directive(directives_vec, *token);
-		std::cout << "This is token " << *token << std::endl;
+		// std::cout << "This is token " << *token << std::endl;
 		if (directive == UNKNOWN_DIRECTIVE)
 		{
-			++token;
 			std::cout << "Not found " << *token<< "\n";
+			++token;
 		}
 		else
 		{
