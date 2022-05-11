@@ -25,8 +25,6 @@ enum DIRECTIVES {
 	SERVER_NAME,
 	ROOT,
 	INDEX,
-	CGI_PY,
-	CGI_PHP,
 	AUTO_INDEX,
 	LOCATION,
 	ERROR_DIRECTIVE,
@@ -66,8 +64,6 @@ const std::vector<std::string> init_directives()//std::vector<std::string>& dire
 	directives[SERVER_NAME] = "server_name";
 	directives[ROOT] = "root";
 	directives[INDEX] = "index";
-	directives[CGI_PY] = "cgi_py";
-	directives[CGI_PHP] = "cgi_php";
 	directives[AUTO_INDEX] = "auto_index";
 	directives[LOCATION] = "location";
 	directives[ERROR_DIRECTIVE] = "error_directive";
@@ -377,10 +373,6 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					handle_root(token, context, server); break;
 				case INDEX:
 					handle_index(token, context, server); break;
-				// case CGI_PY:
-				// 	handle_cgi_py(token, context, server); break;
-				// case CGI_PHP:
-				// 	handle_cgi_php(token, context, server); break;
 				case AUTO_INDEX:
 					handle_auto_index(token, context, server); break;
 				case LOCATION:
@@ -438,26 +430,3 @@ int main()
 		std::cout << "Error\n";
 	return 0;
 }
-
-
-// void load_server_config(Server& config) {
-//     std::ifstream fin("config.txt");
-//     string line;
-//     while (getline(fin, line)) {
-//         istringstream sin(line.substr(line.find("=") + 1));
-//         if (line.find("num") != -1)
-//             sin >> config.num;
-//         else if (line.find("str") != -1)
-//             sin >> config.str;
-//         else if (line.find("flt") != -1)
-//             sin >> config.flt;
-//     }
-// }
-
-// int main() {
-//     Config config;
-//     loadConfig(config);
-//     cout << config.num << '\n';
-//     cout << config.str << '\n';
-//     cout << config.flt << '\n';
-// }
