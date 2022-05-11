@@ -19,6 +19,8 @@ class Server
 		std::vector<std::string>				_error_files;
 		std::vector<str_str_pair>				_redirections;
 		std::string								_root_path;
+		bool									_auto_index;
+		bool									_is_auto_index_set;
 
 	public:
 		std::vector<std::string>&			get_server_names()
@@ -39,4 +41,8 @@ class Server
 		{ return _redirections; }
 		std::string&						get_root_path()
 		{ return _root_path; }
+		bool								get_auto_index()
+		{return _auto_index;}
+		bool								get_is_auto_index_set()
+		{return _is_auto_index_set;}
 };

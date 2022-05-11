@@ -14,6 +14,8 @@ class Location
 		std::string					_index_file;
 		std::vector<str_str_pair>	_redirections;
 		std::vector<std::string>	_allowed_requests;
+		bool						_auto_index;
+		bool						_is_auto_index_set;
 	
 	public:
 		Location(const std::string& path, const std::string& root_path, 
@@ -31,4 +33,8 @@ class Location
 		{return _redirections; }
 		std::vector<std::string>&	get_allowed_requestes()
 		{ return _allowed_requests; }
+		bool								get_auto_index()
+		{return _auto_index;}
+		bool								get_is_auto_index_set()
+		{return _is_auto_index_set;}
 };

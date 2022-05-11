@@ -285,6 +285,29 @@ void	handle_auto_index(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
 	(void)token; (void)context; (void)server;
+	check_valid_token(token);
+	if (*(--(*token).end()) != ';')
+		throw std::invalid_argument("Expected token ';'");
+	std::string	trimmed_token = token->substr(0, token->size() - 1);
+	if (trimmed_token != "off" && trimmed_token != "on")
+		throw std::invalid_argument("Bad argument for auto_index");
+	if (context.top() == "server")
+	{
+		if (server.get_is_auto_index_set())
+			throw std::invalid_argument("Multiple auto_index directives is not allowed");
+		server.get_is_auto_index_set() = 1;
+		if (trimmed_token == "on")
+			server.get_auto_index() = 1;
+	}
+	else /*the context is a location block */
+	{
+		if (!server.get_locations().back().get_is_auto_index_set())
+			throw std::invalid_argument("Multiple auto_index directives is not allowed");
+		server.get_locations().back().get_is_auto_index_set() = 1;
+		if (trimmed_token == "on")
+			server.get_locations().back().get_auto_index() = 1;
+	}
+	++token;
 }
 
 void	handle_location(std::istream_iterator<std::string>& token,
