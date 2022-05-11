@@ -270,19 +270,6 @@ void	handle_index(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_cgi_py(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
-{
-
-(void)token; (void)context; (void)server;
-}
-
-void	handle_cgi_php(std::istream_iterator<std::string>& token,
-						std::stack<std::string>& context, Server& server)
-{
-	(void)token; (void)context; (void)server;
-}
-
 void	handle_auto_index(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
@@ -297,7 +284,6 @@ void	handle_location(std::istream_iterator<std::string>& token,
 		throw std::invalid_argument("Expected path near location block");
 	server.get_locations().push_back(Location(*token));
 	std::cout << "This is location " << *token  << "\n\n" << std::endl;
-	// server.get_locations().back().get_path() = *token;
 	++token;
 	if (*(token->begin()) != '{')
 		throw std::invalid_argument("Expected token '{' near location block");
