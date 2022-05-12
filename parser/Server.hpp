@@ -2,13 +2,13 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 #include "Location.hpp"
 
 class Server
 {
 	public:
 		typedef std::pair<uint16_t, std::string>	ip_port_pair; 
-		typedef std::pair<std::string, std::string>	str_str_pair;
 		typedef std::pair<std::string, std::vector<uint16_t> >
 													str_vec_of_uint16_pair;
 	private:
@@ -20,27 +20,24 @@ class Server
 		std::vector<Location>					_locations;
 		std::string								_index_file;
 		std::vector<str_vec_of_uint16_pair>		_error_pages;
-		std::vector<str_str_pair>				_redirections;
 		std::vector<std::string>				_allowd_methods;
 		std::string								_root_path;
+		std::string								_redirection;
 		uint8_t									_client_max_body_size;
 		bool									_auto_index;
 		bool									_is_auto_index_set;
 		bool									_is_client_max_body_size_set;
 
-				// const std::vector<str_vec_of_uint16_pair> error_pages =
-				// std::vector<str_vec_of_uint16_pair>())
 	public:
-		Server(const std::vector<std::string>& server_names = 
-				std::vector<std::string>(), const std::vector<uint16_t>& ports = 
-				std::vector<uint16_t>(), const bool& is_auto_index_set = false,
-				const uint8_t client_max_body_size = 1)
+		Server()
 		:
-		_server_names(server_names), _listening_ports(ports),
+		_server_names(),
+		_listening_ports(),
+		_listening_port_ip_pairs(1, std::make_pair(0, "0")),
 		_error_pages(std::vector<str_vec_of_uint16_pair>(
 			1, std::make_pair(std::string(), std::vector<uint16_t>()))),
-		_client_max_body_size(client_max_body_size),
-		_is_auto_index_set(is_auto_index_set),
+		_client_max_body_size(1),
+		_is_auto_index_set(false),
 		_is_client_max_body_size_set(false)
 		{}
 
@@ -58,12 +55,12 @@ class Server
 		{ return _index_file; }
 		std::vector<str_vec_of_uint16_pair>&	get_error_pages()
 		{ return _error_pages; }
-		std::vector<str_str_pair>&				get_redirections()
-		{ return _redirections; }
 		std::vector<std::string>&				get_allowed_methods()
 		{ return _allowd_methods; }
 		std::string&							get_root_path()
 		{ return _root_path; }
+		std::string&            				get_redirections()
+		{ return _redirection; }
 		uint8_t&								get_client_max_body_size()
 		{ return _client_max_body_size; }
 		bool&									get_auto_index()

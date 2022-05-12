@@ -17,6 +17,8 @@
 #include <list>
 #include <utility>
 
+bool	parse_config_file(const std::string& file_name);
+
 /* PARSING *
  * Parsing lexical
  * Parsing sytaxique
@@ -48,16 +50,3 @@
  * case 1: Les 
 
 */
-class server
-{
-	private:
-		// just to make sure the code is readable
-		// typedef std::pair<const std::string, const uint16_t> ip_port_pair;
-
-		// const std::list<uint16_t*>		_ports;
-		// const std::list<ip_port_pair>	_ip_port;
-		// on crée dans une liste des std::pair<ip, port>
-		const std::list<std::string>	_server_names;
-		const bool						_is_default;
-
-};

@@ -48,8 +48,6 @@ int main()
 
 	memset(&socket_addr.sin_zero, 0, sizeof(socket_addr.sin_zero));
 	socket_addr.sin_family = AF_INET;
-	// socket_addr.sin_addr.s_addr = INADDR_ANY;
-	// socket_addr.sin_addr.s_addr = inet_addr("10.19.246.24");
 	int listening_s2 = socket(AF_INET, SOCK_STREAM, 0);
 	if (listening_s2 < 0)
 		return error_ret("Socket() 2");

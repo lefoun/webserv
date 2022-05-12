@@ -11,21 +11,15 @@
 #include <istream>
 #include <fcntl.h>
 #include <sys/select.h>
+#include "webserver.hpp"
 
 
 #define BUFFER_SIZE 4096
 
-
-/*
- * 1- Create a socket -> call socket()
- * 2- Identify the socket -> bind() a socket to a port number.
- * 3- Listen for incoming connections in the server.
- * 4- Read/Write from/into the socket.
- * 5- Close the socket.
-*/
-
 int main()
 {
+	if (parse_config_file("../parser/server_config.conf"))
+		std::cout << "File is good\n\nStarting WebServer\n";
 	struct sockaddr_in	address;
 	// const int 			PORT = 8081;
 	const int 			PORT = 42420;
