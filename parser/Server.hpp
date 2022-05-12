@@ -6,11 +6,12 @@
 
 class Server
 {
-	private:
+	public:
 		typedef std::pair<uint16_t, std::string>	ip_port_pair; 
 		typedef std::pair<std::string, std::string>	str_str_pair;
 		typedef std::pair<std::string, std::vector<uint16_t> >
 													str_vec_of_uint16_pair;
+	private:
 
 		std::vector<std::string>				_server_names;
 		std::vector<uint16_t>					_listening_ports;

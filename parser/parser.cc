@@ -74,7 +74,7 @@ const std::vector<std::string> init_directives()//std::vector<std::string>& dire
 	directives[AUTO_INDEX] = "auto_index";
 	directives[LOCATION] = "location";
 	directives[ERROR_DIRECTIVE] = "error_page";
-	directives[REDIRECTION] = "redirection";
+	directives[REDIRECTION] = "redirect";
 	directives[ALLOW] = "allow";
 	directives[CLIENT_MAX_BODY_SIZE] = "client_max_body_size";
 	return directives;
@@ -347,11 +347,33 @@ void	handle_location(std::istream_iterator<std::string>& token,
 	context.push("location");
 }
 
-void	handle_redirection(std::istream_iterator<std::string>& token,
+void    handle_redirection(std::istream_iterator<std::string>& token,
 							const std::stack<std::string>& context,
 							Server& server)
 {
-	(void)token; (void)context; (void)server;
+    if (context.top() !=  "server")
+        throw std::invalid_argument("Found unexpected redirection");
+    check_valid_token(token);
+    const std::string old_path = *token; 
+	/* saving the value of old_path because 
+	 * check_valid_token avances the iterator */
+    check_valid_token(token);
+    if (*(--(*token).end()) != ';')
+        throw std::invalid_argument("Expected token ';'");
+    const std::string new_path = token->substr(0, token->size() - 1);
+	std::vector<Server::str_str_pair>::const_iterator it = 
+											server.get_redirections().begin();
+    while (it != server.get_redirections().end())
+    {
+        if (old_path == it->first)
+            throw std::invalid_argument(
+				"Redirection already used with the same argument");
+        ++it;
+    }
+    server.get_redirections().push_back(std::make_pair(old_path, new_path));
+    std::cout << server.get_redirections().back().first << " >> " <<  
+		server.get_redirections().back().second << std::endl;
+    ++token;
 }
 
 template <typename T>
