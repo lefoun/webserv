@@ -60,7 +60,7 @@ class Server
 		{ return _error_pages; }
 		std::vector<str_str_pair>&				get_redirections()
 		{ return _redirections; }
-		std::vector<std::string>&				get_allowd_methods()
+		std::vector<std::string>&				get_allowed_methods()
 		{ return _allowd_methods; }
 		std::string&							get_root_path()
 		{ return _root_path; }

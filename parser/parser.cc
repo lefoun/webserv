@@ -200,9 +200,17 @@ static void	set_allowed_method(const std::string& method,
 	if (method != "GET" && method != "POST" && method != "DELETE")
 		throw std::invalid_argument("Unkown method " + method);
 	if (context == "server")
-		server.get_allowd_methods().push_back(method);
+	{
+		if (!is_in_vector(server.get_allowed_methods(), method))
+			server.get_allowed_methods().push_back(method);
+	}
 	else if (context == "location")
-		server.get_locations().back().get_allowed_methods().push_back(method);
+	{
+		if (!is_in_vector(server.get_locations().back().get_allowed_methods(),
+			method))
+			server.get_locations().back().get_allowed_methods().push_back(
+				method);
+	}
 }
 
 void	handle_listen(std::istream_iterator<std::string>& token,
