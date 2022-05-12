@@ -20,7 +20,8 @@ enum TOKEN {
 };
 
 enum DIRECTIVES {
-	SERVER = 0,
+	UNKNOWN_DIRECTIVE = -1,
+	SERVER,
 	LISTEN,
 	SERVER_NAME,
 	ROOT,
@@ -30,7 +31,7 @@ enum DIRECTIVES {
 	ERROR_DIRECTIVE,
 	REDIRECTION,
 	ALLOW,
-	UNKNOWN_DIRECTIVE,
+	CLIENT_MAX_BODY_SIZE,
 	DIRECTIVES_NB
 };
 
@@ -66,9 +67,10 @@ const std::vector<std::string> init_directives()//std::vector<std::string>& dire
 	directives[INDEX] = "index";
 	directives[AUTO_INDEX] = "auto_index";
 	directives[LOCATION] = "location";
-	directives[ERROR_DIRECTIVE] = "error_directive";
+	directives[ERROR_DIRECTIVE] = "error_page";
 	directives[REDIRECTION] = "redirection";
 	directives[ALLOW] = "allow";
+	directives[CLIENT_MAX_BODY_SIZE] = "client_max_body_size";
 	return directives;
 }
 
@@ -178,6 +180,15 @@ static void	set_ip(const std::string& host, Server& server)
 		throw std::invalid_argument("Unable to find host");
 }
 
+static void	set_allowed_method(const std::string& method,
+						 const std::string& context, Server& server)
+{
+	if (context == "server")
+		server.get_allowd_methods().push_back(method);
+	else if (context == "location")
+		server.get_locations().back().get_allowed_methods().push_back(method);
+}
+
 void	handle_listen(std::istream_iterator<std::string>& token,
 						const std::stack<std::string>&context, Server& server)
 {
@@ -217,12 +228,13 @@ void	handle_server_name(std::istream_iterator<std::string>& token,
 	check_valid_token(token);
 	std::istream_iterator<std::string> end_of_file;
 	if (context.top() != "server")
-		throw std::invalid_argument("Unexpected token inside server block");
+		throw std::invalid_argument(
+			"unexpected token in " + context.top() + " block");
 	while (*(--(*token).end()) != ';' && token != end_of_file)
 		server.get_server_names().push_back(*token++);
 	if (token == end_of_file)
-		throw std::invalid_argument("Unexpected end of file");
-	std::cout << "This is sever_nme " << *token << std::endl;
+		throw std::invalid_argument("unexpected end of file");
+	std::cout << "this is sever_nme " << *token << std::endl;
 	server.get_server_names().push_back((*token).substr(0, (*token).size() - 1));
 	++token;
 }
@@ -298,9 +310,9 @@ void	handle_auto_index(std::istream_iterator<std::string>& token,
 		if (trimmed_token == "on")
 			server.get_auto_index() = true;
 	}
-	else /* the context is a location block */
+	else if (context.top() == "location")
 	{
-		if (!server.get_locations().back().get_is_auto_index_set())
+		if (server.get_locations().back().get_is_auto_index_set())
 			throw std::invalid_argument(
 				"Multiple auto_index directives in location block is not allowed");
 		server.get_locations().back().get_is_auto_index_set() = true;
@@ -330,24 +342,65 @@ void	handle_location(std::istream_iterator<std::string>& token,
 }
 
 void	handle_redirection(std::istream_iterator<std::string>& token,
-						const std::stack<std::string>& context, Server& server)
+							const std::stack<std::string>& context,
+							Server& server)
 {
 	(void)token; (void)context; (void)server;
+}
+
+template <typename T>
+bool is_in_vector(const std::vector<T>& vect, const T& value)
+{
+	if (vect.empty())
+		return false;
+	return std::find(vect.begin(), vect.end(), value) != vect.end();
+}
+
+static void	set_error_numbers(const std::string& token,
+							const std::string& context, Server& server)
+{
+	if (token.size() > 3 || !is_number(token)
+		|| !in_range(0, 999, atoi(token.c_str())))
+		throw std::invalid_argument(
+			"Expected integer between 0 and 999 but got argument " + token);
+	const uint16_t	error_nb = atoi(token.c_str());
+	std::cout << "this is error number " << error_nb << std::endl;
+	if (context == "server")
+	{
+		server.get_error_pages().back().second.push_back(2);
+		if (is_in_vector(server.get_error_pages().back().second, error_nb))
+			throw std::invalid_argument(
+				"Error number " + token + " is already set in server block");
+		server.get_error_pages().back().second.push_back(error_nb);
+	}
+	else if (context == "location")
+	{
+		Location *location = &(server.get_locations().back());
+		if (is_in_vector(location->get_error_pages().back().second, error_nb))
+			throw std::invalid_argument(
+				"Error number " + token + " is already set in location block");
+		location->get_error_pages().back().second.push_back(error_nb);
+	}
 }
 
 void	handle_error_directive(std::istream_iterator<std::string>& token,
-						const std::stack<std::string>& context, Server& server)
+								const std::stack<std::string>& context,
+								Server& server)
 {
-	(void)token; (void)context; (void)server;
-}
-
-void	set_allowed_method(const std::string& method,
-						 const std::string& context, Server& server)
-{
-	if (context == "server")
-		server.get_allowd_methods().push_back(method);
-	else
-		server.get_locations().back().get_allowed_methods().push_back(method);
+	check_valid_token(token);
+	std::istream_iterator<std::string> end_of_file;
+	while (*(--(*token).end()) != ';' && token != end_of_file)
+		set_error_numbers(*token++, context.top(), server);
+	const std::string error_page = token->substr(0, token->size() - 1);
+	if (context.top() == "server")
+		server.get_error_pages().back().first = error_page;
+	else if (context.top() == "location")
+		server.get_locations().back().get_error_pages().back().first = 
+														error_page;
+	std::cout << "This is error page " << error_page << std::endl;
+	if (token == end_of_file)
+		throw std::invalid_argument("unexpected end of file");
+	++token;
 }
 
 void	handle_allow(std::istream_iterator<std::string>& token,
@@ -421,6 +474,8 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 				case REDIRECTION:
 					handle_redirection(token, context, server); break;
 				case ALLOW:
+					handle_allow(token, context, server); break;
+				case CLIENT_MAX_BODY_SIZE:
 					handle_allow(token, context, server); break;
 			}
 		}
