@@ -107,6 +107,14 @@ static bool is_number(const std::string& s)
     return true;
 }
 
+template <typename T>
+static bool is_in_vector(const std::vector<T>& vect, const T& value)
+{
+	if (vect.empty())
+		return false;
+	return std::find(vect.begin(), vect.end(), value) != vect.end();
+}
+
 static void	check_valid_token(std::istream_iterator<std::string>& token)
 {
 	std::istream_iterator<std::string> end_of_file;
@@ -187,7 +195,7 @@ static void	set_ip(const std::string& host, Server& server)
 }
 
 static void	set_allowed_method(const std::string& method,
-						 const std::string& context, Server& server)
+								const std::string& context, Server& server)
 {
 	if (context == "server")
 		server.get_allowd_methods().push_back(method);
@@ -196,7 +204,8 @@ static void	set_allowed_method(const std::string& method,
 }
 
 void	handle_listen(std::istream_iterator<std::string>& token,
-						const std::stack<std::string>&context, Server& server)
+						const std::stack<std::string>& context,
+						Server& server)
 {
 	check_valid_token(token);
 	if (context.top() != "server")
@@ -376,13 +385,6 @@ void    handle_redirection(std::istream_iterator<std::string>& token,
     ++token;
 }
 
-template <typename T>
-bool is_in_vector(const std::vector<T>& vect, const T& value)
-{
-	if (vect.empty())
-		return false;
-	return std::find(vect.begin(), vect.end(), value) != vect.end();
-}
 
 static void	set_error_numbers(const std::string& token,
 							const std::string& context, Server& server)
@@ -445,6 +447,35 @@ void	handle_allow(std::istream_iterator<std::string>& token,
 						server);
 	++token;
 }
+
+void	handle_body_size_limit(std::istream_iterator<std::string>& token,
+								const std::stack<std::string>& context,
+								Server& server)
+{
+	check_valid_token(token);
+	if (*(--(*token).end()) != ';')
+		throw std::invalid_argument("Expected token ';'");
+	std::string	body_size = token->substr(0, token->size() - 1);
+	if (body_size == "\"\"")
+		throw std::invalid_argument("Invalid index \"\"");
+	if (context.top() != "server")
+		throw std::invalid_argument(
+			"client_body_size_limit directive is only allowd in server block");
+	std::cout << "This is body size " << body_size << std::endl;
+	if (server.get_is_client_body_size_set())
+		throw std::invalid_argument(
+			"Multiple client_body_size_limit directives is not allowed");
+	if (body_size.size() > 4 
+		|| (body_size.back() != 'M' && body_size.back() != 'm')
+		|| !is_number(body_size.substr(0, body_size.size() - 1)) 
+		|| !in_range(1, 100, atoi(body_size.c_str())))
+		throw std::invalid_argument(
+			"Bad argument for client_body_size_limit. Expected token "
+			"between 1M and 100M");
+	server.get_client_max_body_size() = atoi(body_size.c_str());
+	++token;
+}
+
 void	get_server(std::istream_iterator<std::string>& token, Server& server,
 					std::stack<std::string>& context,
 					const std::vector<std::string>& directives_vec)
@@ -504,7 +535,7 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 				case ALLOW:
 					handle_allow(token, context, server); break;
 				case CLIENT_MAX_BODY_SIZE:
-					handle_allow(token, context, server); break;
+					handle_body_size_limit(token, context, server); break;
 			}
 		}
 	}
