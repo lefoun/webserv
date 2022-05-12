@@ -197,6 +197,8 @@ static void	set_ip(const std::string& host, Server& server)
 static void	set_allowed_method(const std::string& method,
 								const std::string& context, Server& server)
 {
+	if (method != "GET" && method != "POST" && method != "DELETE")
+		throw std::invalid_argument("Unkown method " + method);
 	if (context == "server")
 		server.get_allowd_methods().push_back(method);
 	else if (context == "location")
