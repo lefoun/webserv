@@ -19,6 +19,12 @@ enum TOKEN {
 	SEMI_COLON
 };
 
+enum REQUEST_METHODS {
+	GET = 0,
+	POST,
+	DELETE
+};
+
 enum DIRECTIVES {
 	UNKNOWN_DIRECTIVE = -1,
 	SERVER,
