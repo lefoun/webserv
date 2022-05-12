@@ -17,7 +17,74 @@
 #include <list>
 #include <utility>
 
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
+
 bool	parse_config_file(const std::string& file_name);
+
+class Socket
+{
+	private:
+		const uint16_t			_port;
+		const uint32_t			_ip;
+		int						_socket_fd;
+		struct sockaddr_in		_socket_addr;
+		socklen_t				_sockaddr_len;
+
+	public:
+		Socket(const uint16_t port = 80, const uint32_t ip = INADDR_ANY)
+		:
+		_port(port), _ip(ip)
+		{
+			/* Init sockaddr_in */
+			memset(&_socket_addr.sin_zero, 0, sizeof(_socket_addr.sin_zero));
+			_socket_addr.sin_family = AF_INET;
+			_socket_addr.sin_addr.s_addr = ip;
+			_socket_addr.sin_port = htons(_port);
+
+			/* Open socket */
+			_sockaddr_len = sizeof(_socket_addr);
+			_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+			if (_socket_fd < 0)
+				throw std::runtime_error(
+					"Socket of port " + SSTR(_port) + "and Ip " + SSTR(_ip));
+			if (fcntl(_socket_fd, F_SETFL, O_NONBLOCK) == -1)
+				throw std::runtime_error(
+					"Fcntl failed for socket " + SSTR(_socket_fd));
+
+			/* Tmp print to debug */
+			std::cout << "Socket " << _socket_fd << "created successfuly\n";
+		}
+
+		~Socket()
+		{
+			std::cout << "CLOSED SOCKET " << _socket_fd << '\n';
+			close(_socket_fd);
+		}
+
+	/* Class Getters : Return const because we don't need to modify the values*/
+		const uint16_t&	get_port() const { return _port; }
+		const uint32_t&	get_ip() const { return _ip; }
+		const int&		get_socket_fd() const { return _socket_fd; }
+		socklen_t&		get_sockaddr_len() { return _sockaddr_len; }
+		sockaddr_in&	get_sockaddr_in() { return _socket_addr; }
+	
+	/* Members to handle binding and listneing */
+		int				bind_socket()
+		{
+			if (bind(get_socket_fd(),
+					(struct sockaddr *)&_socket_addr, get_sockaddr_len()) < 0)
+				throw std::runtime_error(
+					"Socket " + SSTR(get_socket_fd()) + "Failed to open");
+			return 0;
+		}
+		int			listen_socket()
+		{
+			if (listen(get_socket_fd(), SOMAXCONN) < 0)
+				throw std::runtime_error(
+					"Socket " + SSTR(get_socket_fd()) + "Failed to listen");
+		}
+};
 
 /* PARSING *
  * Parsing lexical
@@ -37,10 +104,19 @@ bool	parse_config_file(const std::string& file_name);
  *  4- listen localhost;
  */
 
+/* Règles d'ouverture de port
+ * si il n y a que des pairs il n'ouvre que des pairs
+ * si il y a des ip seules il ouvre ip:80
+ * 
+ ****************************** NOUS ****************************
+ * prendre les ports les ouvrir (check si le port est ouvert ouppa)
+ * 
+*/
 /*
  * CREATE SERVER
- * Tous les ports et toutes les ips dans listen du server
- * ensuite faire le tri pour laisser les paires et les ports les plus pertinent.
+ * créer une socket par 
+ * créer une sock_addr_in
+ * 
 
 */
 
@@ -50,3 +126,26 @@ bool	parse_config_file(const std::string& file_name);
  * case 1: Les 
 
 */
+
+// class Socket_addr_in
+// {
+// 	private:
+// 		uint8_t			_sin_len;
+// 		sa_family_t		_sin_family;
+// 		in_port_t		_sin_port;
+// 		struct in_addr	_sin_addr;
+// 		char			_sin_zero[8];
+	
+// 	public:
+// 		Socket_addr_in(const struct sockaddr_in& sockaddr)
+// 		:
+// 		_sin_addr(sockaddr.sin_addr),
+// 		_sin_family(sockaddr.sin_family),
+// 		_sin_port(sockaddr.sin_port)
+// 		{
+// 			for (size_t i = 0; i < 8; ++i)
+// 				_sin_zero[i] = sockaddr.sin_zero[i];
+// 		}
+// 		Socket_addr_in() {}
+
+// };
