@@ -40,7 +40,7 @@ int get_socket_index(const std::vector<T>& vec, int socket)
 
 int main()
 {
-//	parse_config_file("../parser/server_config.conf");
+	parse_config_file("../parser/server_config.conf");
 	std::cout << "File is good\n\nStarting WebServer\n";
 
 	fd_set				master_socket_list, copy_socket_list;
@@ -76,7 +76,8 @@ int main()
 	int	fd_max_nb = listen_sockets.back().get_socket_fd();
 	while (true)
 	{
-		std::cout << "====== Waiting for incoming new connections ======\n";
+		std::cout << MAGENTA "====== Waiting for incoming new connections "
+						<< "======\n" RESET;
 		/* Copy our original socket list into copy because Select() will erase
 		 * its contents and leave only read-ready sockets
 		 */ 
@@ -94,6 +95,7 @@ int main()
 				if (index != -1)
 				{
 					SockComm *new_conect = listen_sockets[index].accept_connection();
+					communication_sockets.push_back(*new_conect);
 					FD_SET(new_conect->get_socket_fd(), &master_socket_list);
 					if (new_conect->get_socket_fd() > fd_max_nb)
 						fd_max_nb = new_conect->get_socket_fd();
@@ -102,7 +104,7 @@ int main()
 						<< listen_sockets[index].get_port() << "\n"RESET;
 						send(new_conect->get_socket_fd(), 
 							serv_response.c_str(),
-							strlen(serv_response.c_str()), 0);
+							serv_response.length(), 0);
 				}
 				else
 				{
@@ -114,7 +116,9 @@ int main()
 										<< i << std::endl;
 						else if (nb_bytes < 0)
 							perror("Recv failed");
-						close(i);
+						std::vector<SockComm>::iterator it = communication_sockets.begin() + get_socket_index(communication_sockets, i);
+						communication_sockets.erase(it);	
+						// close(i);
 						FD_CLR(i, &master_socket_list);
 					}
 					else
@@ -127,25 +131,5 @@ int main()
 			}
 		}
 	}
-	//	int new_socket = accept(, (struct sockaddr *)&address, &addr_size);
-	//	if (new_socket < 0)
-	//		return_error("Accept failed");
-
-//		char buffer[BUFFER_SIZE + 1] = {0};
-//		int val_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
-//		std::cout << "Reading from server: " << std::endl;
-//		for (size_t i = 0; buffer[i]; ++i)
-//			std::cout << buffer[i];
-//		std::cout << std::endl;
-//		if (val_received == 0)
-//			std::cout << "Connection closed received 0 bytes\n";
-//		else if (val_received < 0)
-//			std::cout << "No bytes to read" << std::endl;
-//
-//		send(new_socket, response_str.c_str(), response_str.length(), 0);
-//
-//		std::cout << "====== Closing socket_fd ======" << std::endl;
-//		close(new_socket);
-//	}
 	return 0;
 }

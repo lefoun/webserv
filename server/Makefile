@@ -1,5 +1,5 @@
-# SRCS = webserv.cc ../parser/config_parser.cc
-SRCS = beejserv.cc
+SRCS = webserv.cc ../parser/config_parser.cc
+# SRCS = beejserv.cc
 
 GREEN        = \033[1;32m
 RESET		 = \033[0m
