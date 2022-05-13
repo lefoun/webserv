@@ -106,18 +106,18 @@ class SockListen : public Socket
 	/* Class Getters : Return const because we don't need to modify the values*/
 		SockComm&			accept_connection()
 		{
-			SockComm	socket_comm(this->get_port(), this->get_ip());
+			SockComm	*socket_comm = new SockComm(this->get_port(), this->get_ip());
 			int new_socket = accept(this->get_socket_fd(), 
-									(struct sockaddr*)&socket_comm.\
+									(struct sockaddr*)&socket_comm->\
 									get_sockaddr_in(),
-									&socket_comm.get_sockaddr_len());
+									&socket_comm->get_sockaddr_len());
 			if (new_socket < 0)
 				throw std::runtime_error(
 					"Couldn't accept new connection from socket " 
 					+ SSTR(get_socket_fd()));
-			socket_comm.set_socket_fd(new_socket);
-			socket_comm.init_sock_com();
-			return socket_comm;
+			socket_comm->set_socket_fd(new_socket);
+			socket_comm->init_sock_com();
+			return *socket_comm;
 		}
 
 	/* Members to handle binding and listneing */
@@ -129,7 +129,7 @@ class SockListen : public Socket
 					"Socket " + SSTR(get_socket_fd()) + "Failed to open");
 			return 0;
 		}
-		int			listen_socket()
+		void			listen_socket()
 		{
 			if (listen(get_socket_fd(), SOMAXCONN) < 0)
 				throw std::runtime_error(

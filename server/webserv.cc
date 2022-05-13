@@ -2,6 +2,7 @@
 #include <vector>
 #include "colors.hpp"
 
+
 #define BUFFER_SIZE 4096
 
 	/*
@@ -39,7 +40,7 @@ int get_socket_index(const std::vector<T> vec, int socket)
 
 int main()
 {
-	parse_config_file("../parser/server_config.conf");
+//	parse_config_file("../parser/server_config.conf");
 	std::cout << "File is good\n\nStarting WebServer\n";
 
 	fd_set				master_socket_list, copy_socket_list;
@@ -47,11 +48,11 @@ int main()
 	std::vector<SockListen> listen_sockets(1, SockListen(PORT, INADDR_ANY));
 	std::vector<SockComm> communication_sockets;
 	char				buffer[BUFFER_SIZE + 1];
-	char				*serv_response = "HTTP/1.1 200 OK\nContent-Type:"
+	std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
 										" text/html\nContent-Length: 20"
 										"\n\nResponse form Serv";
 
-	std::string response_str(serv_response);
+	std::string response_str(serv_response.c_str());
 
 	// if (address.sin_addr.s_addr == (in_addr_t)(-1))
 	// 	return_error("Converting IP address from char* to uint failed");
@@ -115,25 +116,26 @@ int main()
 				}
 			}
 		}
-		int new_socket = accept(socket_fd, (struct sockaddr *)&address, &addr_size);
-		if (new_socket < 0)
-			return_error("Accept failed");
-
-		char buffer[BUFFER_SIZE + 1] = {0};
-		int val_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
-		std::cout << "Reading from server: " << std::endl;
-		for (size_t i = 0; buffer[i]; ++i)
-			std::cout << buffer[i];
-		std::cout << std::endl;
-		if (val_received == 0)
-			std::cout << "Connection closed received 0 bytes\n";
-		else if (val_received < 0)
-			std::cout << "No bytes to read" << std::endl;
-
-		send(new_socket, response_str.c_str(), response_str.length(), 0);
-
-		std::cout << "====== Closing socket_fd ======" << std::endl;
-		close(new_socket);
 	}
+	//	int new_socket = accept(, (struct sockaddr *)&address, &addr_size);
+	//	if (new_socket < 0)
+	//		return_error("Accept failed");
+
+//		char buffer[BUFFER_SIZE + 1] = {0};
+//		int val_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
+//		std::cout << "Reading from server: " << std::endl;
+//		for (size_t i = 0; buffer[i]; ++i)
+//			std::cout << buffer[i];
+//		std::cout << std::endl;
+//		if (val_received == 0)
+//			std::cout << "Connection closed received 0 bytes\n";
+//		else if (val_received < 0)
+//			std::cout << "No bytes to read" << std::endl;
+//
+//		send(new_socket, response_str.c_str(), response_str.length(), 0);
+//
+//		std::cout << "====== Closing socket_fd ======" << std::endl;
+//		close(new_socket);
+//	}
 	return 0;
 }
