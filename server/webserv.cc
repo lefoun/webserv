@@ -45,7 +45,9 @@ int main()
 
 	fd_set				master_socket_list, copy_socket_list;
 	const int 			PORT = 42420;
-	std::vector<SockListen> listen_sockets(1, SockListen(PORT, INADDR_ANY));
+	std::vector<SockListen> listen_sockets;
+	SockListen socket_liste(PORT, INADDR_ANY);
+	listen_sockets.push_back(socket_liste);
 	std::vector<SockComm> communication_sockets;
 	char				buffer[BUFFER_SIZE + 1];
 	std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
@@ -54,15 +56,15 @@ int main()
 
 	std::string response_str(serv_response.c_str());
 
-	// if (address.sin_addr.s_addr == (in_addr_t)(-1))
-	// 	return_error("Converting IP address from char* to uint failed");
 
 	// creates the socket
 	FD_ZERO(&master_socket_list);
 	FD_ZERO(&copy_socket_list);
-	for (std::vector<Socket>::const_iterator it = listen_sockets.begin();
+	for (std::vector<SockListen>::iterator it = listen_sockets.begin();
 		it != listen_sockets.end(); ++it)
 	{
+		it->bind_socket();
+		it->listen_socket();
 		FD_SET(it->get_socket_fd(), &master_socket_list);
 		std::cout << BLUE "Listening on socket " << it->get_socket_fd() 
 			<< "\n" RESET;

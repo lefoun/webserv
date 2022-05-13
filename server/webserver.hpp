@@ -76,12 +76,6 @@ class SockComm : public Socket
 
 class SockListen : public Socket
 {
-	private:
-	
-	/* Need to createa another constructor that includes std::string as
-	 * ip_name ?
-	 */
-
 	public:
 		SockListen(const uint16_t port = 80, const std::string& ip = "0.0.0.0")
 		{
@@ -108,8 +102,8 @@ class SockListen : public Socket
 		{
 			SockComm	*socket_comm = new SockComm(this->get_port(), this->get_ip());
 			int new_socket = accept(this->get_socket_fd(), 
-									(struct sockaddr*)&socket_comm->\
-									get_sockaddr_in(),
+									(struct sockaddr*)&(socket_comm->\
+									get_sockaddr_in()),
 									&socket_comm->get_sockaddr_len());
 			if (new_socket < 0)
 				throw std::runtime_error(
@@ -121,13 +115,12 @@ class SockListen : public Socket
 		}
 
 	/* Members to handle binding and listneing */
-		int				bind_socket()
+		void			bind_socket()
 		{
 			if (bind(get_socket_fd(),
 					(struct sockaddr *)&_socket_addr, get_sockaddr_len()) < 0)
 				throw std::runtime_error(
 					"Socket " + SSTR(get_socket_fd()) + "Failed to open");
-			return 0;
 		}
 		void			listen_socket()
 		{

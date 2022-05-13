@@ -1,0 +1,47 @@
+{
+    "editor.minimap.enabled": false,
+    "editor.inlineSuggest.enabled": true,
+    "files.autoSave": "afterDelay",
+    "vim.normalModeKeyBindings": [
+        {
+            "before": ["<tab>"],
+            "commands": ["workbench.action.nextEditor"]
+        },
+        {
+            "before": ["<S-tab>"],
+            "commands": ["workbench.action.previousEditor"]
+        },
+    ],
+    "python.linting.pycodestyleEnabled": false,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": ["--disable=C0111"],
+    "vim.smartRelativeLine": true,
+    "[cpp]": {
+
+        "editor.rulers": [80],
+        "editor.insertSpaces": false,
+        "editor.semanticHighlighting.enabled": true,
+        "editor.occurrencesHighlight": true,
+    },
+    "[c]":{
+        "editor.rulers": [80],
+        "editor.insertSpaces": false,
+    },
+    "[python]": {
+        "editor.rulers": [80],
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+    },
+    "github.copilot.enable": {
+        "*": false,
+        "yaml": false,
+        "plaintext": false,
+        "markdown": false
+    },
+    "liveServer.settings.donotVerifyTags": true,
+    "liveServer.settings.donotShowInfoMsg": true,
+    "workbench.colorTheme": "Visual Studio Dark",
+    "editor.semanticHighlighting.enabled": true,
+    "editor.unicodeHighlight.nonBasicASCII": false,
+}
