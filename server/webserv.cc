@@ -94,17 +94,24 @@ int main()
 				int index = get_socket_index(listen_sockets, i);
 				if (index != -1)
 				{
-					SockComm *new_conect = listen_sockets[index].accept_connection();
-					communication_sockets.push_back(*new_conect);
-					FD_SET(new_conect->get_socket_fd(), &master_socket_list);
-					if (new_conect->get_socket_fd() > fd_max_nb)
-						fd_max_nb = new_conect->get_socket_fd();
-					std::cout << 
-						GREEN "Server Accepted new connection on socket "
-						<< listen_sockets[index].get_port() << "\n"RESET;
-						send(new_conect->get_socket_fd(), 
-							serv_response.c_str(),
-							serv_response.length(), 0);
+					try 
+					{
+						SockComm *new_conect = listen_sockets[index].accept_connection();
+						communication_sockets.push_back(*new_conect);
+						FD_SET(new_conect->get_socket_fd(), &master_socket_list);
+						if (new_conect->get_socket_fd() > fd_max_nb)
+							fd_max_nb = new_conect->get_socket_fd();
+						std::cout << 
+							GREEN "Server Accepted new connection on socket "
+							<< listen_sockets[index].get_port() << "\n"RESET;
+							send(new_conect->get_socket_fd(), 
+								serv_response.c_str(),
+								serv_response.length(), 0);
+					}
+					catch (std::exception& e)
+					{
+						continue;
+					}
 				}
 				else
 				{
