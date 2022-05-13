@@ -28,7 +28,7 @@ int	return_error(const std::string& error_msg)
 }
 
 template <typename T>
-int get_socket_index(const std::vector<T> vec, int socket)
+int get_socket_index(const std::vector<T>& vec, int socket)
 {
 	for (int i = 0; i < vec.size(); ++i)
 	{
@@ -51,11 +51,15 @@ int main()
 	std::vector<SockComm> communication_sockets;
 	char				buffer[BUFFER_SIZE + 1];
 	std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
-										" text/html\nContent-Length: 20"
-										"\n\nResponse form Serv";
+										" text/html\nContent-Length: ";
+	std::string				follow_up_rsp = 
+										"\n\n<html><header>Response form "
+										"Serv</header><body><h1>Hello World"
+										"</h1></body></html>";
+	serv_response.append(SSTR(serv_response.size()));
+	serv_response.append(follow_up_rsp);
 
 	std::string response_str(serv_response.c_str());
-
 
 	// creates the socket
 	FD_ZERO(&master_socket_list);
@@ -89,13 +93,16 @@ int main()
 				int index = get_socket_index(listen_sockets, i);
 				if (index != -1)
 				{
-					SockComm new_conect = listen_sockets[i].accept_connection();
-					FD_SET(new_conect.get_socket_fd(), &master_socket_list);
-					if (new_conect.get_socket_fd() > fd_max_nb)
-						fd_max_nb = new_conect.get_socket_fd();
+					SockComm *new_conect = listen_sockets[index].accept_connection();
+					FD_SET(new_conect->get_socket_fd(), &master_socket_list);
+					if (new_conect->get_socket_fd() > fd_max_nb)
+						fd_max_nb = new_conect->get_socket_fd();
 					std::cout << 
 						GREEN "Server Accepted new connection on socket "
-						<< listen_sockets[i].get_port() << "\n"ESC;
+						<< listen_sockets[index].get_port() << "\n"RESET;
+						send(new_conect->get_socket_fd(), 
+							serv_response.c_str(),
+							strlen(serv_response.c_str()), 0);
 				}
 				else
 				{
@@ -103,7 +110,8 @@ int main()
 					if (nb_bytes <= 0)
 					{
 						if (nb_bytes == 0)
-							std::cout << "Connection closed from Socket " << i << std::endl;
+							std::cout << "Connection closed from Socket "
+										<< i << std::endl;
 						else if (nb_bytes < 0)
 							perror("Recv failed");
 						close(i);
@@ -112,7 +120,7 @@ int main()
 					else
 					{
 						std::cout << BLUE "Received data from client " << i
-							<< ESC"\n";
+							<< "\n"RESET;
 						read_buf(buffer, nb_bytes);
 					}
 				}

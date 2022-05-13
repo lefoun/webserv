@@ -60,7 +60,7 @@ class SockComm : public Socket
 
 		void		set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
 		int			close_socket() { return close(get_socket_fd()); }
-		void	init_sock_com()
+		void		init_sock_com()
 		{
 				if (fcntl(_socket_fd, F_SETFL, O_NONBLOCK) == -1)
 					throw std::runtime_error(
@@ -98,7 +98,7 @@ class SockListen : public Socket
 		}
 
 	/* Class Getters : Return const because we don't need to modify the values*/
-		SockComm&			accept_connection()
+		SockComm*			accept_connection()
 		{
 			SockComm	*socket_comm = new SockComm(this->get_port(), this->get_ip());
 			int new_socket = accept(this->get_socket_fd(), 
@@ -111,7 +111,7 @@ class SockListen : public Socket
 					+ SSTR(get_socket_fd()));
 			socket_comm->set_socket_fd(new_socket);
 			socket_comm->init_sock_com();
-			return *socket_comm;
+			return socket_comm;
 		}
 
 	/* Members to handle binding and listneing */
