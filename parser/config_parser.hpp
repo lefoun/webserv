@@ -6,6 +6,8 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <iterator>
+#include <stack>
 #include "Server.hpp"
 
 enum REQUEST_METHODS {

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <stdint.h>
 
 class Location
 {

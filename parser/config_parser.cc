@@ -97,7 +97,7 @@ static bool	is_ip_address(const std::string &ip_str)
 
 static bool set_valid_host_name(const std::string& host, Server& server)
 {
-	std::ifstream	hosts_file(std::string("/etc/hosts"));	//open hosts file
+	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
 	if (hosts_file.fail())
 		throw std::invalid_argument("Failed to open hosts file");
 
@@ -457,7 +457,7 @@ void	handle_body_size_limit(std::istream_iterator<std::string>& token,
 		throw std::invalid_argument(
 			"Multiple client_body_size_limit directives is not allowed");
 	if (body_size.size() > 4 
-		|| (body_size.back() != 'M' && body_size.back() != 'm')
+		|| (*(body_size.end()) != 'M' && *(body_size.end()) != 'm')
 		|| !is_number(body_size.substr(0, body_size.size() - 1)) 
 		|| !in_range(1, 100, atoi(body_size.c_str())))
 		throw std::invalid_argument(
@@ -566,7 +566,7 @@ void	enriche_configuration(std::vector<Server>& servers)
 
 bool	parse_config_file(const std::string& file_name)
 {
-	std::ifstream	config_file(file_name);
+	std::ifstream	config_file(file_name.c_str());
 	if (!config_file.is_open() || config_file.fail())
 		throw config_file.exceptions();
 
