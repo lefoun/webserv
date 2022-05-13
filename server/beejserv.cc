@@ -91,7 +91,8 @@ int main()
 				if (i == listening_s)
 				{
 					socklen_t client_len = sizeof(client_addr);					
-					new_socket = accept(listening_s, (struct sockaddr *)&client_addr, &client_len);	
+					// new_socket = accept(listening_s, (struct sockaddr *)&client_addr, &client_len);	
+					new_socket = accept(listening_s, NULL, NULL);	
 					fcntl(new_socket, F_SETFL, O_NONBLOCK);
 					if (new_socket == -1)
 						perror("Accept() failed to accept new connection");
