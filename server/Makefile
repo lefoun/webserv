@@ -9,7 +9,7 @@ INCLUDES =
 OBJS = $(SRCS:.cc=.o)
 DEPS = $(SRCS:.cc=.d)
 NAME = server 
-
+FLAGS = -std=c++98 -pedantic
 ifeq ($(NOFLAGS), 1)
 	FLAGS = 
 else
