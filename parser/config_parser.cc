@@ -392,38 +392,6 @@ void    handle_redirection(std::istream_iterator<std::string>& token,
     ++token;
 }
 
-// void    handle_redirection(std::istream_iterator<std::string>& token,
-// 							const std::stack<std::string>& context,
-// 							Server& server)
-// {
-//     if (context.top() !=  "server")
-//         throw std::invalid_argument("Found unexpected redirection");
-//     check_valid_token(token);
-// 	/* paths ending with / or not are the same */
-// 	const std::string old_path = (*(--(*token).end()) == '/') ? 
-// 						token->substr(0, token->size() - 1) : *token;
-
-// 	/* saving the value of old_path because 
-// 	 * check_valid_token advances the iterator */
-//     check_valid_token(token);
-//     if (*(--(*token).end()) != ';')
-//         throw std::invalid_argument("Expected token ';'");
-//     const std::string new_path = token->substr(0, token->size() - 1);
-// 	std::vector<Server::str_str_pair>::const_iterator it = 
-// 											server.get_redirections().begin();
-//     while (it != server.get_redirections().end())
-//     {
-//         if (old_path == it->first)
-//             throw std::invalid_argument(
-// 				"Redirection already used with the same argument");
-//         ++it;
-//     }
-//     server.get_redirections().push_back(std::make_pair(old_path, new_path));
-//     std::cout << server.get_redirections().back().first << " >> " <<  
-// 		server.get_redirections().back().second << std::endl;
-//     ++token;
-// }
-
 void	handle_allow(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
@@ -562,6 +530,7 @@ void	enriche_configuration(std::vector<Server>& servers)
 		servers.begin()->get_listening_ips().push_back("127.0.0.1");
 	if (no_default_port == true)
 		servers.begin()->get_listening_ports().push_back(80);
+	
 }
 
 bool	parse_config_file(const std::string& file_name, 

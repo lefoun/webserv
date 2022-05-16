@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <list>
 #include <utility>
+#include <unordered_map>
 
 #include "../parser/Server.hpp"
 
@@ -46,7 +47,8 @@ typedef struct request
 {
 	std::string	method;
 	std::string	target;
-	std::string	http_version;
+	std::string	host;
+	std::string	connection;
 
 } request_t;
 

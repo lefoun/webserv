@@ -17,6 +17,7 @@ class Server
 		std::vector<uint16_t>					_listening_ports;
 		std::vector<std::string>				_listening_ips;
 		std::vector<ip_port_pair>				_listening_port_ip_pairs;
+		std::vector<ip_port_pair>				_implicit_port_ip_pairs;
 		std::vector<Location>					_locations;
 		std::string								_index_file;
 		std::vector<str_vec_of_uint16_pair>		_error_pages;

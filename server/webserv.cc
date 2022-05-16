@@ -31,48 +31,130 @@ void	read_buf(char buffer[], int size = 0)
 	}
 }
 
-void	parse_request_header(const char buffer[])
+void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
+{
+	char tmp;
+
+	ss >> tmp;
+	if (tmp != delimiter)
+		throw std::invalid_argument("Unxpected token");
+}
+
+void	parse_request_header(const char buffer[], request_t& request)
 {
 	/* Request format
-	 * request-line   = method SP request-target SP HTTP-version CRLF
+	 * request-line = method SP request-target SP HTTP-version CRLF
 	 */
+
 	size_t 				i = 0;
-	request_t 			request;
-	std::istringstream	ss(buffer);
+	char				tmp_char;
 	std::string			tmp;
+	std::istringstream	ss(buffer);
 
 	ss >> std::noskipws;
 	/* Parse Method */
 	ss >> request.method;
-	std::cout << "This is method " << request.method << "\n";
 	if (!(request.method == "GET" || request.method == "POST"
 		|| request.method == "DELETE"))
 		throw std::invalid_argument("Invalid Method");
-	std::cout << "Parsing Space 1\n";
-	char tmp_char;
-	ss >> tmp_char;	
-	std::cout << "This is tmp |" << tmp_char << "|\n";
-	if (tmp_char != ' ')
-		throw std::invalid_argument("expected space");
+	
+	check_char_in_stream(' ', ss);
 	ss >> request.target;
-	ss >> tmp_char;
-	std::cout << "Parsing Space 2\n";
-	if (tmp_char != ' ')
-		throw std::invalid_argument("expected space");
-	ss >> request.http_version;
-	if (request.http_version != "HTTP/1.1")
+	check_char_in_stream(' ', ss);
+	ss >> tmp;
+	if (tmp != "HTTP/1.1")
 		throw std::invalid_argument("expected HTTP/1.1 version");
-	ss >> tmp_char;
-	std::cout << "this cariage return " << int(tmp_char) << "\n";
-	if (tmp_char != '\n' && tmp_char != '\r')
-		throw std::invalid_argument("Expected CRLF");
+	check_char_in_stream('\r', ss);
+	check_char_in_stream('\n', ss);
+	ss >> tmp;
+	if (tmp != "Host:")	
+		throw std::invalid_argument("Expected host");
+	check_char_in_stream(' ', ss);
+	ss >> request.host;
+	check_char_in_stream('\r', ss);
+	check_char_in_stream('\n', ss);
 }
+
+template <typename T>
+static bool	in_range(T low, T high, T num)
+{
+	return num >= low && num <= high;
+}
+
+static bool is_number(const std::string& s)
+{
+    if(s.size() == 0)
+		return false;
+    for (size_t i = 0; i < s.size(); i++)
+	{
+        if ((s[i]>= '0' && s[i] <='9') == false)
+            return false;
+    }
+    return true;
+}
+
+static bool	is_ip_address(const std::string &ip_str)
+{
+	if (std::count(ip_str.begin(), ip_str.end(), '.') != 3)
+		return false;
+
+	std::stringstream			ip_ss(ip_str);
+	std::string					split_ip;
+	std::vector<std::string>	ip_octet_holder;
+	while (std::getline(ip_ss, split_ip, '.'))
+	{
+		ip_octet_holder.push_back(split_ip);
+		std::string octect = ip_octet_holder.back();
+		if (!is_number(octect) || octect.size() > 3
+			|| !in_range(0, 255, atoi(octect.c_str())))
+			return false;
+	}
+	if (ip_octet_holder.size() != 4)
+		return false;
+	return true;
+}
+
+// bool	check_valid_host(const std::string& host)
+// {
+
+// 	std::string::size_type	pos = host.find(':');
+// 	if (pos == std::string::npos) /* Means that it's either a Host or a Port */
+// 	{
+// 		std::cout << "This is either a simple host with default port "
+// 					<< host << std::endl;
+// 		if (is_number(host))
+// 			set_port(host, server);
+// 		else
+// 			set_ip(host, server);
+// 	}
+// 	else /* It's a host:port pair */
+// 	{
+// 		std::cout << "This is a ip:port pair " << host << std::endl;
+// 		std::pair<uint16_t, std::string>	ip_port_pair;
+// 		std::string	tmp_host = host.substr(0, pos);
+// 		std::string	tmp_port = host.substr(pos + 1, std::string::npos);
+// 		set_port(tmp_port, server);
+// 		set_ip(tmp_host, server);
+// 	}
+// }
 
 Server*	get_server_associated_with_request(std::vector<Server>& servers,
 											const SockComm& socket,
 											const char buffer[])
 {
-	parse_request_header(buffer);		
+	/* check request
+	 * HOSTNAME:PORT
+	 * PORT
+	 * IP
+	 * server_name
+	*/
+	request_t	request;
+	parse_request_header(buffer, request);
+
+	for (size_t i = 0; i < servers.size(); ++i)
+	{
+		servers[i].get_ip_port_pairs();
+	}
 	return NULL;
 }
 
@@ -98,11 +180,12 @@ int main()
 	std::vector<Server> servers;
 	if (!parse_config_file("../parser/server_config.conf", servers))
 		return 1;
+	// std::unord
 	//servers.
 	std::cout << "File is good\n\nStarting WebServer\n";
 
 	fd_set				master_socket_list, copy_socket_list;
-	const int 			PORT = 42420;
+	const int 			PORT = 80;
 	std::vector<SockListen> listen_sockets;
 	SockListen socket_liste(PORT, INADDR_ANY);
 	listen_sockets.push_back(socket_liste);
