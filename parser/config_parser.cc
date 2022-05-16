@@ -564,13 +564,13 @@ void	enriche_configuration(std::vector<Server>& servers)
 		servers.begin()->get_listening_ports().push_back(80);
 }
 
-bool	parse_config_file(const std::string& file_name)
+bool	parse_config_file(const std::string& file_name, 
+							std::vector<Server>& servers)
 {
 	std::ifstream	config_file(file_name.c_str());
 	if (!config_file.is_open() || config_file.fail())
 		throw config_file.exceptions();
 
-	std::vector<Server>	servers;
 	std::stack<std::string> context;
 	std::istream_iterator<std::string> token(config_file);
 	const std::istream_iterator<std::string> end_of_file;

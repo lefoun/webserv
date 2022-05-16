@@ -1,5 +1,4 @@
 #include "webserver.hpp"
-#include <vector>
 #include "colors.hpp"
 
 
@@ -12,14 +11,70 @@
 	* htons converts host to network short and htonl to long.
 	*/
 
-void	read_buf(char buffer[], int size)
+void	send_response()
 {
-	for (size_t i = 0; i < size; ++i)
-		std::cout << buffer[i];
-	std::cout << std::endl;
+	std::cout << "413 Request(entity) too large\n";
 }
 
-typedef struct sockaddr_in sockaddr_in_t;
+void	read_buf(char buffer[], int size = 0)
+{
+	if (size == 0)
+	{
+		for (size_t i = 0; buffer[i] != '\0'; ++i)
+			std::cout << buffer[i];
+	}
+	else
+	{
+		for (size_t i = 0; i < size; ++i)
+			std::cout << buffer[i];
+		std::cout << std::endl;
+	}
+}
+
+void	parse_request_header(const char buffer[])
+{
+	/* Request format
+	 * request-line   = method SP request-target SP HTTP-version CRLF
+	 */
+	size_t 				i = 0;
+	request_t 			request;
+	std::istringstream	ss(buffer);
+	std::string			tmp;
+
+	ss >> std::noskipws;
+	/* Parse Method */
+	ss >> request.method;
+	std::cout << "This is method " << request.method << "\n";
+	if (!(request.method == "GET" || request.method == "POST"
+		|| request.method == "DELETE"))
+		throw std::invalid_argument("Invalid Method");
+	std::cout << "Parsing Space 1\n";
+	char tmp_char;
+	ss >> tmp_char;	
+	std::cout << "This is tmp |" << tmp_char << "|\n";
+	if (tmp_char != ' ')
+		throw std::invalid_argument("expected space");
+	ss >> request.target;
+	ss >> tmp_char;
+	std::cout << "Parsing Space 2\n";
+	if (tmp_char != ' ')
+		throw std::invalid_argument("expected space");
+	ss >> request.http_version;
+	if (request.http_version != "HTTP/1.1")
+		throw std::invalid_argument("expected HTTP/1.1 version");
+	ss >> tmp_char;
+	std::cout << "this cariage return " << int(tmp_char) << "\n";
+	if (tmp_char != '\n' && tmp_char != '\r')
+		throw std::invalid_argument("Expected CRLF");
+}
+
+Server*	get_server_associated_with_request(std::vector<Server>& servers,
+											const SockComm& socket,
+											const char buffer[])
+{
+	parse_request_header(buffer);		
+	return NULL;
+}
 
 int	return_error(const std::string& error_msg)
 {
@@ -40,8 +95,10 @@ int get_socket_index(const std::vector<T>& vec, int socket)
 
 int main()
 {
-	if (!parse_config_file("../parser/server_config.conf"))
+	std::vector<Server> servers;
+	if (!parse_config_file("../parser/server_config.conf", servers))
 		return 1;
+	//servers.
 	std::cout << "File is good\n\nStarting WebServer\n";
 
 	fd_set				master_socket_list, copy_socket_list;
@@ -97,7 +154,8 @@ int main()
 				{
 					try 
 					{
-						SockComm *new_conect = listen_sockets[index].accept_connection();
+						SockComm *new_conect = listen_sockets[index].\
+													accept_connection();
 						communication_sockets.push_back(*new_conect);
 						FD_SET(new_conect->get_socket_fd(), &master_socket_list);
 						if (new_conect->get_socket_fd() > fd_max_nb)
@@ -105,9 +163,11 @@ int main()
 						std::cout << 
 							GREEN "Server Accepted new connection on socket "
 							<< listen_sockets[index].get_port() << "\n"RESET;
-							send(new_conect->get_socket_fd(), 
+							if (send(new_conect->get_socket_fd(), 
 								serv_response.c_str(),
-								serv_response.length(), 0);
+								serv_response.length(), 0) < 0)
+							throw std::runtime_error(
+								"Failed to send data to socket " + SSTR(i));
 					}
 					catch (std::exception& e)
 					{
@@ -130,11 +190,19 @@ int main()
 						communication_sockets.erase(it);	
 						FD_CLR(i, &master_socket_list);
 					}
+					else if (nb_bytes > BUFFER_SIZE)
+						send_response();
 					else
 					{
 						std::cout << BLUE "Received data from client " << i
 							<< "\n"RESET;
 						read_buf(buffer, nb_bytes);
+						sock_com_it_t it = communication_sockets.begin()
+								+ get_socket_index(communication_sockets, i);
+						if (it->get_server() == NULL)
+							Server* serv = get_server_associated_with_request(
+								servers, *it, buffer);
+						// void	serv->process_request(buffer);
 					}
 				}
 			}
@@ -142,3 +210,8 @@ int main()
 	}
 	return 0;
 }
+
+
+/* We receive a request:
+ * We search IP:PORT pairs
+*/

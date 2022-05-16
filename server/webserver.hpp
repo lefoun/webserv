@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 #include <istream>
+#include <ios>
 
 /* C++ Libraries to enable container creation and algorithm use */
 #include <string>
@@ -26,15 +27,28 @@
 #include <list>
 #include <utility>
 
+#include "../parser/Server.hpp"
+
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
 class Socket;
 class SockComm;
 
+typedef struct sockaddr_in sockaddr_in_t;
 typedef std::vector<SockComm>::iterator sock_com_it_t; 
 
-bool	parse_config_file(const std::string& file_name);
+bool	parse_config_file(const std::string& file_name,
+							std::vector<Server>& servers);
+
+
+typedef struct request
+{
+	std::string	method;
+	std::string	target;
+	std::string	http_version;
+
+} request_t;
 
 class Socket
 {
@@ -56,12 +70,16 @@ class Socket
 
 class SockComm : public Socket
 {
+	private:
+		Server*		_server;
+
 	public:
-		SockComm(const uint16_t& port, const in_addr_t& ip)
+		SockComm(const uint16_t& port, const in_addr_t& ip, Server* server = NULL)
 		{
 			memset(&_socket_addr, 0, sizeof(_socket_addr));
 			_port = port;
 			_ip = ip;
+			_server = server;
 		}
 
 		~SockComm()
@@ -70,6 +88,7 @@ class SockComm : public Socket
 			close(_socket_fd);
 		}
 
+		Server*		get_server() { return _server; }
 		void		set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
 		int			close_socket() { return close(get_socket_fd()); }
 		void		init_sock_com()
@@ -213,26 +232,3 @@ class SockListen : public Socket
  * case 1: Les 
 
 */
-
-// class Socket_addr_in
-// {
-// 	private:
-// 		uint8_t			_sin_len;
-// 		sa_family_t		_sin_family;
-// 		in_port_t		_sin_port;
-// 		struct in_addr	_sin_addr;
-// 		char			_sin_zero[8];
-	
-// 	public:
-// 		Socket_addr_in(const struct sockaddr_in& sockaddr)
-// 		:
-// 		_sin_addr(sockaddr.sin_addr),
-// 		_sin_family(sockaddr.sin_family),
-// 		_sin_port(sockaddr.sin_port)
-// 		{
-// 			for (size_t i = 0; i < 8; ++i)
-// 				_sin_zero[i] = sockaddr.sin_zero[i];
-// 		}
-// 		Socket_addr_in() {}
-
-// };
