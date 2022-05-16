@@ -21,12 +21,18 @@
 
 /* C++ Libraries to enable container creation and algorithm use */
 #include <string>
+#include <vector>
 #include <algorithm>
 #include <list>
 #include <utility>
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
+
+class Socket;
+class SockComm;
+
+typedef std::vector<SockComm>::iterator sock_com_it_t; 
 
 bool	parse_config_file(const std::string& file_name);
 
@@ -56,6 +62,12 @@ class SockComm : public Socket
 			memset(&_socket_addr, 0, sizeof(_socket_addr));
 			_port = port;
 			_ip = ip;
+		}
+
+		~SockComm()
+		{
+			std::cout << "closing socket comm " << get_socket_fd() << std::endl;
+			close(_socket_fd);
 		}
 
 		void		set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }

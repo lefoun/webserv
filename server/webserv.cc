@@ -40,7 +40,8 @@ int get_socket_index(const std::vector<T>& vec, int socket)
 
 int main()
 {
-	parse_config_file("../parser/server_config.conf");
+	if (!parse_config_file("../parser/server_config.conf"))
+		return 1;
 	std::cout << "File is good\n\nStarting WebServer\n";
 
 	fd_set				master_socket_list, copy_socket_list;
@@ -110,6 +111,7 @@ int main()
 					}
 					catch (std::exception& e)
 					{
+						std::cout << e.what() << "\n";
 						continue;
 					}
 				}
@@ -123,9 +125,9 @@ int main()
 										<< i << std::endl;
 						else if (nb_bytes < 0)
 							perror("Recv failed");
-						std::vector<SockComm>::iterator it = communication_sockets.begin() + get_socket_index(communication_sockets, i);
+						sock_com_it_t it = communication_sockets.begin()
+								+ get_socket_index(communication_sockets, i);
 						communication_sockets.erase(it);	
-						// close(i);
 						FD_CLR(i, &master_socket_list);
 					}
 					else

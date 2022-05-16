@@ -457,7 +457,7 @@ void	handle_body_size_limit(std::istream_iterator<std::string>& token,
 		throw std::invalid_argument(
 			"Multiple client_body_size_limit directives is not allowed");
 	if (body_size.size() > 4 
-		|| (*(body_size.end()) != 'M' && *(body_size.end()) != 'm')
+		|| (*(--body_size.end()) != 'M' && *(--body_size.end()) != 'm')
 		|| !is_number(body_size.substr(0, body_size.size() - 1)) 
 		|| !in_range(1, 100, atoi(body_size.c_str())))
 		throw std::invalid_argument(
