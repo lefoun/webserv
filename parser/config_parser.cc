@@ -501,7 +501,58 @@ void	get_server(std::istream_iterator<std::string>& token, Server& server,
 	}
 }
 
-void	enriche_configuration(std::vector<Server>& servers)
+static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
+{
+
+	for (std::vector<Server>::iterator serv_it = servers.begin(); 
+			serv_it != servers.end(); ++serv_it)
+	{
+		for (std::vector<uint16_t>::iterator it_port = 
+				serv_it->get_listening_ports().begin();
+				it_port != serv_it->get_listening_ports().end(); ++it_port)
+		{
+			for (std::map<std::string, std::string>::iterator lookup_it =
+					serv_it->get_host_lookup_map()->begin(); lookup_it !=
+					serv_it->get_host_lookup_map()->end(); ++lookup_it)
+			{
+				serv_it->get_implicit_port_ip_pairs().push_back(
+					std::make_pair(lookup_it->second, *it_port));
+			}
+		}
+		/* printing implicit ip port */
+		for (std::vector<Server::ip_port_pair>::iterator imp_it = 
+				serv_it->get_implicit_port_ip_pairs().begin(); imp_it != 
+				serv_it->get_implicit_port_ip_pairs().end(); ++imp_it)
+		{
+			std::cout << "IP: " << imp_it->first << " Port: " << imp_it->second << "\n"; 
+		}
+	}
+}
+
+static void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_lookup)
+{
+
+	std::ifstream	hosts_file("/etc/hosts");
+	if (hosts_file.fail())
+		throw std::invalid_argument("Failed to open hosts file");
+	
+	std::string	line;
+	while (std::getline(hosts_file, line))
+	{
+		if (std::isdigit(line[0]))
+		{
+			std::istringstream tmp(line);
+			std::string	ip_addr;
+			std::string	host_name;
+			tmp >> ip_addr;
+			tmp >> host_name;
+			host_ip_lookup.insert(std::make_pair(host_name, ip_addr));
+		}
+	}
+}
+
+void	enriche_configuration(std::vector<Server>& servers, std::map<std::string,
+								std::string>& host_ip_lookup)
 {
 	bool	no_default_ip = true;
 	bool	no_default_port = true;
@@ -509,6 +560,7 @@ void	enriche_configuration(std::vector<Server>& servers)
 	for (std::vector<Server>::iterator it = servers.begin(); 
 			it != servers.end(); ++it)
 	{
+		it->set_host_lookup_map(&host_ip_lookup);
 		if (it->get_allowed_methods().empty())
 			set_default_methods(*it);
 		for (size_t i = 0; i < it->get_locations().size(); ++i)
@@ -530,11 +582,13 @@ void	enriche_configuration(std::vector<Server>& servers)
 		servers.begin()->get_listening_ips().push_back("127.0.0.1");
 	if (no_default_port == true)
 		servers.begin()->get_listening_ports().push_back(80);
-	
+	init_host_ip_lookup(host_ip_lookup);
+	set_implicit_ip_port_pairs(servers);
 }
 
 bool	parse_config_file(const std::string& file_name, 
-							std::vector<Server>& servers)
+							std::vector<Server>& servers,
+							std::map<std::string, std::string>& host_ip_lookup)
 {
 	std::ifstream	config_file(file_name.c_str());
 	if (!config_file.is_open() || config_file.fail())
@@ -565,9 +619,9 @@ bool	parse_config_file(const std::string& file_name,
 		}
 		++token;
 	}
-
 	if (servers.empty())
 		throw std::invalid_argument("Empty config file");
+	enriche_configuration(servers, host_ip_lookup);
 	return true;	
 }
 

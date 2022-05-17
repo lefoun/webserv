@@ -177,15 +177,15 @@ int get_socket_index(const std::vector<T>& vec, int socket)
 
 int main()
 {
-	std::vector<Server> servers;
-	if (!parse_config_file("../parser/server_config.conf", servers))
+	std::vector<Server>					servers;
+	std::map<std::string, std::string>	host_ip_lookup;
+	if (!parse_config_file("../parser/server_config.conf", servers, 
+		host_ip_lookup))
 		return 1;
-	// std::unord
-	//servers.
 	std::cout << "File is good\n\nStarting WebServer\n";
 
 	fd_set				master_socket_list, copy_socket_list;
-	const int 			PORT = 80;
+	const int 			PORT = 42420;
 	std::vector<SockListen> listen_sockets;
 	SockListen socket_liste(PORT, INADDR_ANY);
 	listen_sockets.push_back(socket_liste);
@@ -246,11 +246,6 @@ int main()
 						std::cout << 
 							GREEN "Server Accepted new connection on socket "
 							<< listen_sockets[index].get_port() << "\n"RESET;
-							if (send(new_conect->get_socket_fd(), 
-								serv_response.c_str(),
-								serv_response.length(), 0) < 0)
-							throw std::runtime_error(
-								"Failed to send data to socket " + SSTR(i));
 					}
 					catch (std::exception& e)
 					{
@@ -285,6 +280,11 @@ int main()
 						if (it->get_server() == NULL)
 							Server* serv = get_server_associated_with_request(
 								servers, *it, buffer);
+						if (send(i, 
+							serv_response.c_str(),
+							serv_response.length(), 0) < 0)
+							throw std::runtime_error(
+								"Failed to send data to socket " + SSTR(i));
 						// void	serv->process_request(buffer);
 					}
 				}

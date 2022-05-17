@@ -3,16 +3,17 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
 #include "Location.hpp"
 
 class Server
 {
 	public:
-		typedef std::pair<uint16_t, std::string>	ip_port_pair; 
+		typedef std::pair<std::string, uint16_t>	ip_port_pair; 
 		typedef std::pair<std::string, std::vector<uint16_t> >
 													str_vec_of_uint16_pair;
 	private:
-
+		std::map<std::string, std::string>*		_host_lookup_map;
 		std::vector<std::string>				_server_names;
 		std::vector<uint16_t>					_listening_ports;
 		std::vector<std::string>				_listening_ips;
@@ -34,7 +35,7 @@ class Server
 		:
 		_server_names(),
 		_listening_ports(),
-		_listening_port_ip_pairs(1, std::make_pair(0, "0")),
+		_listening_port_ip_pairs(1, std::make_pair("0", 0)),
 		_error_pages(std::vector<str_vec_of_uint16_pair>(
 			1, std::make_pair(std::string(), std::vector<uint16_t>()))),
 		_client_max_body_size(1),
@@ -70,4 +71,11 @@ class Server
 		{ return _is_auto_index_set; }
 		bool&									get_is_client_body_size_set()
 		{ return _is_client_max_body_size_set; }
+		std::map<std::string, std::string>*		get_host_lookup_map()
+		{ return _host_lookup_map; }
+		void									set_host_lookup_map(
+			std::map<std::string, std::string>* new_map)
+		{ _host_lookup_map = new_map; }
+		std::vector<ip_port_pair>&				get_implicit_port_ip_pairs()
+		{ return _implicit_port_ip_pairs; }
 };

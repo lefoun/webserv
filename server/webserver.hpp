@@ -40,7 +40,8 @@ typedef struct sockaddr_in sockaddr_in_t;
 typedef std::vector<SockComm>::iterator sock_com_it_t; 
 
 bool	parse_config_file(const std::string& file_name,
-							std::vector<Server>& servers);
+							std::vector<Server>& servers,
+							std::map<std::string, std::string>& host_ip_lookup);
 
 
 typedef struct request
@@ -49,6 +50,8 @@ typedef struct request
 	std::string	target;
 	std::string	host;
 	std::string	connection;
+	uint32_t	ip;
+	uint16_t	port;
 
 } request_t;
 
