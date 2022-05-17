@@ -1,4 +1,6 @@
 #include "webserver.hpp"
+#include <sys/wait.h>
+#include <sstream>
 #include "colors.hpp"
 
 
@@ -31,6 +33,16 @@ void	read_buf(char buffer[], int size = 0)
 	}
 }
 
+void	parse_target_arguments(request_t& request)
+{
+	size_t pos = request.target.find('?', 0);	
+	if (pos == std::string::npos)
+		return ;
+	request.args = request.target.substr(pos + 1, std::string::npos);
+	std::string tmp = request.target.substr(0, pos);
+	request.target = tmp;
+}
+
 void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
 {
 	char tmp;
@@ -60,6 +72,7 @@ void	parse_request_header(const char buffer[], request_t& request)
 	
 	check_char_in_stream(' ', ss);
 	ss >> request.target;
+	parse_target_arguments(request);
 	check_char_in_stream(' ', ss);
 	ss >> tmp;
 	if (tmp != "HTTP/1.1")
@@ -138,9 +151,41 @@ static bool	is_ip_address(const std::string &ip_str)
 // 	}
 // }
 
-Server*	get_server_associated_with_request(std::vector<Server>& servers,
-											const SockComm& socket,
-											const char buffer[])
+void	get_cgi_response(request_t* request, std::string& response)
+{
+	pid_t child_pid = fork();
+	extern char **environ;
+
+	if (child_pid < 0)
+	{
+		std::cout << "Failed to create a new process\n";
+		return ;
+	}
+	if (child_pid == 0) /* Child process */
+	{
+		setenv("QUERY_STRING", request->args.c_str(), 1);
+		execve("./cgi_test.py", NULL, environ);
+		std::cout << "Executed process CGI TEST\n";
+		exit(0);
+	}
+	else /* parent */
+	{
+		wait(NULL);
+		std::ifstream response_file("cgi_serv_communication_file.txt");
+		if (response_file.fail())
+			throw std::runtime_error("Failed to send a response from CGI");
+		std::stringstream tmp;
+		tmp << response_file.rdbuf();		
+		std::string	header_response = "HTTP/1.1 200 OK\nContent-Type:"
+										" text/html\nContent-Length: ";
+		response.append(header_response);
+		response.append(SSTR(tmp.str().size()));
+		response.append("\n\n");
+		response.append(tmp.str());
+	}
+}
+
+request_t*	get_parsed_request(const char buffer[])
 {
 	/* check request
 	 * HOSTNAME:PORT
@@ -148,8 +193,33 @@ Server*	get_server_associated_with_request(std::vector<Server>& servers,
 	 * IP
 	 * server_name
 	*/
-	request_t	request;
-	parse_request_header(buffer, request);
+	request_t	*request = new request_t;
+	parse_request_header(buffer, *request);
+	return request;
+}
+
+void	send_response(request_t* request, const int& socket_fd,
+						const std::string& static_response)
+{
+	std::string response;
+	if (request->method == "GET" && !request->args.empty()
+		/*&& request->target.find_last_of(".py") != std::string::npos*/)
+	{
+		std::cout << GREEN "Calling CGI Python\n" RESET;
+		get_cgi_response(request, response);
+	}
+	else
+		response = static_response;
+	std::cout << response << std::endl;
+	if (send(socket_fd, response.c_str(), response.length(), 0) < 0)
+		throw std::runtime_error(
+			"Failed to send data to socket " + SSTR(socket_fd));
+}
+
+Server*	get_server_associated_with_request(std::vector<Server>& servers,
+											const SockComm& socket,
+											const char buffer[])
+{
 
 	for (size_t i = 0; i < servers.size(); ++i)
 	{
@@ -193,11 +263,17 @@ int main()
 	char				buffer[BUFFER_SIZE + 1];
 	std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
 										" text/html\nContent-Length: ";
-	std::string				follow_up_rsp = 
-										"\n\n<html><header>Response form "
-										"Serv</header><body><h1>Hello World"
-										"</h1></body></html>";
-	serv_response.append(SSTR(serv_response.size()));
+	// std::string				follow_up_rsp = 
+	// 									"\n\n<html><header>Response form "
+	// 									"Serv</header><body><h1>Hello World"
+	// 									"</h1></body></html>";
+	std::ifstream html_form("form.html");
+	std::stringstream tmp_ss; 
+	tmp_ss << html_form.rdbuf();
+	std::string follow_up_rsp = "\n\n" + tmp_ss.str();
+	// std::cout << "This is follow_up " << follow_up_rsp << "\nand size "
+	// 		<< serv_response.size() <<  std::endl;
+	serv_response.append(SSTR(follow_up_rsp.size()));
 	serv_response.append(follow_up_rsp);
 
 	std::string response_str(serv_response.c_str());
@@ -226,7 +302,10 @@ int main()
 
 		// accept incoming connections
 		if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
+		{
+			perror("failed select\n"); 
 			throw std::runtime_error("Call to select() failed");
+		}
 		
 		for (size_t i = 0; i <= fd_max_nb; ++i)
 		{
@@ -268,8 +347,6 @@ int main()
 						communication_sockets.erase(it);	
 						FD_CLR(i, &master_socket_list);
 					}
-					else if (nb_bytes > BUFFER_SIZE)
-						send_response();
 					else
 					{
 						std::cout << BLUE "Received data from client " << i
@@ -280,11 +357,11 @@ int main()
 						if (it->get_server() == NULL)
 							Server* serv = get_server_associated_with_request(
 								servers, *it, buffer);
-						if (send(i, 
-							serv_response.c_str(),
-							serv_response.length(), 0) < 0)
-							throw std::runtime_error(
-								"Failed to send data to socket " + SSTR(i));
+						request_t *request = get_parsed_request(buffer);
+						std::cout << BLUE "Sending data To client " << i
+							<< "\n"RESET;
+						send_response(request, it->get_socket_fd(), serv_response);
+						FD_CLR(it->get_socket_fd(), &master_socket_list);
 						// void	serv->process_request(buffer);
 					}
 				}

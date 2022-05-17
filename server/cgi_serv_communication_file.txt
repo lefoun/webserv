@@ -1,0 +1,8 @@
+<html>
+<head>
+<title>Python CGI Program</title>
+</head>
+<body>
+<h2>Hello hello world </h2> 
+</body>
+</html>

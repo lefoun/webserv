@@ -549,6 +549,7 @@ static void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_look
 			host_ip_lookup.insert(std::make_pair(host_name, ip_addr));
 		}
 	}
+	hosts_file.close();
 }
 
 void	enriche_configuration(std::vector<Server>& servers, std::map<std::string,
@@ -622,6 +623,7 @@ bool	parse_config_file(const std::string& file_name,
 	if (servers.empty())
 		throw std::invalid_argument("Empty config file");
 	enriche_configuration(servers, host_ip_lookup);
+	config_file.close();
 	return true;	
 }
 

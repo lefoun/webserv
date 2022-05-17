@@ -47,6 +47,7 @@ bool	parse_config_file(const std::string& file_name,
 typedef struct request
 {
 	std::string	method;
+	std::string	args;
 	std::string	target;
 	std::string	host;
 	std::string	connection;
