@@ -174,13 +174,8 @@ class SockListen : public Socket
 	/* Class Getters : Return const because we don't need to modify the values*/
 		SockComm*			accept_connection()
 		{
-<<<<<<< HEAD
 			SockComm	*socket_comm = new SockComm(_port, _ip);
 			int new_socket = accept(_socket_fd, 
-=======
-			SockComm	*socket_comm = new SockComm(this->get_port(), this->get_ip());
-			int new_socket = accept(this->get_socket_fd(),
->>>>>>> 77736c695026908fdccff3a5e98bc266ba179aee
 									(struct sockaddr*)&(socket_comm->\
 									get_sockaddr_in()),
 									&socket_comm->get_sockaddr_len());
