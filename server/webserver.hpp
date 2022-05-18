@@ -54,7 +54,7 @@ typedef struct request
 	std::string	target;
 	std::string	host;
 	std::string	connection;
-	uint32_t	ip;
+	in_addr_t	ip;
 	uint16_t	port;
 
 } request_t;
@@ -151,13 +151,13 @@ class SockListen : public Socket
 
 		SockListen(const SockListen& copy)
 		{
-			std::cout << RED "Calling copy operator of SockListen\n" RESET;
+			// std::cout << RED "Calling copy operator of SockListen\n" RESET;
 			*this = copy;	
 		}
 
 		SockListen& operator=(const SockListen& copy)
 		{
-			std::cout << RED "Calling assignment operator of SockListen\n" RESET;
+			// std::cout << RED "Calling assignment operator of SockListen\n" RESET;
 			this->_port = copy.get_port();
 			this->_ip = copy.get_ip();
 			this->_socket_fd = copy.get_socket_fd();
@@ -167,7 +167,7 @@ class SockListen : public Socket
 		}
 		~SockListen()
 		{
-			std::cout << "CLOSED SOCKET " << _socket_fd << '\n';
+			// std::cout << "CLOSED SOCKET " << _socket_fd << '\n';
 			// close(_socket_fd);
 		}
 
@@ -192,7 +192,7 @@ class SockListen : public Socket
 		void			bind_socket()
 		{
 			if (bind(get_socket_fd(),
-					(struct sockaddr *)&_socket_addr, get_sockaddr_len()) < 0)
+					(const struct sockaddr *)&_socket_addr, get_sockaddr_len()) < 0)
 				throw std::runtime_error(
 					"Socket " + SSTR(get_socket_fd()) + "Failed to bind");
 		}
@@ -214,7 +214,7 @@ class SockListen : public Socket
 			/* Init sockaddr_in */
 			memset(&_socket_addr.sin_zero, 0, sizeof(_socket_addr.sin_zero));
 			_socket_addr.sin_family = AF_INET;
-			_socket_addr.sin_addr.s_addr = ip;
+			_socket_addr.sin_addr.s_addr = htonl(ip);
 			_socket_addr.sin_port = htons(_port);
 
 			/* Open socket */

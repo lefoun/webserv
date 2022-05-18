@@ -2,6 +2,7 @@
 
 
 #define BUFFER_SIZE 4096
+#define INVALID 0
 
 	/*
 	* sin_family = Protocol for this socket. (internet in this case)
@@ -9,6 +10,47 @@
 	* INADDR_ANY = let the os decide
 	* htons converts host to network short and htonl to long.
 	*/
+
+in_addr_t	ip_to_number(const char * ip)
+{
+    /* The return value. */
+    in_addr_t	v = 0;
+    /* The count of the number of bytes processed. */
+    int i;
+    /* A pointer to the next digit to process. */
+    const char * start;
+
+    start = ip;
+    for (i = 0; i < 4; i++) {
+        /* The digit being processed. */
+        char c;
+        /* The value of this byte. */
+        int n = 0;
+        while (1) {
+            c = * start;
+            start++;
+            if (c >= '0' && c <= '9') {
+                n *= 10;
+                n += c - '0';
+            }
+            /* We insist on stopping at "." if we are still parsing
+               the first, second, or third numbers. If we have reached
+               the end of the numbers, we will allow any character. */
+            else if ((i < 3 && c == '.') || i == 3) {
+                break;
+            }
+            else {
+                return INVALID;
+            }
+        }
+        if (n >= 256) {
+            return INVALID;
+        }
+        v *= 256;
+        v += n;
+    }
+    return v;
+}
 
 void	send_response()
 {
@@ -199,8 +241,7 @@ request_t*	get_parsed_request(const char buffer[])
 	return request;
 }
 
-void	send_response(request_t* request, const int& socket_fd,
-						const std::string& static_response)
+void	send_response(request_t* request, const int& socket_fd)
 {
 	std::string response;
 	if (request->method == "GET" && !request->args.empty()
@@ -210,7 +251,22 @@ void	send_response(request_t* request, const int& socket_fd,
 		get_cgi_response(request, response);
 	}
 	else
-		response = static_response;
+	{
+		std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
+											" text/html\nContent-Length: ";
+		std::ifstream html_form("form.html");
+		std::stringstream tmp_ss; 
+		tmp_ss << html_form.rdbuf();
+		serv_response.append(SSTR(tmp_ss.str().size()));
+		std::string follow_up_rsp = "\n\n" + tmp_ss.str();
+		// std::cout << "This is follow_up " << follow_up_rsp << "\nand size "
+		// 		<< serv_response.size() <<  std::endl;
+		serv_response.append("\nConnection: keep-alive\n");
+		serv_response.append(follow_up_rsp);
+
+		html_form.close();
+		response = serv_response; 
+	}
 	std::cout << response << std::endl;
 	if (send(socket_fd, response.c_str(), response.length(), 0) < 0)
 		throw std::runtime_error(
@@ -245,49 +301,86 @@ int get_socket_index(const std::vector<T>& vec, int socket)
 	return -1;
 }
 
-int main()
+template <typename U>
+bool	is_socket_already_open(const U vect, uint16_t port, in_addr_t ip)
 {
-	std::vector<Server>					servers;
-	std::map<std::string, std::string>	host_ip_lookup;
-	SockComm*							new_connect;
-	if (!parse_config_file("../parser/server_config.conf", servers, 
-		host_ip_lookup))
-		return 1;
-	std::cout << "File is good\n\nStarting WebServer\n";
+	for (size_t i = 0; i < vect.size(); ++i)
+	{
+		if (port == vect[i].get_port() && ip == vect[i].get_ip())
+			return true;
+	}
+	return false;
+}
 
-	fd_set				master_socket_list, copy_socket_list;
-	const int 			PORT = 42420;
+void	open_listening_sockets(std::vector<SockListen>& sockets,
+								std::vector<Server>& servers)
+{
+	/* find listening ports */
+	for (std::vector<Server>::iterator it = servers.begin();
+			it != servers.end(); ++it)
+	{
+		for (std::vector<uint16_t>::iterator it_port = 
+				it->get_listening_ports().begin();
+				it_port != it->get_listening_ports().end(); ++it_port)
+		{
+			if (!is_socket_already_open(sockets, *it_port, INADDR_ANY))
+			{
+				std::cout << BLUE "Opening Socket PORT: " << *it_port
+							<< " IP: ALL\n" RESET;
+				sockets.push_back(SockListen(*it_port, INADDR_ANY));
+			}
+		}
+	}
+
+	/* find listening ips with default port = 80*/
+	for (std::vector<Server>::iterator it = servers.begin();
+			it != servers.end(); ++it)
+	{
+		for (std::vector<std::string>::iterator it_ip = 
+				it->get_listening_ips().begin();
+				it_ip!= it->get_listening_ips().end(); ++it_ip)
+		{
+			if (!is_socket_already_open(sockets, 8000,
+				ip_to_number(it_ip->c_str())))
+			{
+				std::cout << BLUE "Opening Socket PORT: 8000"
+							<< " IP: " << *it_ip << "\n" RESET;
+				sockets.push_back(SockListen(8000, ip_to_number(it_ip->c_str())));
+			}
+		}
+	}
+
+	/* find listening pairs Ip:port */
+	for (std::vector<Server>::iterator it = servers.begin();
+			it != servers.end(); ++it)
+	{
+		for (std::vector<Server::ip_port_pair>::iterator it_pair = 
+				it->get_ip_port_pairs().begin();
+				it_pair!= it->get_ip_port_pairs().end(); ++it_pair)
+		{
+			if (it_pair->second != 0 && !is_socket_already_open(sockets, it_pair->second,
+				ip_to_number(it_pair->first.c_str())))
+			{
+				std::cout << BLUE "Opening Socket pair PORT: " << it_pair->second
+							<< " IP: " << it_pair->first << "\n" RESET;
+				sockets.push_back(SockListen(it_pair->second,
+									ip_to_number(it_pair->first.c_str())));
+			}
+		}
+	}
+}
+
+void	launch_server(std::vector<Server>& servers,
+						std::map<std::string, std::string>& host_ip_lookup)
+{
+	SockComm*			new_connect;
 	std::vector<SockListen> listen_sockets;
 	std::vector<SockComm> communication_sockets;
+	fd_set				master_socket_list, copy_socket_list;
 	char				buffer[BUFFER_SIZE + 1];
-	std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
-										" text/html\nContent-Length: ";
-	// std::string				follow_up_rsp = 
-	// 									"\n\n<html><header>Response form "
-	// 									"Serv</header><body><h1>Hello World"
-	// 									"</h1></body></html>";
-	std::ifstream html_form("form.html");
-	std::stringstream tmp_ss; 
-	tmp_ss << html_form.rdbuf();
-	serv_response.append(SSTR(tmp_ss.str().size()));
-	std::string follow_up_rsp = "\n\n" + tmp_ss.str();
-	// std::cout << "This is follow_up " << follow_up_rsp << "\nand size "
-	// 		<< serv_response.size() <<  std::endl;
-	serv_response.append("\nConnection: keep-alive\n");
-	serv_response.append(follow_up_rsp);
-
-	html_form.close();
-	std::string response_str(serv_response.c_str());
-
-	// SockListen socket_liste(PORT, INADDR_ANY);
-	// const uint16_t port2 = 8000;
-	// SockListen socket_liste2(port2, INADDR_ANY);
-	// listen_sockets.push_back(socket_liste);
-	// listen_sockets.push_back(socket_liste2);
-	listen_sockets.push_back(SockListen(PORT, INADDR_ANY));
-	listen_sockets.push_back(SockListen(8000, INADDR_ANY));
 
 	// creates the socket
+	open_listening_sockets(listen_sockets, servers);
 	FD_ZERO(&master_socket_list);
 	FD_ZERO(&copy_socket_list);
 	for (std::vector<SockListen>::iterator it = listen_sockets.begin();
@@ -297,7 +390,9 @@ int main()
 		it->listen_socket();
 		FD_SET(it->get_socket_fd(), &master_socket_list);
 		std::cout << BLUE "Listening on socket " << it->get_socket_fd()
-			<< "\n" RESET;
+				<< " and port "<< it->get_port()
+				<< " and ip " << inet_ntoa(it->get_sockaddr_in().sin_addr)
+				<< "\n" RESET;
 	}
 	int	fd_max_nb = listen_sockets.back().get_socket_fd();
 	while (true)
@@ -371,18 +466,23 @@ int main()
 						request_t *request = get_parsed_request(buffer);
 						std::cout << BLUE "Sending data To client " << i
 							<< "\n"RESET;
-						send_response(request, it->get_socket_fd(), serv_response);
-						// int sent = send(it->get_socket_fd(), "lolizo", 6, 0);
-						// std::cout << "Sent " << sent << " bytes\n";
-
-						// it->close_socket();
-						// FD_CLR(i, &master_socket_list);
-						// void	serv->process_request(buffer);
+						send_response(request, i);
 					}
 				}
 			}
 		}
 	}
+}
+
+int main()
+{
+	std::vector<Server>					servers;
+	std::map<std::string, std::string>	host_ip_lookup;
+	if (!parse_config_file("../parser/server_config.conf", servers, 
+		host_ip_lookup))
+		return 1;
+	std::cout << "File is good\n\nStarting WebServer\n";
+	launch_server(servers, host_ip_lookup);
 	return 0;
 }
 
