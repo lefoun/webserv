@@ -29,6 +29,7 @@
 #include <unordered_map>
 
 #include "../parser/Server.hpp"
+#include "colors.hpp"
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -88,10 +89,28 @@ class SockComm : public Socket
 			_server = server;
 		}
 
+		SockComm(const SockComm& copy)
+		{
+			*this = copy;
+			std::cout << RED "Callign copy constructor\n" RESET;
+		}
+
+		SockComm&	operator=(const SockComm& cop)
+		{
+			std::cout << RED "Calling assignment operator\n" RESET;
+			this->_port = cop.get_port();
+			this->_ip = cop.get_ip();
+			this->_socket_fd = cop.get_socket_fd();
+			this->_sockaddr_len = cop._sockaddr_len;
+			this->_socket_addr = cop._socket_addr;
+			return *this;
+		}
+
 		~SockComm()
 		{
-			std::cout << "closing socket comm " << get_socket_fd() << std::endl;
-			close(_socket_fd);
+			std::cout << RED "Calling Sock Com destructor\n" RESET<< std::endl;
+			// std::cout << "closing socket comm " << get_socket_fd() << std::endl;
+			// close(_socket_fd);
 		}
 
 		Server*		get_server() { return _server; }
@@ -137,8 +156,8 @@ class SockListen : public Socket
 	/* Class Getters : Return const because we don't need to modify the values*/
 		SockComm*			accept_connection()
 		{
-			SockComm	*socket_comm = new SockComm(this->get_port(), this->get_ip());
-			int new_socket = accept(this->get_socket_fd(), 
+			SockComm	*socket_comm = new SockComm(_port, _ip);
+			int new_socket = accept(_socket_fd, 
 									(struct sockaddr*)&(socket_comm->\
 									get_sockaddr_in()),
 									&socket_comm->get_sockaddr_len());

@@ -21,3 +21,4 @@ with open("cgi_serv_communication_file.txt", "w") as response_file:
     print(f"<h2>Hello {first_name} {last_name} </h2> ", file=response_file)
     print("</body>", file=response_file)
     print("</html>", file=response_file)
+exit(0)

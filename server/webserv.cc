@@ -13,6 +13,26 @@
 	* htons converts host to network short and htonl to long.
 	*/
 
+typedef struct sock_comm_list
+{
+	SockComm*	sock_com_ptr;
+	SockComm*	next;
+
+} sock_comm_list_t;
+
+// void	add_sock_to_list(sock_comm_list_t** head, SockComm* ptr)
+// {
+// 	if (!head)
+// 	{
+// 		head = ptr;
+// 		return ;
+// 	}
+// 	while (head->next != NULL)
+// 	{
+// 		head->
+// 	}
+// }
+
 void	send_response()
 {
 	std::cout << "413 Request(entity) too large\n";
@@ -154,7 +174,6 @@ static bool	is_ip_address(const std::string &ip_str)
 void	get_cgi_response(request_t* request, std::string& response)
 {
 	pid_t child_pid = fork();
-	extern char **environ;
 
 	if (child_pid < 0)
 	{
@@ -163,6 +182,7 @@ void	get_cgi_response(request_t* request, std::string& response)
 	}
 	if (child_pid == 0) /* Child process */
 	{
+		extern char **environ;
 		setenv("QUERY_STRING", request->args.c_str(), 1);
 		execve("./cgi_test.py", NULL, environ);
 		std::cout << "Executed process CGI TEST\n";
@@ -175,11 +195,13 @@ void	get_cgi_response(request_t* request, std::string& response)
 		if (response_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");
 		std::stringstream tmp;
-		tmp << response_file.rdbuf();		
+		tmp << response_file.rdbuf();
+		response_file.close();
 		std::string	header_response = "HTTP/1.1 200 OK\nContent-Type:"
 										" text/html\nContent-Length: ";
 		response.append(header_response);
 		response.append(SSTR(tmp.str().size()));
+		response.append("\nConnection: keep-alive\n");
 		response.append("\n\n");
 		response.append(tmp.str());
 	}
@@ -220,7 +242,6 @@ Server*	get_server_associated_with_request(std::vector<Server>& servers,
 											const SockComm& socket,
 											const char buffer[])
 {
-
 	for (size_t i = 0; i < servers.size(); ++i)
 	{
 		servers[i].get_ip_port_pairs();
@@ -249,6 +270,7 @@ int main()
 {
 	std::vector<Server>					servers;
 	std::map<std::string, std::string>	host_ip_lookup;
+	SockComm*							new_connect;
 	if (!parse_config_file("../parser/server_config.conf", servers, 
 		host_ip_lookup))
 		return 1;
@@ -257,8 +279,6 @@ int main()
 	fd_set				master_socket_list, copy_socket_list;
 	const int 			PORT = 42420;
 	std::vector<SockListen> listen_sockets;
-	SockListen socket_liste(PORT, INADDR_ANY);
-	listen_sockets.push_back(socket_liste);
 	std::vector<SockComm> communication_sockets;
 	char				buffer[BUFFER_SIZE + 1];
 	std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
@@ -274,9 +294,14 @@ int main()
 	// std::cout << "This is follow_up " << follow_up_rsp << "\nand size "
 	// 		<< serv_response.size() <<  std::endl;
 	serv_response.append(SSTR(follow_up_rsp.size()));
+	serv_response.append("\nConnection: keep-alive\n");
 	serv_response.append(follow_up_rsp);
 
+	html_form.close();
 	std::string response_str(serv_response.c_str());
+
+	SockListen socket_liste(PORT, INADDR_ANY);
+	listen_sockets.push_back(socket_liste);
 
 	// creates the socket
 	FD_ZERO(&master_socket_list);
@@ -316,12 +341,13 @@ int main()
 				{
 					try 
 					{
-						SockComm *new_conect = listen_sockets[index].\
+						new_connect = listen_sockets[index].\
 													accept_connection();
-						communication_sockets.push_back(*new_conect);
-						FD_SET(new_conect->get_socket_fd(), &master_socket_list);
-						if (new_conect->get_socket_fd() > fd_max_nb)
-							fd_max_nb = new_conect->get_socket_fd();
+						std::cout << "Before closing any socket\n";
+						communication_sockets.push_back(*new_connect);
+						FD_SET(new_connect->get_socket_fd(), &master_socket_list);
+						if (new_connect->get_socket_fd() > fd_max_nb)
+							fd_max_nb = new_connect->get_socket_fd();
 						std::cout << 
 							GREEN "Server Accepted new connection on socket "
 							<< listen_sockets[index].get_port() << "\n"RESET;
@@ -345,6 +371,7 @@ int main()
 						sock_com_it_t it = communication_sockets.begin()
 								+ get_socket_index(communication_sockets, i);
 						communication_sockets.erase(it);	
+						it->close_socket();
 						FD_CLR(i, &master_socket_list);
 					}
 					else
@@ -361,7 +388,6 @@ int main()
 						std::cout << BLUE "Sending data To client " << i
 							<< "\n"RESET;
 						send_response(request, it->get_socket_fd(), serv_response);
-						FD_CLR(it->get_socket_fd(), &master_socket_list);
 						// void	serv->process_request(buffer);
 					}
 				}
