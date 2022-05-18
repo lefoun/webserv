@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <unistd.h>
+#include <sys/wait.h>
 
 /* Socket | Inet libraries to enable communication */
 #include <sys/socket.h>
@@ -26,7 +27,6 @@
 #include <algorithm>
 #include <list>
 #include <utility>
-#include <unordered_map>
 
 #include "../parser/Server.hpp"
 #include "colors.hpp"

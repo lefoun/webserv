@@ -1,7 +1,4 @@
 #include "webserver.hpp"
-#include <sys/wait.h>
-#include <sstream>
-#include "colors.hpp"
 
 
 #define BUFFER_SIZE 4096
@@ -12,26 +9,6 @@
 	* INADDR_ANY = let the os decide
 	* htons converts host to network short and htonl to long.
 	*/
-
-typedef struct sock_comm_list
-{
-	SockComm*	sock_com_ptr;
-	SockComm*	next;
-
-} sock_comm_list_t;
-
-// void	add_sock_to_list(sock_comm_list_t** head, SockComm* ptr)
-// {
-// 	if (!head)
-// 	{
-// 		head = ptr;
-// 		return ;
-// 	}
-// 	while (head->next != NULL)
-// 	{
-// 		head->
-// 	}
-// }
 
 void	send_response()
 {
@@ -290,10 +267,10 @@ int main()
 	std::ifstream html_form("form.html");
 	std::stringstream tmp_ss; 
 	tmp_ss << html_form.rdbuf();
+	serv_response.append(SSTR(tmp_ss.str().size()));
 	std::string follow_up_rsp = "\n\n" + tmp_ss.str();
 	// std::cout << "This is follow_up " << follow_up_rsp << "\nand size "
 	// 		<< serv_response.size() <<  std::endl;
-	serv_response.append(SSTR(follow_up_rsp.size()));
 	serv_response.append("\nConnection: keep-alive\n");
 	serv_response.append(follow_up_rsp);
 
@@ -388,6 +365,11 @@ int main()
 						std::cout << BLUE "Sending data To client " << i
 							<< "\n"RESET;
 						send_response(request, it->get_socket_fd(), serv_response);
+						// int sent = send(it->get_socket_fd(), "lolizo", 6, 0);
+						// std::cout << "Sent " << sent << " bytes\n";
+
+						// it->close_socket();
+						// FD_CLR(i, &master_socket_list);
 						// void	serv->process_request(buffer);
 					}
 				}
