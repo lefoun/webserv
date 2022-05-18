@@ -151,6 +151,8 @@ static bool	is_ip_address(const std::string &ip_str)
 void	get_cgi_response(request_t* request, std::string& response)
 {
 	pid_t child_pid = fork();
+	char	*arg[1];
+	arg[0] = NULL;
 
 	if (child_pid < 0)
 	{
@@ -161,7 +163,7 @@ void	get_cgi_response(request_t* request, std::string& response)
 	{
 		extern char **environ;
 		setenv("QUERY_STRING", request->args.c_str(), 1);
-		execve("./cgi_test.py", NULL, environ);
+		execve("./cgi_test.py", arg, environ);
 		std::cout << "Executed process CGI TEST\n";
 		exit(0);
 	}
