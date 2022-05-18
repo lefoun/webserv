@@ -133,7 +133,7 @@ class SockComm : public Socket
 class SockListen : public Socket
 {
 	public:
-		SockListen(const uint16_t port = 80, const std::string& ip = "0.0.0.0")
+		SockListen(const uint16_t port = 80, const std::string& ip = "0.0.0.0") : Socket()
 		{
 			const in_addr_t ip_int = inet_addr(ip.c_str());
 			if (ip_int == (in_addr_t)(-1))
@@ -142,15 +142,31 @@ class SockListen : public Socket
 			_init_socket(port, ip_int);
 			std::cout << "Socket " << _socket_fd << "created successfuly\n";
 		}
-		SockListen(const uint16_t port = 80, const in_addr_t ip = INADDR_ANY)
+		SockListen(const uint16_t port = 80, const in_addr_t ip = INADDR_ANY) : Socket()
 		{
 			_init_socket(port, ip);
 		}
 
+		SockListen(const SockListen& copy)
+		{
+			std::cout << RED "Calling copy operator of SockListen\n" RESET;
+			*this = copy;	
+		}
+
+		SockListen& operator=(const SockListen& copy)
+		{
+			std::cout << RED "Calling assignment operator of SockListen\n" RESET;
+			this->_port = copy.get_port();
+			this->_ip = copy.get_ip();
+			this->_socket_fd = copy.get_socket_fd();
+			this->_sockaddr_len = copy._sockaddr_len;
+			this->_socket_addr = copy._socket_addr;
+			return *this;
+		}
 		~SockListen()
 		{
 			std::cout << "CLOSED SOCKET " << _socket_fd << '\n';
-			close(_socket_fd);
+			// close(_socket_fd);
 		}
 
 	/* Class Getters : Return const because we don't need to modify the values*/
@@ -176,7 +192,7 @@ class SockListen : public Socket
 			if (bind(get_socket_fd(),
 					(struct sockaddr *)&_socket_addr, get_sockaddr_len()) < 0)
 				throw std::runtime_error(
-					"Socket " + SSTR(get_socket_fd()) + "Failed to open");
+					"Socket " + SSTR(get_socket_fd()) + "Failed to bind");
 		}
 		void			listen_socket()
 		{

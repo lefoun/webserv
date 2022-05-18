@@ -279,8 +279,13 @@ int main()
 	html_form.close();
 	std::string response_str(serv_response.c_str());
 
-	SockListen socket_liste(PORT, INADDR_ANY);
-	listen_sockets.push_back(socket_liste);
+	// SockListen socket_liste(PORT, INADDR_ANY);
+	// const uint16_t port2 = 8000;
+	// SockListen socket_liste2(port2, INADDR_ANY);
+	// listen_sockets.push_back(socket_liste);
+	// listen_sockets.push_back(socket_liste2);
+	listen_sockets.push_back(SockListen(PORT, INADDR_ANY));
+	listen_sockets.push_back(SockListen(8000, INADDR_ANY));
 
 	// creates the socket
 	FD_ZERO(&master_socket_list);
