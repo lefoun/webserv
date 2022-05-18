@@ -66,7 +66,7 @@ void	parse_request_header(const char buffer[], request_t& request)
 	if (!(request.method == "GET" || request.method == "POST"
 		|| request.method == "DELETE"))
 		throw std::invalid_argument("Invalid Method");
-	
+
 	check_char_in_stream(' ', ss);
 	ss >> request.target;
 	parse_target_arguments(request);
@@ -77,7 +77,7 @@ void	parse_request_header(const char buffer[], request_t& request)
 	check_char_in_stream('\r', ss);
 	check_char_in_stream('\n', ss);
 	ss >> tmp;
-	if (tmp != "Host:")	
+	if (tmp != "Host:")
 		throw std::invalid_argument("Expected host");
 	check_char_in_stream(' ', ss);
 	ss >> request.host;
@@ -249,8 +249,12 @@ int main()
 {
 	std::vector<Server>					servers;
 	std::map<std::string, std::string>	host_ip_lookup;
+<<<<<<< HEAD
 	SockComm*							new_connect;
 	if (!parse_config_file("../parser/server_config.conf", servers, 
+=======
+	if (!parse_config_file("../parser/server_config.conf", servers,
+>>>>>>> 77736c695026908fdccff3a5e98bc266ba179aee
 		host_ip_lookup))
 		return 1;
 	std::cout << "File is good\n\nStarting WebServer\n";
@@ -262,6 +266,7 @@ int main()
 	char				buffer[BUFFER_SIZE + 1];
 	std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
 										" text/html\nContent-Length: ";
+<<<<<<< HEAD
 	// std::string				follow_up_rsp = 
 	// 									"\n\n<html><header>Response form "
 	// 									"Serv</header><body><h1>Hello World"
@@ -274,6 +279,13 @@ int main()
 	// std::cout << "This is follow_up " << follow_up_rsp << "\nand size "
 	// 		<< serv_response.size() <<  std::endl;
 	serv_response.append("\nConnection: keep-alive\n");
+=======
+	std::string				follow_up_rsp =
+										"\n\n<html><header>Response form "
+										"Serv</header><body><h1>Hello World"
+										"</h1></body></html>";
+	serv_response.append(SSTR(serv_response.size()));
+>>>>>>> 77736c695026908fdccff3a5e98bc266ba179aee
 	serv_response.append(follow_up_rsp);
 
 	html_form.close();
@@ -296,7 +308,7 @@ int main()
 		it->bind_socket();
 		it->listen_socket();
 		FD_SET(it->get_socket_fd(), &master_socket_list);
-		std::cout << BLUE "Listening on socket " << it->get_socket_fd() 
+		std::cout << BLUE "Listening on socket " << it->get_socket_fd()
 			<< "\n" RESET;
 	}
 	int	fd_max_nb = listen_sockets.back().get_socket_fd();
@@ -306,16 +318,20 @@ int main()
 						<< "======\n" RESET;
 		/* Copy our original socket list into copy because Select() will erase
 		 * its contents and leave only read-ready sockets
-		 */ 
-		copy_socket_list = master_socket_list; 
+		 */
+		copy_socket_list = master_socket_list;
 
 		// accept incoming connections
 		if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
 		{
 			perror("failed select\n"); 
 			throw std::runtime_error("Call to select() failed");
+<<<<<<< HEAD
 		}
 		
+=======
+
+>>>>>>> 77736c695026908fdccff3a5e98bc266ba179aee
 		for (size_t i = 0; i <= fd_max_nb; ++i)
 		{
 			if (FD_ISSET(i, &copy_socket_list))
@@ -323,16 +339,24 @@ int main()
 				int index = get_socket_index(listen_sockets, i);
 				if (index != -1)
 				{
-					try 
+					try
 					{
 						new_connect = listen_sockets[index].\
 													accept_connection();
+<<<<<<< HEAD
 						std::cout << "Before closing any socket\n";
 						communication_sockets.push_back(*new_connect);
 						FD_SET(new_connect->get_socket_fd(), &master_socket_list);
 						if (new_connect->get_socket_fd() > fd_max_nb)
 							fd_max_nb = new_connect->get_socket_fd();
 						std::cout << 
+=======
+						communication_sockets.push_back(*new_conect);
+						FD_SET(new_conect->get_socket_fd(), &master_socket_list);
+						if (new_conect->get_socket_fd() > fd_max_nb)
+							fd_max_nb = new_conect->get_socket_fd();
+						std::cout <<
+>>>>>>> 77736c695026908fdccff3a5e98bc266ba179aee
 							GREEN "Server Accepted new connection on socket "
 							<< listen_sockets[index].get_port() << "\n"RESET;
 					}
@@ -354,8 +378,12 @@ int main()
 							perror("Recv failed");
 						sock_com_it_t it = communication_sockets.begin()
 								+ get_socket_index(communication_sockets, i);
+<<<<<<< HEAD
 						communication_sockets.erase(it);	
 						it->close_socket();
+=======
+						communication_sockets.erase(it);
+>>>>>>> 77736c695026908fdccff3a5e98bc266ba179aee
 						FD_CLR(i, &master_socket_list);
 					}
 					else
@@ -368,6 +396,7 @@ int main()
 						if (it->get_server() == NULL)
 							Server* serv = get_server_associated_with_request(
 								servers, *it, buffer);
+<<<<<<< HEAD
 						request_t *request = get_parsed_request(buffer);
 						std::cout << BLUE "Sending data To client " << i
 							<< "\n"RESET;
@@ -377,6 +406,13 @@ int main()
 
 						// it->close_socket();
 						// FD_CLR(i, &master_socket_list);
+=======
+						if (send(i,
+							serv_response.c_str(),
+							serv_response.length(), 0) < 0)
+							throw std::runtime_error(
+								"Failed to send data to socket " + SSTR(i));
+>>>>>>> 77736c695026908fdccff3a5e98bc266ba179aee
 						// void	serv->process_request(buffer);
 					}
 				}
