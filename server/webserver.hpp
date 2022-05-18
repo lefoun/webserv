@@ -26,9 +26,10 @@
 #include <algorithm>
 #include <list>
 #include <utility>
-#include <unordered_map>
 
 #include "../parser/Server.hpp"
+
+#include "colors.hpp"
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -37,7 +38,7 @@ class Socket;
 class SockComm;
 
 typedef struct sockaddr_in sockaddr_in_t;
-typedef std::vector<SockComm>::iterator sock_com_it_t; 
+typedef std::vector<SockComm>::iterator sock_com_it_t;
 
 bool	parse_config_file(const std::string& file_name,
 							std::vector<Server>& servers,
@@ -137,13 +138,13 @@ class SockListen : public Socket
 		SockComm*			accept_connection()
 		{
 			SockComm	*socket_comm = new SockComm(this->get_port(), this->get_ip());
-			int new_socket = accept(this->get_socket_fd(), 
+			int new_socket = accept(this->get_socket_fd(),
 									(struct sockaddr*)&(socket_comm->\
 									get_sockaddr_in()),
 									&socket_comm->get_sockaddr_len());
 			if (new_socket < 0)
 				throw std::runtime_error(
-					"Couldn't accept new connection from socket " 
+					"Couldn't accept new connection from socket "
 					+ SSTR(get_socket_fd()));
 			socket_comm->set_socket_fd(new_socket);
 			socket_comm->init_sock_com();
@@ -165,7 +166,7 @@ class SockListen : public Socket
 					"Socket " + SSTR(get_socket_fd()) + "Failed to listen");
 
 		}
-	
+
 		int	close_socket() { return close(get_socket_fd()); }
 
 	private:
@@ -205,7 +206,7 @@ class SockListen : public Socket
  * Créer les sockets et les binds à des ports. (Si un port n'a pas d'ip assignée)
  * - alors ouvrir le port et le bind a ADDR_ANY sinon si le port a une ip assignée
  * - mais a aussi un listen sans aucune ip assignée alors ouvrir le port et le bind
- * - a ADDR_ANY sinon si il n y a qu'une adresse ip assignée à une ip alors 
+ * - a ADDR_ANY sinon si il n y a qu'une adresse ip assignée à une ip alors
  * - ouvrir le port et le bind à l'adresse assignée sinon si qu'une adresse
  * - ip est spécifiée alors la bind au port 80.
  * exemples des trois cas cités ci-dessus:
@@ -218,22 +219,22 @@ class SockListen : public Socket
 /* Règles d'ouverture de port
  * si il n y a que des pairs il n'ouvre que des pairs
  * si il y a des ip seules il ouvre ip:80
- * 
+ *
  ****************************** NOUS ****************************
  * prendre les ports les ouvrir (check si le port est ouvert ouppa)
- * 
+ *
 */
 /*
  * CREATE SERVER
- * créer une socket par 
+ * créer une socket par
  * créer une sock_addr_in
- * 
+ *
 
 */
 
 /*
  * READ FROM SERVER *
  * on reçoit une requête :
- * case 1: Les 
+ * case 1: Les
 
 */
