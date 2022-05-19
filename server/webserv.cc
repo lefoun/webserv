@@ -24,10 +24,11 @@ void	get_cgi_response(request_t* request, std::string& response)
 		std::cout << "Failed to create a new process\n";
 		return ;
 	}
+	unsetenv("QUERY_STRING");
+	setenv("QUERY_STRING", request->args.c_str(), 1);
 	if (child_pid == 0) /* Child process */
 	{
 		extern char **environ;
-		setenv("QUERY_STRING", request->args.c_str(), 1);
 		execve("../cgi-bin/cgi_test.py", arg, environ);
 		std::cout << "Executed process CGI TEST\n";
 		exit(0);
@@ -54,28 +55,57 @@ void	get_cgi_response(request_t* request, std::string& response)
 void	send_response(request_t* request, const int& socket_fd)
 {
 	std::string response;
+	std::string				file_extension = 
+		request->target.substr(request->target.find_last_of(".") + 1);
 
-	if (request->method == "GET" && !request->args.empty() && request->target.find_last_of(".py") != std::string::npos)
+	if (request->method == "GET" && file_extension == "py")
 	{
 		std::cout << GREEN "Calling CGI Python\n" RESET;
 		get_cgi_response(request, response);
 	}
 	else
 	{
-		std::string				serv_response = "HTTP/1.1 200 OK\nContent-Type:"
-											" text/html\nContent-Length: ";
-		std::ifstream html_form("www/form.html");
-		if (html_form.fail())
-			throw std::runtime_error("Failed to open file form.html");
-		std::stringstream tmp_ss; 
-		tmp_ss << html_form.rdbuf();
-		serv_response.append(SSTR(tmp_ss.str().size()));
-		std::string follow_up_rsp = "\n\n" + tmp_ss.str();
-		serv_response.append("\nConnection: keep-alive\n");
+		std::string				serv_response = "HTTP/1.1 200 OK\r\nContent-Type:";
+		std::string				content_type = " text/html";
+		std::string				content_length = "\r\nContent-Length: ";
+		unsigned int			flags = std::ios::in;
+
+		std::cout << GREEN "This is file extension " << file_extension 
+			<< RESET << std::endl;
+		if (file_extension == "css")
+			content_type = " text/css";
+		else if (file_extension == "jpeg")
+			content_type = " image/jpeg";
+		else if (file_extension == "jpg")
+			content_type = " image/jpg";
+		else if (file_extension == "js")
+			content_type = " text/javascript";
+		else if (file_extension == "ico")
+			content_type = " image/png";
+		// else if (file_extension == "ico")
+		// 	content_type = " image/vnd.microsoft.icon";
+
+		if (content_type == " image/jpeg" || content_type == " image/jpg"
+			|| content_type == " image/vnd.microsoft.icon")
+		{
+			std::cout << "Modifying flags\n";
+			flags = std::ios::in | std::ios::binary;
+		}
+
+		std::ifstream file("www/" + request->target, flags);
+		if (file.fail())
+			throw std::runtime_error("Failed to open file " + request->target);
+		std::ostringstream tmp_ss; 
+		tmp_ss << file.rdbuf();
+		std::string follow_up_rsp(tmp_ss.str());
+		content_length.append(SSTR(follow_up_rsp.size()));
+		serv_response.append(content_type);
+		serv_response.append(content_length);
+		// serv_response.append("\r\nConnection: keep-alive\n");
+		serv_response.append("\n\n");
 		serv_response.append(follow_up_rsp);
-		html_form.close();
+		file.close();
 		response = serv_response;
-		std::cout << "Sending this response from else: " << response << std::endl;
 	}
 	std::cout << response << std::endl;
 	if (send(socket_fd, response.c_str(), response.length(), 0) < 0)
@@ -157,7 +187,8 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 			{
 				std::cout << BLUE "Opening Socket PORT: 8000"
 							<< " IP: " << *it_ip << "\n" RESET;
-				sockets.push_back(SockListen(8000, ip_to_number(it_ip->c_str())));
+				sockets.push_back(
+					SockListen(8000, ip_to_number(it_ip->c_str())));
 			}
 		}
 	}
@@ -174,7 +205,8 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 				&& !is_socket_already_open(sockets, it_pair->second,
 				ip_to_number(it_pair->first.c_str())))
 			{
-				std::cout << BLUE "Opening Socket pair PORT: " << it_pair->second
+				std::cout << BLUE "Opening Socket pair PORT: "
+							<< it_pair->second
 							<< " IP: " << it_pair->first << "\n" RESET;
 				sockets.push_back(SockListen(it_pair->second,
 									ip_to_number(it_pair->first.c_str())));

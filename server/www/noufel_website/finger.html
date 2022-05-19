@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <!--Flavicon-->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="icon" type="image/x-icon" href="static/assets/favicon.ico"/>
+        <!--CSS Theme-->
+        <link rel="stylesheet" href="static/css/my_style.css"/>
+        <script type="text/javascript" src="static/js/myscripts.js"></script>
+    </head>
+    <body>
+        <!--Navigation-->
+        <div class="top-navigation" id="top-nav">
+            <a href="/" class="active">About</a>
+            <a href="/github" target="_blank">Github</a>
+            <a href="/contact" target="_blank">Contact</a>
+            <a href="javascript:void(0);" class="icon" onclick="add_responsive_to_nav()">
+                <i class="fa fa-bars"></i>
+            </a>
+        </div>
+        <form action = "<?php $_PHP_SELF ?>" method="GET">
+            <label for="first_name">First Name:</label><br>
+            <input type="text" id="first-name" name="fname">
+            <input type="submit" value="Submit"></label>
+        </form>
+    </body>
+</html>

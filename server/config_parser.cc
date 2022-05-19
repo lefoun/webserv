@@ -43,47 +43,43 @@ static void	set_port(const std::string& port_str, Server& server)
 		std::cout << port_str << std::endl;
 		throw std::invalid_argument("Port number out of range");
 	}
-	if (!in_range(0, 65535, atoi(port_str.c_str())))
+	if (!in_range(1, 65535, atoi(port_str.c_str())))
 		throw std::invalid_argument("Invalid Port number");
 	(server.get_listening_ports()).push_back(atoi(port_str.c_str()));
 }
 
-
-static bool set_valid_host_name(const std::string& host, Server& server)
+static void	set_ip_port_pair(const std::string& host, const std::string& port,
+							 Server& server,
+							 const std::map<std::string, std::string>&
+							 host_ip_lookup)
 {
-	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
-	if (hosts_file.fail())
-		throw std::invalid_argument("Failed to open hosts file");
+	std::string	ip_host = host;
 
-	std::string	line;
-	while (std::getline(hosts_file, line))
+	if (!is_ip_address(host))
 	{
-		if (std::isdigit(line[0]) && line.find(host) != std::string::npos)
-		{
-			std::istringstream tmp(line);
-			std::string ip_addr;
-			tmp >> ip_addr;
-			server.get_listening_ips().push_back(ip_addr);
-			return true;
-		}
+		if (host_ip_lookup.find(host) == host_ip_lookup.end())
+			throw std::invalid_argument("Can't find host");
+		ip_host = (host_ip_lookup.find(host))->second;
 	}
-	return false;
+	if (port.size() > 5 || !in_range(1, 65535, atoi(port.c_str())))
+		throw std::invalid_argument("Invalid port number");
+	server.get_ip_port_pairs().push_back(std::make_pair(
+		ip_host, atoi(port.c_str())));
 }
 
-static void	set_ip(const std::string& host, Server& server)
+static void	set_ip(const std::string& host, Server& server,
+					const std::map<std::string, std::string>& host_ip_lookup)
 {
-	std::ifstream	hosts_file("/etc/hosts");	//open hosts file
-	if (hosts_file.fail())
-		throw std::invalid_argument("Failed to open hosts file");
-	
 	if (is_ip_address(host))
 	{
 		server.get_listening_ips().push_back(host);
 		return ;
 	}
 
-	if (!set_valid_host_name(host, server))
+	if (host_ip_lookup.find(host) == host_ip_lookup.end())
 		throw std::invalid_argument("Unable to find host");
+	const std::string host_ip = (host_ip_lookup.find(host))->second;
+	server.get_listening_ips().push_back(host_ip);
 }
 
 static void	set_allowed_method(const std::string& method,
@@ -164,7 +160,8 @@ static void	handle_error_directive(std::istream_iterator<std::string>& token,
 
 static void	handle_listen(std::istream_iterator<std::string>& token,
 						const std::stack<std::string>& context,
-						Server& server)
+						Server& server,
+						const std::map<std::string, std::string>& host_ip_lookup)
 {
 	check_valid_token(token);
 	if (context.top() != "server")
@@ -183,16 +180,14 @@ static void	handle_listen(std::istream_iterator<std::string>& token,
 		if (is_number(trimmed_token))
 			set_port(trimmed_token, server);
 		else
-			set_ip(trimmed_token, server);
+			set_ip(trimmed_token, server, host_ip_lookup);
 	}
 	else /* It's a host:port pair */
 	{
 		std::cout << "This is a ip:port pair " << trimmed_token << std::endl;
-		std::pair<uint16_t, std::string>	ip_port_pair;
-		std::string	tmp_host = trimmed_token.substr(0, pos);
-		std::string	tmp_port = trimmed_token.substr(pos + 1, std::string::npos);
-		set_port(tmp_port, server);
-		set_ip(tmp_host, server);
+		std::string	host = trimmed_token.substr(0, pos);
+		std::string	port = trimmed_token.substr(pos + 1, std::string::npos);
+		set_ip_port_pair(host, port, server, host_ip_lookup);
 	}
 	++token;
 }
@@ -393,7 +388,8 @@ static void	handle_body_size_limit(std::istream_iterator<std::string>& token,
 
 static void	get_server(std::istream_iterator<std::string>& token,
 						Server& server, std::stack<std::string>& context,
-						const std::vector<std::string>& directives_vec)
+						const std::vector<std::string>& directives_vec,
+						const std::map<std::string, std::string>& host_ip_lookup)
 {
 	const std::istream_iterator<std::string> end_of_file;
 	if (*(++token) != "{")
@@ -430,7 +426,7 @@ static void	get_server(std::istream_iterator<std::string>& token,
 				case SERVER:
 					throw std::invalid_argument("Found nested servers");
 				case LISTEN:
-					handle_listen(token, context, server); break;
+					handle_listen(token, context, server, host_ip_lookup); break;
 				case SERVER_NAME:
 					handle_server_name(token, context, server); break;
 				case ROOT:
@@ -459,7 +455,7 @@ static void	get_server(std::istream_iterator<std::string>& token,
 
 static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 {
-
+	int i = 1;
 	for (std::vector<Server>::iterator serv_it = servers.begin(); 
 			serv_it != servers.end(); ++serv_it)
 	{
@@ -467,12 +463,17 @@ static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 				serv_it->get_listening_ports().begin();
 				it_port != serv_it->get_listening_ports().end(); ++it_port)
 		{
+			std::cout << "Port number " << *it_port << std::endl;
 			for (std::map<std::string, std::string>::iterator lookup_it =
 					serv_it->get_host_lookup_map()->begin(); lookup_it !=
 					serv_it->get_host_lookup_map()->end(); ++lookup_it)
 			{
-				serv_it->get_implicit_port_ip_pairs().push_back(
-					std::make_pair(lookup_it->second, *it_port));
+				if (!is_in_vector(serv_it->get_implicit_port_ip_pairs(),
+					std::make_pair(lookup_it->second, *it_port)))
+					serv_it->get_implicit_port_ip_pairs().push_back(
+						std::make_pair(lookup_it->second, *it_port));
+
+				// if (serv_it->get_implicit_port_ip_pairs())
 			}
 		}
 		/* printing implicit ip port */
@@ -482,6 +483,8 @@ static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 		{
 			std::cout << "IP: " << imp_it->first << " Port: " << imp_it->second << "\n"; 
 		}
+		
+		std::cout << "Server number " << i++ << std::endl;
 	}
 }
 
@@ -495,13 +498,19 @@ static void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_look
 	std::string	line;
 	while (std::getline(hosts_file, line))
 	{
-		if (std::isdigit(line[0]))
+		if (std::isdigit(line[0]) && std::isdigit(line[0]) != 2)
 		{
 			std::istringstream tmp(line);
 			std::string	ip_addr;
 			std::string	host_name;
 			tmp >> ip_addr;
 			tmp >> host_name;
+			for (std::map<std::string, std::string>::const_iterator it = 
+				host_ip_lookup.begin(); it != host_ip_lookup.end(); ++it)
+			{
+				if (ip_addr == it->second)
+					return ;
+			}
 			host_ip_lookup.insert(std::make_pair(host_name, ip_addr));
 		}
 	}
@@ -512,9 +521,6 @@ static void	enriche_configuration(std::vector<Server>& servers,
 									std::map<std::string, std::string>&
 									host_ip_lookup)
 {
-	bool	no_default_ip = true;
-	bool	no_default_port = true;
-
 	for (std::vector<Server>::iterator it = servers.begin(); 
 			it != servers.end(); ++it)
 	{
@@ -526,21 +532,11 @@ static void	enriche_configuration(std::vector<Server>& servers,
 			if (!it->get_locations()[i].get_allowed_methods().empty())
 				set_default_methods(it->get_locations()[i]);
 		}
-		if (!it->get_listening_ips().empty())
-			no_default_ip = false;
-		if (!it->get_listening_ports().empty())
-			no_default_port = false;
-		if (!it->get_ip_port_pairs().empty())
-		{
-			no_default_ip = false;
-			no_default_port = false;
-		}
+		if (it->get_listening_ips().empty() && it->get_listening_ports().empty()
+			&& it->get_ip_port_pairs().empty())
+			servers.begin()->get_ip_port_pairs().push_back(
+				std::make_pair("127.0.0.1", 80));
 	}
-	if (no_default_ip == true)
-		servers.begin()->get_listening_ips().push_back("127.0.0.1");
-	if (no_default_port == true)
-		servers.begin()->get_listening_ports().push_back(80);
-	init_host_ip_lookup(host_ip_lookup);
 	set_implicit_ip_port_pairs(servers);
 }
 
@@ -548,6 +544,7 @@ bool	parse_config_file(const std::string& file_name,
 							std::vector<Server>& servers,
 							std::map<std::string, std::string>& host_ip_lookup)
 {
+	init_host_ip_lookup(host_ip_lookup);
 	std::ifstream	config_file(file_name.c_str());
 	if (!config_file.is_open() || config_file.fail())
 		throw config_file.exceptions();
@@ -565,7 +562,8 @@ bool	parse_config_file(const std::string& file_name,
 			servers.push_back(Server());
 			try
 			{
-				get_server(token, servers.back(), context, directives);
+				get_server(token, servers.back(), context, directives,
+							host_ip_lookup);
 				context.pop();
 			}
 			catch (std::exception& e)
