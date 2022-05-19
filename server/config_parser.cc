@@ -486,7 +486,7 @@ static void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_look
 			for (std::map<std::string, std::string>::const_iterator it = 
 				host_ip_lookup.begin(); it != host_ip_lookup.end(); ++it)
 			{
-				if (ip_addr == it->second)
+				if (host_name == it->first)
 					return ;
 			}
 			host_ip_lookup.insert(std::make_pair(host_name, ip_addr));

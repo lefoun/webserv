@@ -34,7 +34,10 @@
                 <!-- Masthead Avatar Image-->
                 <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." />
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm Noufel 👋</h1>
+                <h1 class="masthead-title mb-0">
+                    <form action="cgi_test.py" method="GET">
+                        <label> Enter your Name: </h1><br><input type="text" name="first_name"></label>
+                    <!-- Hello, I'm Noufel 👋</h1>-->
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
@@ -42,7 +45,9 @@
                     <div class="divider-custom-line"></div>
                 </div>
                 <!-- Masthead Subheading-->
-                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Conputer Science <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
+                    <label> <h2>Enter your field of study:</h2><br><input type="text" name="field_of_study"></label>
+                    <button> Send </button>
+                <!-- <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Computer Science <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p> -->
                 <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
                 <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
             </div>

@@ -29,13 +29,14 @@ void	get_cgi_response(request_t* request, std::string& response)
 	if (child_pid == 0) /* Child process */
 	{
 		extern char **environ;
-		execve("../cgi-bin/cgi_test.py", arg, environ);
+		execve("cgi-bin/cgi_test.py", arg, environ);
 		std::cout << "Executed process CGI TEST\n";
 		exit(0);
 	}
 	else /* parent */
 	{
 		wait(NULL);
+		// exit(0);
 		std::ifstream response_file("cgi-bin/cgi_serv_communication_file.txt");
 		if (response_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");
