@@ -11,6 +11,10 @@ form = cgi.FieldStorage()
 # Get data from fields
 first_name = form.getvalue('first_name')
 field_of_study = form.getvalue('field_of_study')
+if "<script>" in first_name:
+    first_name = "Kevin Mitnick"
+if "<script>" in field_of_study:
+    field_of_study = "as a Script Kiddy"
 
 print(first_name)
 print(field_of_study)
