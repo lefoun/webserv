@@ -35,9 +35,6 @@ class Server
 		:
 		_server_names(),
 		_listening_ports(),
-		_listening_port_ip_pairs(1, std::make_pair("0", 0)),
-		_error_pages(std::vector<str_vec_of_uint16_pair>(
-			1, std::make_pair(std::string(), std::vector<uint16_t>()))),
 		_client_max_body_size(1),
 		_is_auto_index_set(false),
 		_is_client_max_body_size_set(false)

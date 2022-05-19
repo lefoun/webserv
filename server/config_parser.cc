@@ -463,7 +463,6 @@ static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 				serv_it->get_listening_ports().begin();
 				it_port != serv_it->get_listening_ports().end(); ++it_port)
 		{
-			std::cout << "Port number " << *it_port << std::endl;
 			for (std::map<std::string, std::string>::iterator lookup_it =
 					serv_it->get_host_lookup_map()->begin(); lookup_it !=
 					serv_it->get_host_lookup_map()->end(); ++lookup_it)
@@ -473,7 +472,6 @@ static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 					serv_it->get_implicit_port_ip_pairs().push_back(
 						std::make_pair(lookup_it->second, *it_port));
 
-				// if (serv_it->get_implicit_port_ip_pairs())
 			}
 		}
 		/* printing implicit ip port */
