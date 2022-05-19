@@ -21,9 +21,9 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarResponsive">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="">About</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="github">Github</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="contact">Contact</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="index.html">About</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="github">Download</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="form.html">Form</a></li>
                     </ul>
                 </div>
             </div>
@@ -35,8 +35,12 @@
                 <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." />
                 <!-- Masthead Heading-->
                 <h1 class="masthead-title mb-0">
+                <div class="form__group">
                     <form action="cgi_test.py" method="GET">
-                        <label> Enter your Name: </h1><br><input type="text" name="first_name"></label>
+                    <h2>Enter your name<br></h2>
+                    <input name="first_name" type="text" class="form__input" id="name" placeholder="Norminet" required="" />
+                    <label class="form__label"></label>
+                        <!-- <label class="form__label" placeholder="Norminet"> Enter your Name: </h1><br><input type="text" name="first_name"></label> -->
                     <!-- Hello, I'm Noufel 👋</h1>-->
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
@@ -45,11 +49,12 @@
                     <div class="divider-custom-line"></div>
                 </div>
                 <!-- Masthead Subheading-->
-                    <label> <h2>Enter your field of study:</h2><br><input type="text" name="field_of_study"></label>
-                    <button> Send </button>
+                    <h2>Enter your field of study<br></h2>
+                    <input name="field_of_study" type="text" class="form__input" id="name" placeholder="CS" required="" />
+                    <label name="field_of_study" class="form__label"></label>
+                </div>
+                <button class="button"> Send </button>
                 <!-- <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Computer Science <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p> -->
-                <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
-                <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
             </div>
         </header>
         <!-- Copyright Section-->
