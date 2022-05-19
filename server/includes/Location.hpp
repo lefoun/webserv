@@ -8,15 +8,14 @@
 class Location
 {
 	public:
-		typedef std::pair<std::string, std::vector<uint16_t> >
-													str_vec_of_uint16_pair;
+		typedef std::pair<uint16_t, std::string>	uint16_str_pair;
 	private:
 		std::string								_path;
 		std::string								_root_path;
 		std::string								_index_file;
 		std::string								_redirection;
 		std::vector<std::string>				_allowed_methods;
-		std::vector<str_vec_of_uint16_pair>		_error_pages;
+		std::vector<uint16_str_pair>			_error_pages;
 		bool									_auto_index;
 		bool									_is_auto_index_set;
 	
@@ -24,8 +23,6 @@ class Location
 		Location(const std::string& path)
 		:
 		_path(path),
-		_error_pages(std::vector<str_vec_of_uint16_pair>(
-			1, std::make_pair(std::string(), std::vector<uint16_t>()))),
 		_is_auto_index_set(false)
 		{}
 
@@ -39,7 +36,7 @@ class Location
 		{return _redirection; }
 		std::vector<std::string>&				get_allowed_methods()
 		{ return _allowed_methods; }
-		std::vector<str_vec_of_uint16_pair>&	get_error_pages()
+		std::vector<uint16_str_pair>&			get_error_pages()
 		{ return _error_pages; }
 		bool&									get_auto_index()
 		{return _auto_index;}

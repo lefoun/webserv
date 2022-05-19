@@ -10,8 +10,7 @@ class Server
 {
 	public:
 		typedef std::pair<std::string, uint16_t>	ip_port_pair; 
-		typedef std::pair<std::string, std::vector<uint16_t> >
-													str_vec_of_uint16_pair;
+		typedef std::pair<uint16_t, std::string>	uint16_str_pair;
 	private:
 		std::map<std::string, std::string>*		_host_lookup_map;
 		std::vector<std::string>				_server_names;
@@ -21,7 +20,7 @@ class Server
 		std::vector<ip_port_pair>				_implicit_port_ip_pairs;
 		std::vector<Location>					_locations;
 		std::string								_index_file;
-		std::vector<str_vec_of_uint16_pair>		_error_pages;
+		std::vector<uint16_str_pair>			_error_pages;
 		std::vector<std::string>				_allowd_methods;
 		std::string								_root_path;
 		std::string								_redirection;
@@ -52,7 +51,7 @@ class Server
 		{ return _locations; }
 		std::string&							get_index_file()
 		{ return _index_file; }
-		std::vector<str_vec_of_uint16_pair>&	get_error_pages()
+		std::vector<uint16_str_pair>&			get_error_pages()
 		{ return _error_pages; }
 		std::vector<std::string>&				get_allowed_methods()
 		{ return _allowd_methods; }

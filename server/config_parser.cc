@@ -109,49 +109,29 @@ static void	set_default_methods(T& block)
 	// block.get_allowed_methods().push_back("DELETE");
 }
 
-static void	set_error_numbers(const std::string& token,
-							const std::string& context, Server& server)
-{
-	if (token.size() > 3 || !is_number(token)
-		|| !in_range(0, 999, atoi(token.c_str())))
-		throw std::invalid_argument(
-			"Expected integer between 0 and 999 but got argument " + token);
-
-	const uint16_t	error_nb = atoi(token.c_str());
-	std::cout << "this is error number " << error_nb << std::endl;
-
-	if (context == "server")
-	{
-		server.get_error_pages().back().second.push_back(2);
-		if (is_in_vector(server.get_error_pages().back().second, error_nb))
-			throw std::invalid_argument(
-				"Error number " + token + " is already set in server block");
-		server.get_error_pages().back().second.push_back(error_nb);
-	}
-	else if (context == "location")
-	{
-		Location *location = &(server.get_locations().back());
-		if (is_in_vector(location->get_error_pages().back().second, error_nb))
-			throw std::invalid_argument(
-				"Error number " + token + " is already set in location block");
-		location->get_error_pages().back().second.push_back(error_nb);
-	}
-}
-
 static void	handle_error_directive(std::istream_iterator<std::string>& token,
 								const std::stack<std::string>& context,
 								Server& server)
 {
 	check_valid_token(token);
 	std::istream_iterator<std::string> end_of_file;
-	while (*(--(*token).end()) != ';' && token != end_of_file)
-		set_error_numbers(*token++, context.top(), server);
-	const std::string error_page = token->substr(0, token->size() - 1);
+	if (!is_number(*token)) 
+		throw std::invalid_argument("Unexpected token" + *token);
+	std::string error_nb = *token;
+	std::string error_page = *++token;
+	if (error_page[error_page.size() - 1] != ';')
+		throw std::invalid_argument("Expected token ';'");
+	error_page = token->substr(0, token->size() - 1);
+	if (error_nb.size() > 3 || !is_number(error_nb)
+		|| !in_range(400, 550, atoi(error_nb.c_str())))
+		throw std::invalid_argument("Invalid error number");
+
+	uint16_t error = atoi(error_nb.c_str());
 	if (context.top() == "server")
-		server.get_error_pages().back().first = error_page;
+		server.get_error_pages().push_back(std::make_pair(error, error_page));
 	else if (context.top() == "location")
-		server.get_locations().back().get_error_pages().back().first = 
-														error_page;
+		server.get_locations().back().get_error_pages().push_back(
+			std::make_pair(error, error_page));
 	std::cout << "This is error page " << error_page << std::endl;
 	if (token == end_of_file)
 		throw std::invalid_argument("unexpected end of file");
