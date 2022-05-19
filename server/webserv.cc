@@ -36,7 +36,6 @@ void	get_cgi_response(request_t* request, std::string& response)
 	else /* parent */
 	{
 		wait(NULL);
-		// exit(0);
 		std::ifstream response_file("cgi-bin/cgi_serv_communication_file.txt");
 		if (response_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");
@@ -149,7 +148,9 @@ bool	is_socket_already_open(const U vect, uint16_t port, in_addr_t ip)
 {
 	for (size_t i = 0; i < vect.size(); ++i)
 	{
-		if (port == vect[i].get_port() && ip == vect[i].get_ip())
+		if (vect[i].get_ip() == 0 && vect[i].get_port() == port)
+			return true;
+		else if (port == vect[i].get_port() && ip == vect[i].get_ip())
 			return true;
 	}
 	return false;
@@ -168,8 +169,8 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 		{
 			if (!is_socket_already_open(sockets, *it_port, INADDR_ANY))
 			{
-				std::cout << BLUE "Opening Socket PORT: " << *it_port
-							<< " IP: ALL\n" RESET;
+				std::cout << "Opening Socket PORT: " << *it_port
+							<< " IP: ALL\n";
 				sockets.push_back(SockListen(*it_port, INADDR_ANY));
 			}
 		}
@@ -186,8 +187,8 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 			if (!is_socket_already_open(sockets, 8000,
 				ip_to_number(it_ip->c_str())))
 			{
-				std::cout << BLUE "Opening Socket PORT: 8000"
-							<< " IP: " << *it_ip << "\n" RESET;
+				std::cout << "Opening Socket PORT: 8000"
+							<< " IP: " << *it_ip << "\n";
 				sockets.push_back(
 					SockListen(8000, ip_to_number(it_ip->c_str())));
 			}
@@ -206,9 +207,9 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 				&& !is_socket_already_open(sockets, it_pair->second,
 				ip_to_number(it_pair->first.c_str())))
 			{
-				std::cout << BLUE "Opening Socket pair PORT: "
+				std::cout << "Opening Socket pair PORT: "
 							<< it_pair->second
-							<< " IP: " << it_pair->first << "\n" RESET;
+							<< " IP: " << it_pair->first << "\n";
 				sockets.push_back(SockListen(it_pair->second,
 									ip_to_number(it_pair->first.c_str())));
 			}
@@ -328,7 +329,8 @@ int main()
 	if (!parse_config_file("../parser/server_config.conf", servers, 
 		host_ip_lookup))
 		return 1;
-	std::cout << "File is good\n\nStarting WebServer\n";
+	std::cout << GREEN "Loaded config file.\n\n" RESET;
+	std::cout << GREEN"Starting WebServer...\n"RESET;
 	launch_server(servers, host_ip_lookup);
 	return 0;
 }
