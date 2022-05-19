@@ -18,39 +18,13 @@ const std::vector<std::string> init_directives()
 	return directives;
 }
 
-int	find_directive(const std::vector<std::string>& directives,
+static int	find_directive(const std::vector<std::string>& directives,
 					const std::string& token)
 {
 	for (ssize_t i = 0; i < DIRECTIVES_NB; ++i)
 		if (directives[i] == token)
 			return i;
 	return UNKNOWN_DIRECTIVE;
-}
-
-template <typename T>
-static bool	in_range(T low, T high, T num)
-{
-	return num >= low && num <= high;
-}
-
-static bool is_number(const std::string& s)
-{
-    if(s.size() == 0)
-		return false;
-    for (size_t i = 0; i < s.size(); i++)
-	{
-        if ((s[i]>= '0' && s[i] <='9') == false)
-            return false;
-    }
-    return true;
-}
-
-template <typename T>
-static bool is_in_vector(const std::vector<T>& vect, const T& value)
-{
-	if (vect.empty())
-		return false;
-	return std::find(vect.begin(), vect.end(), value) != vect.end();
 }
 
 static void	check_valid_token(std::istream_iterator<std::string>& token)
@@ -74,26 +48,6 @@ static void	set_port(const std::string& port_str, Server& server)
 	(server.get_listening_ports()).push_back(atoi(port_str.c_str()));
 }
 
-static bool	is_ip_address(const std::string &ip_str)
-{
-	if (std::count(ip_str.begin(), ip_str.end(), '.') != 3)
-		return false;
-
-	std::stringstream			ip_ss(ip_str);
-	std::string					split_ip;
-	std::vector<std::string>	ip_octet_holder;
-	while (std::getline(ip_ss, split_ip, '.'))
-	{
-		ip_octet_holder.push_back(split_ip);
-		std::string octect = ip_octet_holder.back();
-		if (!is_number(octect) || octect.size() > 3
-			|| !in_range(0, 255, atoi(octect.c_str())))
-			return false;
-	}
-	if (ip_octet_holder.size() != 4)
-		return false;
-	return true;
-}
 
 static bool set_valid_host_name(const std::string& host, Server& server)
 {
@@ -155,8 +109,8 @@ template <typename T>
 static void	set_default_methods(T& block)
 {
 	block.get_allowed_methods().push_back("GET");
-	block.get_allowed_methods().push_back("POST");
-	block.get_allowed_methods().push_back("DELETE");
+	// block.get_allowed_methods().push_back("POST");
+	// block.get_allowed_methods().push_back("DELETE");
 }
 
 static void	set_error_numbers(const std::string& token,
@@ -166,8 +120,10 @@ static void	set_error_numbers(const std::string& token,
 		|| !in_range(0, 999, atoi(token.c_str())))
 		throw std::invalid_argument(
 			"Expected integer between 0 and 999 but got argument " + token);
+
 	const uint16_t	error_nb = atoi(token.c_str());
 	std::cout << "this is error number " << error_nb << std::endl;
+
 	if (context == "server")
 	{
 		server.get_error_pages().back().second.push_back(2);
@@ -186,7 +142,7 @@ static void	set_error_numbers(const std::string& token,
 	}
 }
 
-void	handle_error_directive(std::istream_iterator<std::string>& token,
+static void	handle_error_directive(std::istream_iterator<std::string>& token,
 								const std::stack<std::string>& context,
 								Server& server)
 {
@@ -206,7 +162,7 @@ void	handle_error_directive(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_listen(std::istream_iterator<std::string>& token,
+static void	handle_listen(std::istream_iterator<std::string>& token,
 						const std::stack<std::string>& context,
 						Server& server)
 {
@@ -241,7 +197,7 @@ void	handle_listen(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_server_name(std::istream_iterator<std::string>& token,
+static void	handle_server_name(std::istream_iterator<std::string>& token,
 							const std::stack<std::string>& context,
 							Server& server)
 {
@@ -260,7 +216,7 @@ void	handle_server_name(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_root(std::istream_iterator<std::string>& token,
+static void	handle_root(std::istream_iterator<std::string>& token,
 						const std::stack<std::string>& context, Server& server)
 {
 	check_valid_token(token);
@@ -287,7 +243,7 @@ void	handle_root(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_index(std::istream_iterator<std::string>& token,
+static void	handle_index(std::istream_iterator<std::string>& token,
 						const std::stack<std::string>& context, Server& server)
 {
 	check_valid_token(token);
@@ -314,7 +270,7 @@ void	handle_index(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_auto_index(std::istream_iterator<std::string>& token,
+static void	handle_auto_index(std::istream_iterator<std::string>& token,
 						const std::stack<std::string>& context, Server& server)
 {
 	check_valid_token(token);
@@ -347,7 +303,7 @@ void	handle_auto_index(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_location(std::istream_iterator<std::string>& token,
+static void	handle_location(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
 	std::cout << "Inside Location block\n";
@@ -366,7 +322,7 @@ void	handle_location(std::istream_iterator<std::string>& token,
 	context.push("location");
 }
 
-void    handle_redirection(std::istream_iterator<std::string>& token,
+static void    handle_redirection(std::istream_iterator<std::string>& token,
                             const std::stack<std::string>& context,
                             Server& server)
 {
@@ -392,7 +348,7 @@ void    handle_redirection(std::istream_iterator<std::string>& token,
     ++token;
 }
 
-void	handle_allow(std::istream_iterator<std::string>& token,
+static void	handle_allow(std::istream_iterator<std::string>& token,
 						std::stack<std::string>& context, Server& server)
 {
 	check_valid_token(token);
@@ -407,7 +363,7 @@ void	handle_allow(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	handle_body_size_limit(std::istream_iterator<std::string>& token,
+static void	handle_body_size_limit(std::istream_iterator<std::string>& token,
 								const std::stack<std::string>& context,
 								Server& server)
 {
@@ -435,9 +391,9 @@ void	handle_body_size_limit(std::istream_iterator<std::string>& token,
 	++token;
 }
 
-void	get_server(std::istream_iterator<std::string>& token, Server& server,
-					std::stack<std::string>& context,
-					const std::vector<std::string>& directives_vec)
+static void	get_server(std::istream_iterator<std::string>& token,
+						Server& server, std::stack<std::string>& context,
+						const std::vector<std::string>& directives_vec)
 {
 	const std::istream_iterator<std::string> end_of_file;
 	if (*(++token) != "{")
@@ -552,8 +508,9 @@ static void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_look
 	hosts_file.close();
 }
 
-void	enriche_configuration(std::vector<Server>& servers, std::map<std::string,
-								std::string>& host_ip_lookup)
+static void	enriche_configuration(std::vector<Server>& servers, 
+									std::map<std::string, std::string>&
+									host_ip_lookup)
 {
 	bool	no_default_ip = true;
 	bool	no_default_port = true;
@@ -626,12 +583,3 @@ bool	parse_config_file(const std::string& file_name,
 	config_file.close();
 	return true;	
 }
-
-// int main()
-// {
-// 	if (parse_config_file("server_config.conf"))
-// 		std::cout << "File is good\n";
-// 	else
-// 		std::cout << "Error\n";
-// 	return 0;
-// }

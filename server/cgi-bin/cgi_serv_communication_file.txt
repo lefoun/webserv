@@ -3,6 +3,6 @@
 <title>Python CGI Program</title>
 </head>
 <body>
-<h2>Hello bidule cherif </h2> 
+<h2>Hello noufel ammari </h2> 
 </body>
 </html>

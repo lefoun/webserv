@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iterator>
 #include <stack>
+#include "helper_functions.hpp"
 #include "Server.hpp"
 
 enum REQUEST_METHODS {

@@ -28,36 +28,26 @@
 #include <list>
 #include <utility>
 
-#include "../parser/Server.hpp"
+#include "helper_functions.hpp"
+#include "Server.hpp"
+#include "request_parsing.hpp"
 #include "colors.hpp"
 
-#include "colors.hpp"
-
-#define SSTR( x ) static_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
+/* for the buffer that reads the clients' message */
+#define BUFFER_SIZE 4096
 
 class Socket;
 class SockComm;
 
-typedef struct sockaddr_in sockaddr_in_t;
-typedef std::vector<SockComm>::iterator sock_com_it_t;
+/* 2 typedefs to make code more readable by reducing the length of it */
+typedef struct sockaddr_in				sockaddr_in_t;
+typedef std::vector<SockComm>::iterator	sock_com_it_t;
 
 bool	parse_config_file(const std::string& file_name,
 							std::vector<Server>& servers,
 							std::map<std::string, std::string>& host_ip_lookup);
 
 
-typedef struct request
-{
-	std::string	method;
-	std::string	args;
-	std::string	target;
-	std::string	host;
-	std::string	connection;
-	in_addr_t	ip;
-	uint16_t	port;
-
-} request_t;
 
 class Socket
 {
@@ -234,44 +224,3 @@ class SockListen : public Socket
 			/* Tmp print to debug */
 		}
 };
-
-/* PARSING *
- * Parsing lexical
- * Parsing sytaxique
- * Créer nos objets servers
- * Trier les membres (ports, ips, paires ips-ports) de nos objets
- * Créer les sockets et les binds à des ports. (Si un port n'a pas d'ip assignée)
- * - alors ouvrir le port et le bind a ADDR_ANY sinon si le port a une ip assignée
- * - mais a aussi un listen sans aucune ip assignée alors ouvrir le port et le bind
- * - a ADDR_ANY sinon si il n y a qu'une adresse ip assignée à une ip alors
- * - ouvrir le port et le bind à l'adresse assignée sinon si qu'une adresse
- * - ip est spécifiée alors la bind au port 80.
- * exemples des trois cas cités ci-dessus:
- *  1- Listen 80;
- *  2- Listen localhost:9191; listen 9191;
- *  3- listen bidule:8888;
- *  4- listen localhost;
- */
-
-/* Règles d'ouverture de port
- * si il n y a que des pairs il n'ouvre que des pairs
- * si il y a des ip seules il ouvre ip:80
- *
- ****************************** NOUS ****************************
- * prendre les ports les ouvrir (check si le port est ouvert ouppa)
- *
-*/
-/*
- * CREATE SERVER
- * créer une socket par
- * créer une sock_addr_in
- *
-
-*/
-
-/*
- * READ FROM SERVER *
- * on reçoit une requête :
- * case 1: Les
-
-*/

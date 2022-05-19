@@ -1,11 +1,10 @@
-SRCS = webserv.cc ../parser/config_parser.cc
-# SRCS = beejserv.cc
+SRCS = webserv.cc helper_functions.cc config_parser.cc request_parsing.cc
 
 GREEN        = \033[1;32m
 RESET		 = \033[0m
 
 CC = c++
-INCLUDES = 
+INCLUDES = includes/
 OBJS = $(SRCS:.cc=.o)
 DEPS = $(SRCS:.cc=.d)
 NAME = server 
@@ -13,8 +12,7 @@ FLAGS = -std=c++98 -pedantic
 ifeq ($(NOFLAGS), 1)
 	FLAGS = 
 else
-	FLAGS = -std=c++98 -pedantic
-#	#  FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
+	FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
 endif
 
 ifeq ($(debug), 1)
@@ -28,11 +26,11 @@ endif
 all:	$(NAME)
 
 $(NAME):	$(OBJS)
-	@$(CC) $(FLAGS) $(OBJS) -o $(NAME) 
+	@$(CC) $(FLAGS) $(OBJS) -o $(NAME) -Iincludes
 	@echo $(PRINTED_MESSAGE)
 
 %.o:	%.cc
-	@$(CC) -MP -MMD -c $(FLAGS) $< -o $@ 
+	@$(CC) -MP -MMD -c $(FLAGS) $< -o $@ -Iincludes
 
 -include $(DEPS)
 
@@ -44,4 +42,4 @@ fclean:
 
 re: fclean all
 
-.PHONY: clean re all
+.PHONY: clean re all fclean
