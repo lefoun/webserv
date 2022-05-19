@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="" />
-        <title>Kevin Mitnick Ammari</title>
+        <title>Chérif Ammari</title>
         <!-- Favicon-->
         <link rel="icon" type="image/x-icon" href="static/assets/favicon.ico" />
         <!-- Core theme CSS-->
@@ -21,9 +21,9 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarResponsive">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="">About</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="index.html">About</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="github">Github</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="contact">Contact</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="form.html">Contact</a></li>
                     </ul>
                 </div>
             </div>
@@ -34,7 +34,7 @@
                 <!-- Masthead Avatar Image-->
                 <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." />
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm Kevin Mitnick 👋</h1>
+                <h1 class="masthead-heading title mb-0">Hello, I'm Chérif 👋</h1>
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
@@ -42,7 +42,7 @@
                     <div class="divider-custom-line"></div>
                 </div>
                 <!-- Masthead Subheading-->
-                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying as a Script Kiddy <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
+                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Cyber security <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
                 <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
                 <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
             </div>

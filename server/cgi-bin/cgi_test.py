@@ -22,7 +22,7 @@ print(field_of_study)
 with open("cgi-bin/cgi_serv_communication_file.txt", "w") as response_file:
     with open("/Users/noufel/Documents/Learning/Programming/projets-42/webserv/server/www/noufel_website/index.html", 'r') as original:
         data = original.read()
-        data = data.replace('Noufel', first_name)
+        data = data.replace('Person', first_name)
         data = data.replace('Computer Science', field_of_study)
     print(data)
     print(data, file=response_file)
