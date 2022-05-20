@@ -51,18 +51,24 @@ class Server
 		{ return _locations; }
 		std::string&							get_index_file()
 		{ return _index_file; }
+		void									set_index_file(std::string index_file)
+		{ _index_file = index_file; }
 		std::vector<uint16_str_pair>&			get_error_pages()
 		{ return _error_pages; }
 		std::vector<std::string>&				get_allowed_methods()
 		{ return _allowd_methods; }
 		std::string&							get_root_path()
 		{ return _root_path; }
+		void 									set_root_path(std::string root_path)
+		{ _root_path = root_path; }
 		std::string&            				get_redirections()
 		{ return _redirection; }
 		uint8_t&								get_client_max_body_size()
 		{ return _client_max_body_size; }
 		bool&									get_auto_index()
 		{ return _auto_index; }
+		void									set_auto_index(bool auto_index)
+		{ _auto_index = auto_index; _is_auto_index_set = true; }
 		bool&									get_is_auto_index_set()
 		{ return _is_auto_index_set; }
 		bool&									get_is_client_body_size_set()

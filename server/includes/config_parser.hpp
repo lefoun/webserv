@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iterator>
 #include <stack>
+#include <dirent.h>
 #include "helper_functions.hpp"
 #include "Server.hpp"
 

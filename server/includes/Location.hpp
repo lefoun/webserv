@@ -30,8 +30,12 @@ class Location
 		{ return _path; }
 		std::string&							get_root_path()
 		{ return _root_path; }
+		void									set_root_path(std::string root_path)
+		{ _root_path = root_path; }
 		std::string&							get_index_file()
 		{ return _index_file; }
+		void									set_index_file(std::string index_file)
+		{ _index_file = index_file; }
 		std::string&							get_redirections()
 		{return _redirection; }
 		std::vector<std::string>&				get_allowed_methods()
@@ -40,6 +44,8 @@ class Location
 		{ return _error_pages; }
 		bool&									get_auto_index()
 		{return _auto_index;}
+		void									set_auto_index(bool auto_index)
+		{_auto_index = auto_index; _is_auto_index_set = true;}
 		bool&									get_is_auto_index_set()
 		{return _is_auto_index_set;}
 };

@@ -505,10 +505,39 @@ static void	enriche_configuration(std::vector<Server>& servers,
 		it->set_host_lookup_map(&host_ip_lookup);
 		if (it->get_allowed_methods().empty())
 			set_default_methods(*it);
+		if (it->get_index_files().empty())
+			it->set_index_file("index.html");
+		if (it->get_is_auto_index_set() == false)
+			it->set_auto_index(false);
+		if (it->get_root_path().empty())
+		{
+			try
+			{
+				DIR *dir = opendir("./www"); // peut-etre trouver une meilleure facon de trouver le dossier www plutot que de faire un truc de schlag avec le chemin relatif
+				if (dir)
+				{
+					it->set_root_path("./www");
+					closedir(dir);
+				}
+				else
+					throw std::invalid_argument("You probably erased the default root path damn stupid.");
+			catch (std::exception& e)
+			{
+				std::cerr << e.what() << std::endl;
+				exit(1);
+			}
+		}
 		for (size_t i = 0; i < it->get_locations().size(); ++i)
 		{
 			if (!it->get_locations()[i].get_allowed_methods().empty())
 				set_default_methods(it->get_locations()[i]);
+			if (it->get_locations()[i].get_root_path().empty())
+				it->get_locations()[i].
+				set_root_path(it->get_root_path());
+			if (it->get_locations()[i].index_file.empty())
+				it->get_locations()[i].set_index_file("index.html");
+			if (it->get_locations()[i].get_is_auto_index_set() == false)
+				it->get_locations()[i].set_auto_index(false);
 		}
 		if (it->get_listening_ips().empty() && it->get_listening_ports().empty()
 			&& it->get_ip_port_pairs().empty())
