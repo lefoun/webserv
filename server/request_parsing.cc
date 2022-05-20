@@ -5,7 +5,7 @@ static void	parse_target_arguments(request_t& request)
 	size_t pos = request.target.find('?', 0);	
 	if (pos == std::string::npos)
 		return ;
-	request.args = request.target.substr(pos + 1, std::string::npos);
+	request.query_string = request.target.substr(pos + 1, std::string::npos);
 	std::string tmp = request.target.substr(0, pos);
 	request.target = tmp;
 }
@@ -51,6 +51,12 @@ static void	parse_request_header(const std::string& header, request_t& request)
 	ss >> request.host;
 	check_char_in_stream('\r', ss);
 	check_char_in_stream('\n', ss);
+	std::cout << GREEN "Before Cookie: " << ss.tellg() << RESET << std::endl;
+	std::string::size_type pos = header.find("tracking-cookie=", ss.tellg());
+	if (pos != std::string::npos) 
+	{
+		request.cookie = header.substr(pos + 16, 24);
+	}
 }
 
 request_t*	get_parsed_request(const std::string& header)

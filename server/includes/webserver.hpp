@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <ctime>
 
 /* Socket | Inet libraries to enable communication */
 #include <sys/socket.h>

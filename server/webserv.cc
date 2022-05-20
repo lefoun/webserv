@@ -13,7 +13,25 @@ void	send_response()
 	std::cout << "413 Request(entity) too large\n";
 }
 
-void	get_cgi_response(request_t* request, std::string& response)
+void	set_cgi_env_variables(const request_t* request)
+{
+	setenv("CONTENT_TYPE", request->method.c_str(), 1);
+	setenv("CONTENT_LENGTH", request->content_length.c_str(), 1);
+	setenv("HTTP_COOKIE", request->cookie.c_str(), 1);
+	setenv("HTTP_USER_AGENT", request->user_agent.c_str(), 1);
+	setenv("PATH_INFO", request->path_info.c_str(), 1);
+	setenv("QUERY_STRING", request->query_string.c_str(), 1);
+	setenv("REMOTE_ADDR", request->remote_addr.c_str(), 1);
+	setenv("REMOTE_HOST", request->remote_host.c_str(), 1);
+	setenv("REQUEST_METHOD", request->method.c_str(), 1);
+	setenv("SCRIPT_FILENAME", request->script_path.c_str(), 1);
+	setenv("SCRIPT_NAME", request->script_name.c_str(), 1);
+	setenv("SERVER_NAME", request->host.c_str(), 1);
+	setenv("SERVER_SOFTWARE", "WebServ", 1);
+	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+}
+
+void	get_cgi_response(const request_t* request, std::string& response)
 {
 	pid_t child_pid = fork();
 	char	*arg[1];
@@ -27,11 +45,9 @@ void	get_cgi_response(request_t* request, std::string& response)
 	if (child_pid == 0) /* Child process */
 	{
 		extern char **environ;
-		setenv("QUERY_STRING", request->args.c_str(), 1);
-		setenv("PATH_INFO", request->target.c_str(), 1);
-		setenv("REQUEST_METHOD", request->method.c_str(), 1);
 		char *const args[1] = {const_cast<char *const>(request->target.c_str())};
-		execve("cgi_tester", args, environ);
+		set_cgi_env_variables(request);
+		execve("cgi-bin/cgi_test.py", args, environ);
 		std::cout << "Executed process CGI TEST\n";
 		exit(0);
 	}
@@ -49,7 +65,6 @@ void	get_cgi_response(request_t* request, std::string& response)
 										" text/html\nContent-Length: ";
 		response.append(header_response);
 		response.append(SSTR(tmp.str().size()));
-		response.append("\nConnection: keep-alive\n");
 		response.append("\n\n");
 		response.append(tmp.str());
 	}
@@ -71,13 +86,26 @@ std::string	get_content_type(const std::string& file_extension)
 	return content_type;
 }
 
+std::string	gen_random_number()
+{
+	static const char alphanum[] = "0123456789""ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+    std::string tmp_s;
+    tmp_s.reserve(24);
+
+    for (size_t i = 0; i < 24; ++i)
+        tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+    
+    return tmp_s;
+}
+
 void	send_response(request_t* request, const int& socket_fd)
 {
 	std::string response;
 	const std::string				file_extension = 
 		request->target.substr(request->target.find_last_of(".") + 1);
 
-	if (request->method == "POST" && file_extension == "bla")
+	if (file_extension == "py")
 	{
 		std::cout << GREEN "Calling CGI Python\n" RESET;
 		get_cgi_response(request, response);
@@ -85,6 +113,8 @@ void	send_response(request_t* request, const int& socket_fd)
 	else
 	{
 		std::string				serv_response = "HTTP/1.1 200 OK\r\nContent-Type:";
+		if (request->method == "POST")
+			serv_response = "HTTP/1.1 405 Not Allowed\r\nContent-Type:";
 		std::string				content_type = " text/html";
 		std::string				content_length = "\r\nContent-Length: ";
 		unsigned int			flags = std::ios::in;
@@ -102,6 +132,9 @@ void	send_response(request_t* request, const int& socket_fd)
 		content_length.append(SSTR(follow_up_rsp.size()));
 		serv_response.append(content_type);
 		serv_response.append(content_length);
+		if (request->cookie.empty() && file_extension == "html")
+			serv_response.append("\nSet-Cookie: tracking-cookie=" + gen_random_number() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
+		serv_response.append("\nConnection: keep-alive");
 		serv_response.append("\n\n");
 		serv_response.append(follow_up_rsp);
 		file.close();
