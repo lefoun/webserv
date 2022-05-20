@@ -134,7 +134,7 @@ int	return_error(const std::string& error_msg)
 }
 
 template <typename T>
-int get_socket_index(const std::vector<T>& vec, int socket)
+int get_socket_index(const std::vector<T>& vec, const int& socket)
 {
 	for (size_t i = 0; i < vec.size(); ++i)
 	{
@@ -234,6 +234,42 @@ void	bind_sockets(std::vector<SockListen>& listen_sockets,
 	}
 }
 
+bool	is_complete_request(const std::string& request)
+{
+	if (request.size() > 30)
+	{
+		if (request.find("GET", 0, 3) != std::string::npos)
+		{
+			if (!(request.find("\r\n\r\n", 0) != std::string::npos))
+				return false;
+			return true;
+		}
+		else if (request.find("POST", 0, 4) != std::string::npos)
+		{
+			if (!(request.find(EOF_POST, 0) != std::string::npos))
+				return false;
+			return true;
+		}
+		else
+			return false;
+	}
+	return false;
+}
+
+void	close_socket(const ssize_t nb_bytes, fd_set& master_socket_list,
+						sock_com_it_t& socket_it, std::vector<SockComm>&
+						communication_sockets)
+{
+	if (nb_bytes == 0)
+		std::cout << RED"Connection closed from Socket "
+					<< socket_it->get_socket_fd() << RESET << std::endl;
+	else if (nb_bytes < 0)
+		perror("Recv failed");
+	FD_CLR(socket_it->get_socket_fd(), &master_socket_list);
+	communication_sockets.erase(socket_it);	
+	socket_it->close_socket();
+}
+
 void	launch_server(std::vector<Server>& servers,
 						std::map<std::string, std::string>& host_ip_lookup)
 {
@@ -251,14 +287,12 @@ void	launch_server(std::vector<Server>& servers,
 	open_listening_sockets(listen_sockets, servers);
 	bind_sockets(listen_sockets, master_socket_list);
 	int	fd_max_nb = listen_sockets.back().get_socket_fd();
-	std::string	header;
 	while (true)
 	{
 		std::cout << MAGENTA "====== Waiting for incoming new connections "
 						<< "======\n" RESET;
 		/* Copy our original socket list into copy because Select() will erase
-		 * its contents and leave only read-ready sockets
-		 */
+		 * its contents and leave only read-ready sockets */
 		copy_socket_list = master_socket_list;
 
 		// accept incoming connections
@@ -276,8 +310,7 @@ void	launch_server(std::vector<Server>& servers,
 				{
 					try
 					{
-						new_connect = listen_sockets[index].\
-													accept_connection();
+						new_connect = listen_sockets[index].accept_connection();
 						std::cout << "Before closing any socket\n";
 						communication_sockets.push_back(*new_connect);
 						FD_SET(new_connect->get_socket_fd(), &master_socket_list);
@@ -287,68 +320,37 @@ void	launch_server(std::vector<Server>& servers,
 							GREEN "Server Accepted new connection on socket "
 							<< listen_sockets[index].get_port() << "\n"RESET;
 					}
-					catch (std::exception& e)
-					{
-						std::cout << e.what() << "\n";
-						continue;
-					}
+					catch (std::exception& e) { std::cout << e.what() << "\n"; }
 				}
 				else
 				{
-					sock_com_it_t it = communication_sockets.begin()
+					sock_com_it_t socket_it = communication_sockets.begin()
 							+ get_socket_index(communication_sockets, socket_fd);
 					memset(buffer, 0, BUFFER_SIZE);
-					ssize_t nb_bytes = recv(
+					size_t nb_bytes = recv(
 						socket_fd, buffer, BUFFER_SIZE, 0);
 					if (nb_bytes <= 0)
-					{
-						if (nb_bytes == 0)
-							std::cout << "Connection closed from Socket "
-										<< socket_fd << std::endl;
-						else if (nb_bytes < 0)
-							perror("Recv failed");
-						sock_com_it_t it = communication_sockets.begin()
-								+ get_socket_index(communication_sockets, socket_fd);
-						communication_sockets.erase(it);	
-						it->close_socket();
-						FD_CLR(socket_fd, &master_socket_list);
-					}
-					it->get_client_request() += buffer;
-					std::cout << "This is it->get_client_request()\n" << it->get_client_request() << "\n\n" << std::endl;
+						close_socket(nb_bytes, master_socket_list, socket_it,
+										communication_sockets);
+					socket_it->get_client_request().append(buffer);
+					std::cout << "This is header\n" << 
+								socket_it->get_client_request()
+								<< "\n\n" << std::endl;
 					std::cout << "This is buffer size " << nb_bytes << std::endl;
-					if (it->get_client_request().size() > 30)
+					if (is_complete_request(socket_it->get_client_request()))
 					{
-						if (it->get_client_request().find("GET", 0, 3) != std::string::npos)
-						{
-							if (!(it->get_client_request().find("\r\n\r\n", 0) != std::string::npos))
-								continue ;
-						}
-						else if (it->get_client_request().find("POST", 0, 4) != std::string::npos)
-						{
-							if (!(it->get_client_request().find(EOF_POST, 0) != std::string::npos))
-								continue ;
-						}
-						else
-							continue ;
-					}
-					std::cout << GREEN "Executing Command\n" RESET;
-					// read_buf(buffer, nb_bytes);
-						std::cout << BLUE "Received data from client " << socket_fd
-							<< "\n"RESET;
-						// read_buf(buffer, nb_bytes);
-						// if (it->get_server() == NULL)
+						std::cout << BLUE "Received data from client "
+									<< socket_fd << "\n"RESET;
+						// if (socket_it->get_server() == NULL)
 							// Server* serv = get_server_associated_with_request(
-								// servers, *it, buffer);
-						request_t *request = get_parsed_request(it->get_client_request());
+								// servers, *socket_it, buffer);
+						request_t *request = get_parsed_request(
+													socket_it->get_client_request());
 						std::cout << BLUE "Sending data To client " << socket_fd
 							<< "\n"RESET;
-						send_response(request, it->get_socket_fd());
-						// sock_com_it_t it = communication_sockets.begin()
-						// 		+ get_socket_index(communication_sockets, socket_fd);
-						it->get_client_request().clear();
-						// communication_sockets.erase(it);	
-						// it->close_socket();
-						// FD_CLR(socket_fd, &master_socket_list);
+						send_response(request, socket_it->get_socket_fd());
+						socket_it->get_client_request().clear();
+					}
 				}
 			}
 		}
