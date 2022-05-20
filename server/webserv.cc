@@ -6,7 +6,7 @@
 	* INADDR_ANY = let the os decide
 	* htons converts host to network short and htonl to long.
 	*/
-
+#define EOF_POST "0\r\n\r\n"
 
 void	send_response()
 {
@@ -24,18 +24,21 @@ void	get_cgi_response(request_t* request, std::string& response)
 		std::cout << "Failed to create a new process\n";
 		return ;
 	}
-	unsetenv("QUERY_STRING");
-	setenv("QUERY_STRING", request->args.c_str(), 1);
 	if (child_pid == 0) /* Child process */
 	{
 		extern char **environ;
-		execve("cgi-bin/cgi_test.py", arg, environ);
+		setenv("QUERY_STRING", request->args.c_str(), 1);
+		setenv("PATH_INFO", request->target.c_str(), 1);
+		setenv("REQUEST_METHOD", request->method.c_str(), 1);
+		char *const args[1] = {const_cast<char *const>(request->target.c_str())};
+		execve("cgi_tester", args, environ);
 		std::cout << "Executed process CGI TEST\n";
 		exit(0);
 	}
 	else /* parent */
 	{
 		wait(NULL);
+		// std::ifstream response_file("cgi-bin/cgi_serv_communication_file.txt");
 		std::ifstream response_file("cgi-bin/cgi_serv_communication_file.txt");
 		if (response_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");
@@ -52,13 +55,29 @@ void	get_cgi_response(request_t* request, std::string& response)
 	}
 }
 
+std::string	get_content_type(const std::string& file_extension)
+{
+	std::string content_type = " text/html";
+	if (file_extension == "css")
+		content_type = " text/css";
+	else if (file_extension == "jpeg")
+		content_type = " image/jpeg";
+	else if (file_extension == "jpg")
+		content_type = " image/jpg";
+	else if (file_extension == "js")
+		content_type = " text/javascript";
+	else if (file_extension == "ico")
+		content_type = " image/png";
+	return content_type;
+}
+
 void	send_response(request_t* request, const int& socket_fd)
 {
 	std::string response;
-	std::string				file_extension = 
+	const std::string				file_extension = 
 		request->target.substr(request->target.find_last_of(".") + 1);
 
-	if (request->method == "GET" && file_extension == "py")
+	if (request->method == "POST" && file_extension == "bla")
 	{
 		std::cout << GREEN "Calling CGI Python\n" RESET;
 		get_cgi_response(request, response);
@@ -70,27 +89,9 @@ void	send_response(request_t* request, const int& socket_fd)
 		std::string				content_length = "\r\nContent-Length: ";
 		unsigned int			flags = std::ios::in;
 
-		std::cout << GREEN "This is file extension " << file_extension 
-			<< RESET << std::endl;
-		if (file_extension == "css")
-			content_type = " text/css";
-		else if (file_extension == "jpeg")
-			content_type = " image/jpeg";
-		else if (file_extension == "jpg")
-			content_type = " image/jpg";
-		else if (file_extension == "js")
-			content_type = " text/javascript";
-		else if (file_extension == "ico")
-			content_type = " image/png";
-		// else if (file_extension == "ico")
-		// 	content_type = " image/vnd.microsoft.icon";
-
-		if (content_type == " image/jpeg" || content_type == " image/jpg"
-			|| content_type == " image/vnd.microsoft.icon")
-		{
-			std::cout << "Modifying flags\n";
+		content_type = get_content_type(file_extension);
+		if (content_type.find("image", 0) != std::string::npos)
 			flags = std::ios::in | std::ios::binary;
-		}
 
 		std::ifstream file("www/" + request->target, flags);
 		if (file.fail())
@@ -101,13 +102,13 @@ void	send_response(request_t* request, const int& socket_fd)
 		content_length.append(SSTR(follow_up_rsp.size()));
 		serv_response.append(content_type);
 		serv_response.append(content_length);
-		// serv_response.append("\r\nConnection: keep-alive\n");
 		serv_response.append("\n\n");
 		serv_response.append(follow_up_rsp);
 		file.close();
 		response = serv_response;
 	}
-	std::cout << response << std::endl;
+	// if (file_extension != "css")
+		// std::cout << response << std::endl;
 	if (send(socket_fd, response.c_str(), response.length(), 0) < 0)
 		throw std::runtime_error(
 			"Failed to send data to socket " + SSTR(socket_fd));
@@ -217,20 +218,9 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	}
 }
 
-void	launch_server(std::vector<Server>& servers,
-						std::map<std::string, std::string>& host_ip_lookup)
+void	bind_sockets(std::vector<SockListen>& listen_sockets,
+						fd_set& master_socket_list)
 {
-	SockComm*			new_connect;
-	std::vector<SockListen> listen_sockets;
-	std::vector<SockComm> communication_sockets;
-	fd_set				master_socket_list, copy_socket_list;
-	char				buffer[BUFFER_SIZE + 1];
-
-	(void)host_ip_lookup;
-	// creates the socket
-	open_listening_sockets(listen_sockets, servers);
-	FD_ZERO(&master_socket_list);
-	FD_ZERO(&copy_socket_list);
 	for (std::vector<SockListen>::iterator it = listen_sockets.begin();
 		it != listen_sockets.end(); ++it)
 	{
@@ -242,7 +232,26 @@ void	launch_server(std::vector<Server>& servers,
 				<< " and ip " << inet_ntoa(it->get_sockaddr_in().sin_addr)
 				<< "\n" RESET;
 	}
+}
+
+void	launch_server(std::vector<Server>& servers,
+						std::map<std::string, std::string>& host_ip_lookup)
+{
+	SockComm*				new_connect;
+	std::vector<SockListen> listen_sockets;
+	std::vector<SockComm> 	communication_sockets;
+	fd_set					master_socket_list, copy_socket_list;
+	char					buffer[BUFFER_SIZE + 1];
+	int						index = 0;
+
+	(void)host_ip_lookup;
+	/* creates the sockets */
+	FD_ZERO(&master_socket_list);
+	FD_ZERO(&copy_socket_list);
+	open_listening_sockets(listen_sockets, servers);
+	bind_sockets(listen_sockets, master_socket_list);
 	int	fd_max_nb = listen_sockets.back().get_socket_fd();
+	std::string	header;
 	while (true)
 	{
 		std::cout << MAGENTA "====== Waiting for incoming new connections "
@@ -255,15 +264,14 @@ void	launch_server(std::vector<Server>& servers,
 		// accept incoming connections
 		if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
 		{
-			perror("failed select\n"); 
+			perror("Call to Select() failed"); 
 			throw std::runtime_error("Call to select() failed");
 		}
-		
-		for (int i = 0; i <= fd_max_nb; ++i)
+		for (int socket_fd = 0; socket_fd <= fd_max_nb; ++socket_fd)
 		{
-			if (FD_ISSET(i, &copy_socket_list))
+			if (FD_ISSET(socket_fd, &copy_socket_list))
 			{
-				int index = get_socket_index(listen_sockets, i);
+				index = get_socket_index(listen_sockets, socket_fd);
 				if (index != -1)
 				{
 					try
@@ -287,35 +295,60 @@ void	launch_server(std::vector<Server>& servers,
 				}
 				else
 				{
-					ssize_t nb_bytes = recv(i, buffer, BUFFER_SIZE, 0);
+					sock_com_it_t it = communication_sockets.begin()
+							+ get_socket_index(communication_sockets, socket_fd);
+					memset(buffer, 0, BUFFER_SIZE);
+					ssize_t nb_bytes = recv(
+						socket_fd, buffer, BUFFER_SIZE, 0);
 					if (nb_bytes <= 0)
 					{
 						if (nb_bytes == 0)
 							std::cout << "Connection closed from Socket "
-										<< i << std::endl;
+										<< socket_fd << std::endl;
 						else if (nb_bytes < 0)
 							perror("Recv failed");
 						sock_com_it_t it = communication_sockets.begin()
-								+ get_socket_index(communication_sockets, i);
+								+ get_socket_index(communication_sockets, socket_fd);
 						communication_sockets.erase(it);	
 						it->close_socket();
-						FD_CLR(i, &master_socket_list);
+						FD_CLR(socket_fd, &master_socket_list);
 					}
-					else
+					it->get_client_request() += buffer;
+					std::cout << "This is it->get_client_request()\n" << it->get_client_request() << "\n\n" << std::endl;
+					std::cout << "This is buffer size " << nb_bytes << std::endl;
+					if (it->get_client_request().size() > 30)
 					{
-						std::cout << BLUE "Received data from client " << i
+						if (it->get_client_request().find("GET", 0, 3) != std::string::npos)
+						{
+							if (!(it->get_client_request().find("\r\n\r\n", 0) != std::string::npos))
+								continue ;
+						}
+						else if (it->get_client_request().find("POST", 0, 4) != std::string::npos)
+						{
+							if (!(it->get_client_request().find(EOF_POST, 0) != std::string::npos))
+								continue ;
+						}
+						else
+							continue ;
+					}
+					std::cout << GREEN "Executing Command\n" RESET;
+					// read_buf(buffer, nb_bytes);
+						std::cout << BLUE "Received data from client " << socket_fd
 							<< "\n"RESET;
-						read_buf(buffer, nb_bytes);
-						sock_com_it_t it = communication_sockets.begin()
-								+ get_socket_index(communication_sockets, i);
+						// read_buf(buffer, nb_bytes);
 						// if (it->get_server() == NULL)
 							// Server* serv = get_server_associated_with_request(
 								// servers, *it, buffer);
-						request_t *request = get_parsed_request(buffer);
-						std::cout << BLUE "Sending data To client " << i
+						request_t *request = get_parsed_request(it->get_client_request());
+						std::cout << BLUE "Sending data To client " << socket_fd
 							<< "\n"RESET;
 						send_response(request, it->get_socket_fd());
-					}
+						// sock_com_it_t it = communication_sockets.begin()
+						// 		+ get_socket_index(communication_sockets, socket_fd);
+						it->get_client_request().clear();
+						// communication_sockets.erase(it);	
+						// it->close_socket();
+						// FD_CLR(socket_fd, &master_socket_list);
 				}
 			}
 		}
@@ -334,8 +367,3 @@ int main()
 	launch_server(servers, host_ip_lookup);
 	return 0;
 }
-
-
-/* We receive a request:
- * We search IP:PORT pairs
-*/

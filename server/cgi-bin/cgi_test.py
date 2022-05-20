@@ -11,6 +11,11 @@ form = cgi.FieldStorage()
 # Get data from fields
 first_name = form.getvalue('first_name')
 field_of_study = form.getvalue('field_of_study')
+cgi.print_environ_usage()
+
+path_info = os.environ['PATH_INFO']
+request_method = os.environ['REQUEST_METHOD']
+
 if "<script>" in first_name:
     first_name = "Kevin Mitnick"
 if "<script>" in field_of_study:
@@ -22,16 +27,10 @@ print(field_of_study)
 with open("cgi-bin/cgi_serv_communication_file.txt", "w") as response_file:
     with open("/Users/noufel/Documents/Learning/Programming/projets-42/webserv/server/www/noufel_website/index.html", 'r') as original:
         data = original.read()
-        data = data.replace('Person', first_name)
-        data = data.replace('Computer Science', field_of_study)
-    print(data)
+        if first_name:
+            data = data.replace('Person', first_name)
+        if field_of_study:
+            data = data.replace('Computer Science', field_of_study)
+    # print(data)
     print(data, file=response_file)
-    # print("<html>", file=response_file)
-    # print("<head>", file=response_file)
-    # print("<title>Python CGI Program</title>", file=response_file)
-    # print("</head>", file=response_file)
-    # print("<body>", file=response_file)
-    # print(f"<h2>Hello {first_name} {last_name} </h2> ", file=response_file)
-    # print("</body>", file=response_file)
-    # print("</html>", file=response_file)
 exit(0)

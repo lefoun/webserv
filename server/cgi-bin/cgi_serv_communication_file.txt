@@ -34,7 +34,7 @@
                 <!-- Masthead Avatar Image-->
                 <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." />
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm OK 👋</h1>
+                <h1 class="masthead-heading title mb-0">Hello, I'm nouf 👋</h1>
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
@@ -42,7 +42,7 @@
                     <div class="divider-custom-line"></div>
                 </div>
                 <!-- Masthead Subheading-->
-                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying LOL <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
+                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying bouf <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
                 <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
                 <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
             </div>

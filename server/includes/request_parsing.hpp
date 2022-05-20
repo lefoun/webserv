@@ -16,4 +16,4 @@ typedef struct request
 
 } request_t;
 
-request_t*	get_parsed_request(const char buffer[]);
+request_t*	get_parsed_request(const std::string& header);

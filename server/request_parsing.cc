@@ -19,21 +19,21 @@ static void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
 		throw std::invalid_argument("Unxpected token");
 }
 
-static void	parse_request_header(const char buffer[], request_t& request)
+static void	parse_request_header(const std::string& header, request_t& request)
 {
 	/* Request format
 	 * request-line = method SP request-target SP HTTP-version CRLF
 	 */
 
 	std::string			tmp;
-	std::istringstream	ss(buffer);
+	std::istringstream	ss(header);
 
 	ss >> std::noskipws; /* To make whitespace non skipable */
 	/* Parse Method */
 	ss >> request.method;
 	if (!(request.method == "GET" || request.method == "POST"
 		|| request.method == "DELETE"))
-		throw std::invalid_argument("Invalid Method");
+		throw std::invalid_argument("Invalid Method" + request.method);
 
 	check_char_in_stream(' ', ss);
 	ss >> request.target;
@@ -53,7 +53,7 @@ static void	parse_request_header(const char buffer[], request_t& request)
 	check_char_in_stream('\n', ss);
 }
 
-request_t*	get_parsed_request(const char buffer[])
+request_t*	get_parsed_request(const std::string& header)
 {
 	/* check request
 	 * HOSTNAME:PORT
@@ -62,6 +62,6 @@ request_t*	get_parsed_request(const char buffer[])
 	 * server_name
 	*/
 	request_t	*request = new request_t;
-	parse_request_header(buffer, *request);
+	parse_request_header(header, *request);
 	return request;
 }

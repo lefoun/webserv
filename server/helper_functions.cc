@@ -84,13 +84,13 @@ void	read_buf(char buffer[], size_t size)
 {
 	if (size == 0)
 	{
-		for (size_t i = 0; buffer[i] != '\0'; ++i)
-			std::cout << buffer[i];
+		for (size_t i = 0; (int)(buffer[i]) != '\0'; ++i)
+			std::cout << buffer[i] << "|";
 	}
 	else
 	{
 		for (size_t i = 0; i < size; ++i)
-			std::cout << buffer[i];
+			std::cout << (int)(buffer[i]) << "|";
 		std::cout << std::endl;
 	}
 }

@@ -71,6 +71,7 @@ class SockComm : public Socket
 {
 	private:
 		Server*		_server;
+		std::string	_client_request;
 
 	public:
 		SockComm(const uint16_t& port, const in_addr_t& ip, Server* server = NULL)
@@ -105,10 +106,11 @@ class SockComm : public Socket
 			// close(_socket_fd);
 		}
 
-		Server*		get_server() { return _server; }
-		void		set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
-		int			close_socket() { return close(get_socket_fd()); }
-		void		init_sock_com()
+		Server*			get_server() { return _server; }
+		std::string&	get_client_request() { return _client_request; }
+		void			set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
+		int				close_socket() { return close(get_socket_fd()); }
+		void			init_sock_com()
 		{
 				if (fcntl(_socket_fd, F_SETFL, O_NONBLOCK) == -1)
 					throw std::runtime_error(
