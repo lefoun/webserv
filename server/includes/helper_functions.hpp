@@ -4,6 +4,8 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -28,5 +30,6 @@ bool	        is_ip_address(const std::string &ip_str);
 
 in_addr_t	ip_to_number(const char * ip);
 
+std::string	ip_to_str(in_addr_t ip);
 /* Reads size from buffer or till buffer[index] == '\0' if no size was given */
 void	read_buf(char buffer[], size_t size = 0);

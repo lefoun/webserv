@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sys/types.h>
 #include <sstream>
+#include "helper_functions.hpp"
 #include "colors.hpp"
 
 typedef struct request

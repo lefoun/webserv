@@ -39,6 +39,15 @@ bool	is_ip_address(const std::string &ip_str)
 	return true;
 }
 
+std::string ip_to_str(in_addr_t ip)
+{
+    struct sockaddr_in sa;
+    char str[INET_ADDRSTRLEN];
+
+    sa.sin_addr.s_addr = htonl(ip);
+    return std::string(inet_ntop(AF_INET, &sa.sin_addr, str, INET_ADDRSTRLEN));
+}
+
 in_addr_t	ip_to_number(const char * ip)
 {
     /* The return value. */

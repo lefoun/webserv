@@ -36,6 +36,7 @@
 
 /* for the buffer that reads the clients' message */
 #define BUFFER_SIZE 4096
+#define DOUBLE_CRLF "\r\n\r\n"
 
 class Socket;
 class SockComm;
@@ -73,6 +74,7 @@ class SockComm : public Socket
 	private:
 		Server*		_server;
 		std::string	_client_request;
+		// size_t		_content_length;
 
 	public:
 		SockComm(const uint16_t& port, const in_addr_t& ip, Server* server = NULL)

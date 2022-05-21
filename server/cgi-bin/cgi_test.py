@@ -24,7 +24,11 @@ if "<script>" in field_of_study:
 print(first_name)
 print(field_of_study)
 
-with open("cgi-bin/cgi_serv_communication_file.txt", "w") as response_file:
+file_name = "cgi-bin/cgi_serv_communication_file.txt"
+if os.environ['HTTP_COOKIE']:
+    file_name = "cgi-bin/cookies/" + os.environ['HTTP_COOKIE']
+    print("file_name is a Cookie " + os.environ['HTTP_COOKIE'])
+with open(file_name, "w") as response_file:
     with open("/Users/noufel/Documents/Learning/Programming/projets-42/webserv/server/www/noufel_website/index.html", 'r') as original:
         data = original.read()
         if first_name:
