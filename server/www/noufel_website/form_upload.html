@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="" />
-        <title>WebServ</title>
+        <title>Noufel Ammari</title>
         <!-- Favicon-->
         <link rel="icon" type="image/x-icon" href="static/assets/favicon.ico" />
         <!-- Core theme CSS-->
@@ -22,8 +22,9 @@
                 <div class="collapse navbar-collapse" id="navbarResponsive">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="index.html">About</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="github">Download</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="form_upload.html">Upload</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="form.html">Form</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="download.py">Download</a></li>
                     </ul>
                 </div>
             </div>
@@ -34,17 +35,23 @@
                 <!-- Masthead Avatar Image-->
                 <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." />
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm Noufnouf 👋</h1>
+                <h1 class="masthead-title mb-0">
+                <div class="form__group">
+                    <form enctype="multipart/form-data" action="cgi-bin/upload.py" method="POST">
+                    <h2>Choose your file:<br></h2>
+                    <input name="file_name" type="file" class="form__input" id="file" placeholder="file.txt" required="" />
+                    <label class="form__label"></label>
+                        <!-- <label class="form__label" placeholder="Norminet"> Enter your Name: </h1><br><input type="text" name="first_name"></label> -->
+                    <!-- Hello, I'm Noufel 👋</h1>-->
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
                     <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
                     <div class="divider-custom-line"></div>
                 </div>
+                <button class="button"> Upload </button>
                 <!-- Masthead Subheading-->
-                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying CS <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
-                <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
-                <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
+                </div>
             </div>
         </header>
         <!-- Copyright Section-->
@@ -57,4 +64,3 @@
         <script src="js/scripts.js"></script>
     </body>
 </html>
-

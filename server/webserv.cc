@@ -60,10 +60,15 @@ void	get_cgi_response(const request_t* request, std::string& response)
 	{
 		extern char **environ;
 		// char *const args[1] = {const_cast<char *const>(request->target.c_str())};
-		char *const args[1] = {NULL};
+		char *args[4];
+		// args[0] = const_cast<char *const>("/usr/bin/python3");
+		args[0] = const_cast<char *const>(request->path_info.c_str());
+		args[1] = const_cast<char *const>(request->body.c_str());
+		args[2] = NULL;
 		set_cgi_env_variables(request);
 		std::cout << "Executed process CGI TEST\n";
-		execve("cgi-bin/cgi_test.py", args, environ);
+		std::cout << request->path_info << std::endl;
+		execve(*args, args + 1, environ);
 		perror("execve failed\n");
 		exit(0);
 	}
@@ -71,9 +76,13 @@ void	get_cgi_response(const request_t* request, std::string& response)
 	{
 		wait(NULL);
 		std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
+		std::string	file_suffix = "uploaded";
+		if (request->path_info.find("upload") == std::string::npos)
+			file_suffix.clear();
 		if (!request->cookie.empty())
 		{
-			file_name = "cgi-bin/cookies/" + request->cookie;
+			file_name = "cgi-bin/cookies/" + request->cookie + "_dir/"
+						+ request->cookie + file_suffix;
 		}
 		std::ifstream response_file(file_name);
 		if (response_file.fail())
@@ -113,9 +122,9 @@ void	send_response(request_t* request, const int& socket_fd)
 	const std::string				file_extension = 
 		request->target.substr(request->target.find_last_of(".") + 1);
 
-	if (file_extension == "py")
+	if (file_extension == "py" || file_extension == "php")
 	{
-		std::cout << GREEN "Calling CGI Python\n" RESET;
+		std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
 		get_cgi_response(request, response);
 	}
 	else
@@ -131,12 +140,14 @@ void	send_response(request_t* request, const int& socket_fd)
 		if (content_type.find("image", 0) != std::string::npos)
 			flags = std::ios::in | std::ios::binary;
 
-		std::string		file_path = "www/" + request->target;
+		std::string		file_path = "www" + request->target;
 		if (!request->cookie.empty() && request->target.find("html", 0) != std::string::npos)
 		{
-			file_path = "cgi-bin/cookies/" + request->cookie;
+			file_path = "cgi-bin/cookies/" + request->cookie + "_dir/" + request->cookie;
 			if (access(file_path.c_str(), F_OK) == -1)
-				file_path = "www/" + request->target;
+				file_path = "www" + request->target;
+			else
+				std::cout << RED "File " + file_path + " Not found\n";
 		}
 		std::ifstream 	file(file_path, flags);
 		if (file.fail())
@@ -283,52 +294,114 @@ void	bind_sockets(std::vector<SockListen>& listen_sockets,
 	}
 }
 
-bool	is_complete_request(const std::string& request)
+/* There are three cases of parsing:
+ * chunked
+ * unchunked
+ * GET
+ * POST
+ * DELETE
+ * multipart/form-data; boundary=---
+*/
+
+
+/*
+ * transfer type: chunked, unchunked, unknown
+*/
+
+// bool	is_complete_request(const std::string& request)
+// {
+// 	// read_buf(const_cast<char *>(request.c_str()), request.size());
+// 	if (request.size() > 30)
+// 	{
+// 		if (request.find("GET", 0, 3) != std::string::npos)
+// 		{
+// 			if ((request.find(DOUBLE_CRLF, 30) != std::string::npos))
+// 				return true;
+// 			return false;
+// 		}
+// 		else if (request.find("POST", 0, 4) != std::string::npos)
+// 		{
+// 			std::string::size_type chunked_parsing = request.find(
+// 				"Transfer-Encoding: chunked", 30);
+// 			if (chunked_parsing != std::string::npos)
+// 			{
+// 				/* the number 57 comes from 27 which is the length of 
+// 				 * "Transfer-Encoding: chunked" string and 30 which is
+// 				 * the minimum number of characters in all required headers
+// 				 * We start searching from the character 30 and 57 to gain time
+// 				*/
+// 				std::string::size_type pos = request.find(DOUBLE_CRLF, 57);
+// 				if (pos != std::string::npos)
+// 					if (request.find(DOUBLE_CRLF, pos + 4) != std::string::npos)
+// 						return true;
+// 				return false;
+// 			}
+// 			else
+// 			{
+// 				std::string::size_type len_pos = request.find(
+// 												"Content-Length: ", 30);
+// 				if (len_pos != std::string::npos)
+// 				{
+// 					size_t len = atoi(request.substr(len_pos + 16).c_str());
+// 					std::string::size_type pos = request.find(
+// 													DOUBLE_CRLF, len_pos + 16);
+// 					if (pos != std::string::npos)
+// 						if (request.substr(pos + 4).size() >= len)
+// 							return true;
+// 					// return false;
+// 					return true;
+// 				}
+// 				return false;
+// 			}
+// 		} /* Need to add Delete Request */
+// 	}
+// 	return false;
+// }
+
+
+bool	is_complete_request(std::string& request, request_t *rqst)
 {
-	read_buf(const_cast<char *>(request.c_str()), request.size());
-	if (request.size() > 30)
+	if (rqst->method.empty()) /* Request header is not parsed yet */
 	{
-		if (request.find("GET", 0, 3) != std::string::npos)
+		if (request.find(DOUBLE_CRLF) != std::string::npos)
 		{
-			if ((request.find(DOUBLE_CRLF, 30) != std::string::npos))
-				return true;
+			/* parse_request_body:
+			 * Parses the request and put teh values in the struct rqst and
+			 * trunks the request string to leave only the body */
+			parse_request_header(request, rqst);
+			parse_request_body(request, rqst);
+		}
+		else
+			return false;
+	} 
+	if (rqst->body_parsing_state == NOT_STARTED) 
+	{
+		/* we parsed the request header but request_body is not yet parsed*/
+		if (rqst->transfer_encoding == "chunked")
+		{
+
+			std::string::size_type pos = request.find(DOUBLE_CRLF, 57);
+			if (pos != std::string::npos)
+				if (request.find(DOUBLE_CRLF, pos + 4) != std::string::npos)
+				{
+					parse_request_body(request, rqst);
+					return true;
+				}
 			return false;
 		}
-		else if (request.find("POST", 0, 4) != std::string::npos)
+		else /* Request is unchunked */
 		{
-			std::string::size_type chunked_parsing = request.find(
-				"Transfer-Encoding: chunked", 30);
-			if (chunked_parsing != std::string::npos)
-			{
-				/* the number 57 comes from 27 which is the length of 
-				 * "Transfer-Encoding: chunked" string and 30 which is
-				 * the minimum number of characters in all required headers
-				 * We start searching from the character 30 and 57 to gain time
-				*/
-				std::string::size_type pos = request.find(DOUBLE_CRLF, 57);
-				if (pos != std::string::npos)
-					if (request.find(DOUBLE_CRLF, pos + 4) != std::string::npos)
-						return true;
-				return false;
-			}
-			else
-			{
-				std::string::size_type len_pos = request.find(
-												"Content-Length: ", 30);
-				if (len_pos != std::string::npos)
-				{
-					size_t len = atoi(request.substr(len_pos + 16).c_str());
-					std::string::size_type pos = request.find(
-													DOUBLE_CRLF, len_pos + 16);
-					if (pos != std::string::npos)
-						if (request.substr(pos + 4).size() == len)
-							return true;
-					return false;
-				}
-				return false;
-			}
+			/*
+			 * Either content_type is multiform data which comes in many steps
+			 * or comes in a single time
+			*/
+			parse_request_body(request, rqst);
 		}
-	}
+	} /* Need to add Delete Request */
+	if (rqst->body_parsing_state == INCOMPLETE)
+		parse_request_body(request, rqst);
+	if (rqst->body_parsing_state == COMPLETE)
+		return true;
 	return false;
 }
 
@@ -403,7 +476,7 @@ void	launch_server(std::vector<Server>& servers,
 					sock_com_it_t socket_it = communication_sockets.begin()
 							+ get_socket_index(communication_sockets, socket_fd);
 					memset(buffer, 0, BUFFER_SIZE);
-					size_t nb_bytes = recv(
+					int nb_bytes = recv(
 						socket_fd, buffer, BUFFER_SIZE, 0);
 					if (socket_it->get_client_request().empty() && nb_bytes <= 0)
 					{
@@ -411,24 +484,25 @@ void	launch_server(std::vector<Server>& servers,
 										communication_sockets);
 						continue ;
 					}
-					socket_it->get_client_request().append(buffer);
+					if (nb_bytes > -1)
+						socket_it->get_client_request().append(buffer, nb_bytes);
 					std::cout << "This is header\n" << 
 								socket_it->get_client_request()
 								<< std::endl;
 					std::cout << "This is buffer size " << nb_bytes << std::endl;
-					if (is_complete_request(socket_it->get_client_request()))
+					std::cout << BLUE "Received data from client "
+								<< socket_fd << "\n"RESET;
+					if (is_complete_request(socket_it->get_client_request(),
+											&socket_it->get_request()))
 					{
-						std::cout << BLUE "Received data from client "
-									<< socket_fd << "\n"RESET;
-						// if (socket_it->get_server() == NULL)
-							// Server* serv = get_server_associated_with_request(
-								// servers, *socket_it, buffer);
-						request_t *request = get_parsed_request(
-													socket_it->get_client_request());
 						std::cout << BLUE "Sending data To client " << socket_fd
 							<< "\n"RESET;
-						send_response(request, socket_it->get_socket_fd());
+						send_response(&socket_it->get_request(), socket_it->get_socket_fd());
 						socket_it->get_client_request().clear();
+						std::string tmp = socket_it->get_request().cookie;
+						memset(&socket_it->get_request(), 0, sizeof(request_t));
+						socket_it->get_request().cookie = tmp;
+						socket_it->get_request().body_parsing_state = NOT_STARTED;
 					}
 				}
 			}

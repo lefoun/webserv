@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Import modules for CGI handling 
-import cgi, cgitb, os
+import cgi, cgitb, os, sys
 import fileinput
 
 # Create instance of FieldStorage 
@@ -25,11 +25,13 @@ print(first_name)
 print(field_of_study)
 
 file_name = "cgi-bin/cgi_serv_communication_file.txt"
-if os.environ['HTTP_COOKIE']:
-    file_name = "cgi-bin/cookies/" + os.environ['HTTP_COOKIE']
+cookie = os.environ['HTTP_COOKIE']
+if cookie:
+    file_name = "cgi-bin/cookies/" + cookie + "_dir/" + cookie
     print("file_name is a Cookie " + os.environ['HTTP_COOKIE'])
+    os.makedirs("cgi-bin/cookies/" + cookie + "_dir/", exist_ok=True)
 with open(file_name, "w") as response_file:
-    with open("/Users/noufel/Documents/Learning/Programming/projets-42/webserv/server/www/noufel_website/index.html", 'r') as original:
+    with open("cgi-bin/allin.html", 'r') as original:
         data = original.read()
         if first_name:
             data = data.replace('Person', first_name)

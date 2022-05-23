@@ -35,7 +35,8 @@
 #include "colors.hpp"
 
 /* for the buffer that reads the clients' message */
-#define BUFFER_SIZE 4096
+// #define BUFFER_SIZE 1048576
+#define BUFFER_SIZE 4096 
 #define DOUBLE_CRLF "\r\n\r\n"
 
 class Socket;
@@ -74,6 +75,7 @@ class SockComm : public Socket
 	private:
 		Server*		_server;
 		std::string	_client_request;
+		request_t	_parsed_request;
 		// size_t		_content_length;
 
 	public:
@@ -83,12 +85,16 @@ class SockComm : public Socket
 			_port = port;
 			_ip = ip;
 			_server = server;
+			_parsed_request.body_parsing_state = NOT_STARTED;
+			// _parsed_request = new request_t;
 		}
 
 		SockComm(const SockComm& copy)
 		{
 			*this = copy;
 			std::cout << RED "Callign copy constructor\n" RESET;
+			_parsed_request.body_parsing_state = NOT_STARTED;
+			// _parsed_request = new request_t;
 		}
 
 		SockComm&	operator=(const SockComm& cop)
@@ -99,6 +105,8 @@ class SockComm : public Socket
 			this->_socket_fd = cop.get_socket_fd();
 			this->_sockaddr_len = cop._sockaddr_len;
 			this->_socket_addr = cop._socket_addr;
+			/* need a profound copy here */
+			_parsed_request = cop._parsed_request;
 			return *this;
 		}
 
@@ -113,6 +121,7 @@ class SockComm : public Socket
 		std::string&	get_client_request() { return _client_request; }
 		void			set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
 		int				close_socket() { return close(get_socket_fd()); }
+		request_t&		get_request() { return _parsed_request; }
 		void			init_sock_com()
 		{
 				if (fcntl(_socket_fd, F_SETFL, O_NONBLOCK) == -1)
