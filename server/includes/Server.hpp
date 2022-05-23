@@ -38,7 +38,7 @@ class Server
 		_is_auto_index_set(false),
 		_is_client_max_body_size_set(false)
 		{}
-
+		t_return_codes							return_codes;
 		std::vector<std::string>&				get_server_names()
 		{ return _server_names; }
 		std::vector<uint16_t>&					get_listening_ports()

@@ -527,6 +527,7 @@ static void	enriche_configuration(std::vector<Server>& servers,
 				exit(1);
 			}
 		}
+		set_default_return_code(*it);
 		for (size_t i = 0; i < it->get_locations().size(); ++i)
 		{
 			if (!it->get_locations()[i].get_allowed_methods().empty())
@@ -538,6 +539,7 @@ static void	enriche_configuration(std::vector<Server>& servers,
 				it->get_locations()[i].set_index_file("index.html");
 			if (it->get_locations()[i].get_is_auto_index_set() == false)
 				it->get_locations()[i].set_auto_index(false);
+			set_default_return_code(it->get_locations()[i]);
 		}
 		if (it->get_listening_ips().empty() && it->get_listening_ports().empty()
 			&& it->get_ip_port_pairs().empty())
