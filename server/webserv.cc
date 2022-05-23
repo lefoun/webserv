@@ -119,7 +119,7 @@ std::string	get_content_type(const std::string& file_extension)
 void	send_response(request_t* request, const int& socket_fd)
 {
 	std::string response;
-	const std::string				file_extension = 
+	std::string				file_extension =
 		request->target.substr(request->target.find_last_of(".") + 1);
 
 	if (file_extension == "py" || file_extension == "php")
@@ -175,16 +175,70 @@ void	send_response(request_t* request, const int& socket_fd)
 }
 
 Server*	get_server_associated_with_request(std::vector<Server>& servers,
-											const SockComm& socket,
-											const char buffer[])
+											const request_t *request)
 {
-	(void)socket;
-	(void)buffer;
-	for (size_t i = 0; i < servers.size(); ++i)
+	const std::map<std::string, std::string>&	host_ip_lookup = *(servers[0].get_host_lookup_map());
+	std::string ip = request->host;
+	std::string host;
+	u_int32_t port = 80;
+	size_t pos = request->host.find(':');
+	if (pos != std::string::npos)
 	{
-		servers[i].get_ip_port_pairs();
+		ip = request->host.substr(0, pos);
+		if (pos < request->host.size())
+			port = atoi(request->host.substr(pos + 1, request->host.size() - pos).c_str());
+
 	}
-	return NULL;
+	if (!is_ip_address(ip))
+	{
+		host = ip;
+		ip = host_ip_lookup.at(ip);
+	}
+	if (ip == "0.0.0.0")
+		ip = "127.0.0.1";
+	Server* associated_serv = NULL;
+	std::vector<Server>::iterator it = servers.begin();
+	while (it != servers.end())
+	{
+		std::cout << "ip=" << it->get_listening_ips().back()  << std::endl;
+		std::vector<Server::ip_port_pair>::iterator it_explicit_ip_port = it->get_ip_port_pairs().begin();
+		while (it->get_ip_port_pairs().size() && it_explicit_ip_port != it->get_ip_port_pairs().end())
+		{
+			if (it_explicit_ip_port->first == ip && it_explicit_ip_port->second == port)
+				return &(*it);
+
+			++it_explicit_ip_port;
+		}
+		std::vector<std::string>::iterator it_listening_ip = it->get_listening_ips().begin();
+		while (it->get_listening_ips().size() && it_listening_ip != it->get_listening_ips().end())
+		{
+			if (*it_listening_ip == ip && port == 8000)
+				return &(*it);
+			++it_listening_ip;
+		}
+		std::vector<Server::ip_port_pair>::iterator it_implicit_ip_port = it->get_implicit_port_ip_pairs().begin();
+		while (it->get_implicit_port_ip_pairs().size() &&  it_implicit_ip_port != it->get_implicit_port_ip_pairs().end())
+		{
+			if (it_implicit_ip_port->first == ip && it_implicit_ip_port->second == port)
+			{
+				if (!associated_serv)
+					associated_serv = &(*it);
+				else if (!host.empty())
+				{
+					std::vector<std::string>::iterator it_server_names = it->get_server_names().begin();
+					while (it_server_names != it->get_server_names().end())
+					{
+						if (*it_server_names == host)
+							return &(*it);
+						++it_server_names;
+					}
+				}
+			}
+			++ it_implicit_ip_port;
+		}
+		it++;
+	}
+	return associated_serv;
 }
 
 int	return_error(const std::string& error_msg)
@@ -224,7 +278,7 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	for (std::vector<Server>::iterator it = servers.begin();
 			it != servers.end(); ++it)
 	{
-		for (std::vector<uint16_t>::iterator it_port = 
+		for (std::vector<uint16_t>::iterator it_port =
 				it->get_listening_ports().begin();
 				it_port != it->get_listening_ports().end(); ++it_port)
 		{
@@ -241,7 +295,7 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	for (std::vector<Server>::iterator it = servers.begin();
 			it != servers.end(); ++it)
 	{
-		for (std::vector<std::string>::iterator it_ip = 
+		for (std::vector<std::string>::iterator it_ip =
 				it->get_listening_ips().begin();
 				it_ip!= it->get_listening_ips().end(); ++it_ip)
 		{
@@ -260,7 +314,7 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	for (std::vector<Server>::iterator it = servers.begin();
 			it != servers.end(); ++it)
 	{
-		for (std::vector<Server::ip_port_pair>::iterator it_pair = 
+		for (std::vector<Server::ip_port_pair>::iterator it_pair =
 				it->get_ip_port_pairs().begin();
 				it_pair!= it->get_ip_port_pairs().end(); ++it_pair)
 		{
@@ -293,71 +347,6 @@ void	bind_sockets(std::vector<SockListen>& listen_sockets,
 				<< "\n" RESET;
 	}
 }
-
-/* There are three cases of parsing:
- * chunked
- * unchunked
- * GET
- * POST
- * DELETE
- * multipart/form-data; boundary=---
-*/
-
-
-/*
- * transfer type: chunked, unchunked, unknown
-*/
-
-// bool	is_complete_request(const std::string& request)
-// {
-// 	// read_buf(const_cast<char *>(request.c_str()), request.size());
-// 	if (request.size() > 30)
-// 	{
-// 		if (request.find("GET", 0, 3) != std::string::npos)
-// 		{
-// 			if ((request.find(DOUBLE_CRLF, 30) != std::string::npos))
-// 				return true;
-// 			return false;
-// 		}
-// 		else if (request.find("POST", 0, 4) != std::string::npos)
-// 		{
-// 			std::string::size_type chunked_parsing = request.find(
-// 				"Transfer-Encoding: chunked", 30);
-// 			if (chunked_parsing != std::string::npos)
-// 			{
-// 				/* the number 57 comes from 27 which is the length of 
-// 				 * "Transfer-Encoding: chunked" string and 30 which is
-// 				 * the minimum number of characters in all required headers
-// 				 * We start searching from the character 30 and 57 to gain time
-// 				*/
-// 				std::string::size_type pos = request.find(DOUBLE_CRLF, 57);
-// 				if (pos != std::string::npos)
-// 					if (request.find(DOUBLE_CRLF, pos + 4) != std::string::npos)
-// 						return true;
-// 				return false;
-// 			}
-// 			else
-// 			{
-// 				std::string::size_type len_pos = request.find(
-// 												"Content-Length: ", 30);
-// 				if (len_pos != std::string::npos)
-// 				{
-// 					size_t len = atoi(request.substr(len_pos + 16).c_str());
-// 					std::string::size_type pos = request.find(
-// 													DOUBLE_CRLF, len_pos + 16);
-// 					if (pos != std::string::npos)
-// 						if (request.substr(pos + 4).size() >= len)
-// 							return true;
-// 					// return false;
-// 					return true;
-// 				}
-// 				return false;
-// 			}
-// 		} /* Need to add Delete Request */
-// 	}
-// 	return false;
-// }
-
 
 bool	is_complete_request(std::string& request, request_t *rqst)
 {
@@ -465,9 +454,9 @@ void	launch_server(std::vector<Server>& servers,
 						FD_SET(new_connect->get_socket_fd(), &master_socket_list);
 						if (new_connect->get_socket_fd() > fd_max_nb)
 							fd_max_nb = new_connect->get_socket_fd();
-						std::cout << 
+						std::cout <<
 							GREEN "Server Accepted new connection on socket "
-							<< listen_sockets[index].get_port() << "\n"RESET;
+							<< listen_sockets[index].get_port() << "\n" RESET;
 					}
 					catch (std::exception& e) { std::cout << e.what() << "\n"; }
 				}
@@ -497,6 +486,11 @@ void	launch_server(std::vector<Server>& servers,
 					{
 						std::cout << BLUE "Sending data To client " << socket_fd
 							<< "\n"RESET;
+						Server* serv = get_server_associated_with_request(servers, &socket_it->get_request());
+						std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
+						if (serv == NULL)
+							std::cout << "NULL" << std::endl;
+						set_location_block(*serv, socket_it->get_request());
 						send_response(&socket_it->get_request(), socket_it->get_socket_fd());
 						socket_it->get_client_request().clear();
 						std::string tmp = socket_it->get_request().cookie;

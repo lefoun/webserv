@@ -8,14 +8,10 @@
 #include <algorithm>
 #include <iterator>
 #include <stack>
+#include <dirent.h>
 #include "helper_functions.hpp"
 #include "Server.hpp"
-
-enum REQUEST_METHODS {
-	GET = 0,
-	POST,
-	DELETE
-};
+#include "webserver.hpp"
 
 enum DIRECTIVES {
 	UNKNOWN_DIRECTIVE = -1,

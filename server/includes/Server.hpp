@@ -9,8 +9,7 @@
 class Server
 {
 	public:
-		typedef std::pair<std::string, uint16_t>	ip_port_pair; 
-		typedef std::pair<uint16_t, std::string>	uint16_str_pair;
+		typedef std::pair<std::string, uint16_t>	ip_port_pair;
 	private:
 		std::map<std::string, std::string>*		_host_lookup_map;
 		std::vector<std::string>				_server_names;
@@ -38,7 +37,7 @@ class Server
 		_is_auto_index_set(false),
 		_is_client_max_body_size_set(false)
 		{}
-
+		t_return_codes							return_codes;
 		std::vector<std::string>&				get_server_names()
 		{ return _server_names; }
 		std::vector<uint16_t>&					get_listening_ports()
@@ -51,18 +50,24 @@ class Server
 		{ return _locations; }
 		std::string&							get_index_file()
 		{ return _index_file; }
+		void									set_index_file(std::string index_file)
+		{ _index_file = index_file; }
 		std::vector<uint16_str_pair>&			get_error_pages()
 		{ return _error_pages; }
 		std::vector<std::string>&				get_allowed_methods()
 		{ return _allowd_methods; }
 		std::string&							get_root_path()
 		{ return _root_path; }
+		void 									set_root_path(std::string root_path)
+		{ _root_path = root_path; }
 		std::string&            				get_redirections()
 		{ return _redirection; }
 		uint8_t&								get_client_max_body_size()
 		{ return _client_max_body_size; }
 		bool&									get_auto_index()
 		{ return _auto_index; }
+		void									set_auto_index(bool auto_index)
+		{ _auto_index = auto_index; _is_auto_index_set = true; }
 		bool&									get_is_auto_index_set()
 		{ return _is_auto_index_set; }
 		bool&									get_is_client_body_size_set()
@@ -75,3 +80,5 @@ class Server
 		std::vector<ip_port_pair>&				get_implicit_port_ip_pairs()
 		{ return _implicit_port_ip_pairs; }
 };
+
+typedef std::pair<Server::ip_port_pair, std::vector<std::string> >  ips_ports_server_names;

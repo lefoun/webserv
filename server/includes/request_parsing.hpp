@@ -17,21 +17,22 @@
 
 enum request_keys_e
 {
+	GET,
+	POST,
+	DELETE,
 	CONTENT_TYPE,
 	CONTENT_LENGTH,
 	COOKIE,
 	USER_AGENT,
 	CONNECTION,
 	HOST,
-	GET,
-	DELETE,
-	POST,
 	PROTOCOL,
 	TRACKING_COOKIE,
 	BOUNDARY,
 	TRANSFER_ENCODING,
 	REQUEST_KEYS_SIZE
 };
+#include <netinet/in.h>
 
 typedef struct request
 {
