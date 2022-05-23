@@ -70,4 +70,10 @@ class Location
 		{_auto_index = auto_index; _is_auto_index_set = true;}
 		bool&									get_is_auto_index_set()
 		{return _is_auto_index_set;}
+		bool									is_location_empty()
+		{
+			return (this->get_root_path().empty() && this->get_index_file().empty()
+					&& this->get_redirections().empty() && !this->get_allowed_methods().size()
+						&& !this->get_error_pages().size() && !this->get_is_auto_index_set());
+		}
 };

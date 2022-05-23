@@ -549,9 +549,9 @@ void	check_errors(std::vector<Server>& servers)
 						std::make_pair(std::string("127.0.0.1"), *it_listen_ports) &&
 						is_duplicate(it_ips_ports_names->second, it->get_server_names()))
 					throw (std::invalid_argument("Error: found duplicate server_name for same port"));
-				ips_ports_names.push_back(std::make_pair(std::make_pair
-					("127.0.0.1", *it_listen_ports),
-				it->get_server_names()));
+			ips_ports_names.push_back(std::make_pair(std::make_pair
+				("127.0.0.1", *it_listen_ports),
+			it->get_server_names()));
 		}
 		for(std::vector<Server::ip_port_pair>::iterator it_ip_port_pair = it->
 			get_ip_port_pairs().begin(); it_ip_port_pair != it->
@@ -689,8 +689,8 @@ bool	parse_config_file(const std::string& file_name,
 	}
 	if (servers.empty())
 		throw std::invalid_argument("Empty config file");
-	enriche_configuration(servers, host_ip_lookup);
 	check_errors(servers);
+	enriche_configuration(servers, host_ip_lookup);
 	config_file.close();
 	return true;
 }
