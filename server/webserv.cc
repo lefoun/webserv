@@ -55,7 +55,7 @@ void	get_cgi_response(request_t* request, std::string& response)
 void	send_response(request_t* request, const int& socket_fd)
 {
 	std::string response;
-	std::string				file_extension = 
+	std::string				file_extension =
 		request->target.substr(request->target.find_last_of(".") + 1);
 
 	if (request->method == "GET" && file_extension == "py")
@@ -70,7 +70,7 @@ void	send_response(request_t* request, const int& socket_fd)
 		std::string				content_length = "\r\nContent-Length: ";
 //		unsigned int			flags = std::ios::in;
 
-		std::cout << GREEN "This is file extension " << file_extension 
+		std::cout << GREEN "This is file extension " << file_extension
 			<< RESET << std::endl;
 		if (file_extension == "css")
 			content_type = " text/css";
@@ -87,7 +87,7 @@ void	send_response(request_t* request, const int& socket_fd)
 
 		std::string path = "www/" + request->target;
 		std::ifstream file;
-	
+
 		if (content_type == " image/jpeg" || content_type == " image/jpg"
 			|| content_type == " image/vnd.microsoft.icon")
 			file.open(path.c_str(), std::ios::in | std::ios::binary);
@@ -95,7 +95,7 @@ void	send_response(request_t* request, const int& socket_fd)
 			file.open(path.c_str(), std::ios::in);
 		if (file.fail())
 			throw std::runtime_error("Failed to open file " + request->target);
-		std::ostringstream tmp_ss; 
+		std::ostringstream tmp_ss;
 		tmp_ss << file.rdbuf();
 		std::string follow_up_rsp(tmp_ss.str());
 		content_length.append(SSTR(follow_up_rsp.size()));
@@ -114,16 +114,70 @@ void	send_response(request_t* request, const int& socket_fd)
 }
 
 Server*	get_server_associated_with_request(std::vector<Server>& servers,
-											const SockComm& socket,
-											const char buffer[])
+											const request_t *request)
 {
-	(void)socket;
-	(void)buffer;
-	for (size_t i = 0; i < servers.size(); ++i)
+	const std::map<std::string, std::string>&	host_ip_lookup = *(servers[0].get_host_lookup_map());
+	std::string ip = request->host;
+	std::string host;
+	u_int32_t port = 80;
+	size_t pos = request->host.find(':');
+	if (pos != std::string::npos)
 	{
-		servers[i].get_ip_port_pairs();
+		ip = request->host.substr(0, pos);
+		if (pos < request->host.size())
+			port = atoi(request->host.substr(pos + 1, request->host.size() - pos).c_str());
+
 	}
-	return NULL;
+	if (!is_ip_address(ip))
+	{
+		host = ip;
+		ip = host_ip_lookup.at(ip);
+	}
+	if (ip == "0.0.0.0")
+		ip = "127.0.0.1";
+	Server* associated_serv = NULL;
+	std::vector<Server>::iterator it = servers.begin();
+	while (it != servers.end())
+	{
+		std::cout << "ip=" << it->get_listening_ips().back()  << std::endl;
+		std::vector<Server::ip_port_pair>::iterator it_explicit_ip_port = it->get_ip_port_pairs().begin();
+		while (it->get_ip_port_pairs().size() && it_explicit_ip_port != it->get_ip_port_pairs().end())
+		{
+			if (it_explicit_ip_port->first == ip && it_explicit_ip_port->second == port)
+				return &(*it);
+
+			++it_explicit_ip_port;
+		}
+		std::vector<std::string>::iterator it_listening_ip = it->get_listening_ips().begin();
+		while (it->get_listening_ips().size() && it_listening_ip != it->get_listening_ips().end())
+		{
+			if (*it_listening_ip == ip && port == 8000)
+				return &(*it);
+			++it_listening_ip;
+		}
+		std::vector<Server::ip_port_pair>::iterator it_implicit_ip_port = it->get_implicit_port_ip_pairs().begin();
+		while (it->get_implicit_port_ip_pairs().size() &&  it_implicit_ip_port != it->get_implicit_port_ip_pairs().end())
+		{
+			if (it_implicit_ip_port->first == ip && it_implicit_ip_port->second == port)
+			{
+				if (!associated_serv)
+					associated_serv = &(*it);
+				else if (!host.empty())
+				{
+					std::vector<std::string>::iterator it_server_names = it->get_server_names().begin();
+					while (it_server_names != it->get_server_names().end())
+					{
+						if (*it_server_names == host)
+							return &(*it);
+						++it_server_names;
+					}
+				}
+			}
+			++ it_implicit_ip_port;
+		}
+		it++;
+	}
+	return associated_serv;
 }
 
 int	return_error(const std::string& error_msg)
@@ -163,7 +217,7 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	for (std::vector<Server>::iterator it = servers.begin();
 			it != servers.end(); ++it)
 	{
-		for (std::vector<uint16_t>::iterator it_port = 
+		for (std::vector<uint16_t>::iterator it_port =
 				it->get_listening_ports().begin();
 				it_port != it->get_listening_ports().end(); ++it_port)
 		{
@@ -180,7 +234,7 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	for (std::vector<Server>::iterator it = servers.begin();
 			it != servers.end(); ++it)
 	{
-		for (std::vector<std::string>::iterator it_ip = 
+		for (std::vector<std::string>::iterator it_ip =
 				it->get_listening_ips().begin();
 				it_ip!= it->get_listening_ips().end(); ++it_ip)
 		{
@@ -199,7 +253,7 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	for (std::vector<Server>::iterator it = servers.begin();
 			it != servers.end(); ++it)
 	{
-		for (std::vector<Server::ip_port_pair>::iterator it_pair = 
+		for (std::vector<Server::ip_port_pair>::iterator it_pair =
 				it->get_ip_port_pairs().begin();
 				it_pair!= it->get_ip_port_pairs().end(); ++it_pair)
 		{
@@ -255,10 +309,10 @@ void	launch_server(std::vector<Server>& servers,
 		// accept incoming connections
 		if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
 		{
-			perror("failed select\n"); 
+			perror("failed select\n");
 			throw std::runtime_error("Call to select() failed");
 		}
-		
+
 		for (int i = 0; i <= fd_max_nb; ++i)
 		{
 			if (FD_ISSET(i, &copy_socket_list))
@@ -275,7 +329,7 @@ void	launch_server(std::vector<Server>& servers,
 						FD_SET(new_connect->get_socket_fd(), &master_socket_list);
 						if (new_connect->get_socket_fd() > fd_max_nb)
 							fd_max_nb = new_connect->get_socket_fd();
-						std::cout << 
+						std::cout <<
 							GREEN "Server Accepted new connection on socket "
 							<< listen_sockets[index].get_port() << "\n"RESET;
 					}
@@ -297,7 +351,7 @@ void	launch_server(std::vector<Server>& servers,
 							perror("Recv failed");
 						sock_com_it_t it = communication_sockets.begin()
 								+ get_socket_index(communication_sockets, i);
-						communication_sockets.erase(it);	
+						communication_sockets.erase(it);
 						it->close_socket();
 						FD_CLR(i, &master_socket_list);
 					}
@@ -308,10 +362,12 @@ void	launch_server(std::vector<Server>& servers,
 						read_buf(buffer, nb_bytes);
 						sock_com_it_t it = communication_sockets.begin()
 								+ get_socket_index(communication_sockets, i);
-						// if (it->get_server() == NULL)
-							// Server* serv = get_server_associated_with_request(
-								// servers, *it, buffer);
 						request_t *request = get_parsed_request(buffer);
+						Server* serv = get_server_associated_with_request(servers, request);
+						if (serv == NULL)
+							std::cout << "NULL" << std::endl;
+					//	(void)serv;
+						std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
 						std::cout << BLUE "Sending data To client " << i
 							<< "\n"RESET;
 						send_response(request, it->get_socket_fd());
@@ -326,7 +382,7 @@ int main()
 {
 	std::vector<Server>					servers;
 	std::map<std::string, std::string>	host_ip_lookup;
-	if (!parse_config_file("../parser/server_config.conf", servers, 
+	if (!parse_config_file("../parser/server_config.conf", servers,
 		host_ip_lookup))
 		return 1;
 	std::cout << GREEN "Loaded config file.\n\n" RESET;
