@@ -44,16 +44,20 @@ void	set_location_options(Server & server, request_t & request, Location & locat
 
 	if (request.method.compare("GET") == 0)
 	{
+		std::cout << location.get_path() << std::endl;
+		std::cout << "GET" << std::endl;
 		if (!location.get_allowed_methods().empty())
 		{
 			std::vector<std::string>::iterator it = location.get_allowed_methods().begin();
 			for (; it != location.get_allowed_methods().end(); ++it)
 			{
+				std::cout << "allowed method : " << *it << std::endl;
 				if (request.method.compare(*it) == 0)
 					break;
 			}
 			if  (it == location.get_allowed_methods().end())
 			{
+				//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 				std::cout << location.return_codes.err_405 << std::endl;
 				return ;
 			}

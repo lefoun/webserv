@@ -633,7 +633,7 @@ static void	enriche_configuration(std::vector<Server>& servers,
 		set_default_return_code(*it);
 		for (size_t i = 0; i < it->get_locations().size(); ++i)
 		{
-			if (!it->get_locations()[i].get_allowed_methods().empty())
+			if (it->get_locations()[i].get_allowed_methods().empty())
 				set_default_methods(it->get_locations()[i]);
 			if (it->get_locations()[i].get_root_path().empty())
 				it->get_locations()[i].

@@ -331,7 +331,7 @@ void	launch_server(std::vector<Server>& servers,
 							fd_max_nb = new_connect->get_socket_fd();
 						std::cout <<
 							GREEN "Server Accepted new connection on socket "
-							<< listen_sockets[index].get_port() << "\n"RESET;
+							<< listen_sockets[index].get_port() << "\n" RESET;
 					}
 					catch (std::exception& e)
 					{
@@ -358,7 +358,7 @@ void	launch_server(std::vector<Server>& servers,
 					else
 					{
 						std::cout << BLUE "Received data from client " << i
-							<< "\n"RESET;
+							<< "\n" RESET;
 						read_buf(buffer, nb_bytes);
 						sock_com_it_t it = communication_sockets.begin()
 								+ get_socket_index(communication_sockets, i);
@@ -369,8 +369,9 @@ void	launch_server(std::vector<Server>& servers,
 					//	(void)serv;
 						std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
 						std::cout << BLUE "Sending data To client " << i
-							<< "\n"RESET;
-						send_response(request, it->get_socket_fd());
+							<< "\n" RESET;
+						set_location_block(*serv, *request);
+						//send_response(request, it->get_socket_fd());
 					}
 				}
 			}
@@ -386,7 +387,7 @@ int main()
 		host_ip_lookup))
 		return 1;
 	std::cout << GREEN "Loaded config file.\n\n" RESET;
-	std::cout << GREEN"Starting WebServer...\n"RESET;
+	std::cout << GREEN"Starting WebServer...\n" RESET;
 	launch_server(servers, host_ip_lookup);
 	return 0;
 }
