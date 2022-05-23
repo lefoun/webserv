@@ -9,8 +9,7 @@
 class Server
 {
 	public:
-		typedef std::pair<std::string, uint16_t>	ip_port_pair; 
-		typedef std::pair<uint16_t, std::string>	uint16_str_pair;
+		typedef std::pair<std::string, uint16_t>	ip_port_pair;
 	private:
 		std::map<std::string, std::string>*		_host_lookup_map;
 		std::vector<std::string>				_server_names;

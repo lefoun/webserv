@@ -5,7 +5,9 @@
 #include <utility>
 #include <stdint.h>
 
-typedef struct	s_return_codes 
+typedef std::pair<uint16_t, std::string>	uint16_str_pair;
+
+typedef struct	s_return_codes
 {
 	std::string err_400;
 	std::string err_401;
@@ -30,8 +32,6 @@ typedef struct	s_return_codes
 
 class Location
 {
-	public:
-		typedef std::pair<uint16_t, std::string>	uint16_str_pair;
 	private:
 		std::string								_path;
 		std::string								_root_path;

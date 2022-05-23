@@ -69,7 +69,7 @@ void	set_location_options(Server & server, request_t & request, Location & locat
 		if (!location.get_index_file().empty())
 			index_file = location.get_index_file();
 		if (!location.get_is_auto_index_set())
-			autoindex = location.get_auto_index(); 
+			autoindex = location.get_auto_index();
 		std::string full_path = root_path + request.target;
 		DIR *dir = opendir(full_path.c_str());
 		if (dir != NULL)
@@ -124,7 +124,7 @@ Location *choose_location(Server & server, request_t & request)
 
 void	set_location_block(Server & server, request_t & request)
 {
-	Location						*location;
+	Location						*location = NULL;
 	// check if there is location block inside the choosen server
 	// then we check if the target is inside the location block (exactly)
 	// then we crop the uri name to find if an inexact location's name fit with a part of the URI
