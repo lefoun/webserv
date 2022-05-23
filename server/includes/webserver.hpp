@@ -142,7 +142,7 @@ class SockListen : public Socket
 		SockListen(const SockListen& copy)
 		{
 			// std::cout << RED "Calling copy operator of SockListen\n" RESET;
-			*this = copy;
+			*this = copy;	
 		}
 
 		SockListen& operator=(const SockListen& copy)
@@ -165,7 +165,7 @@ class SockListen : public Socket
 		SockComm*			accept_connection()
 		{
 			SockComm	*socket_comm = new SockComm(_port, _ip);
-			int new_socket = accept(_socket_fd,
+			int new_socket = accept(_socket_fd, 
 									(struct sockaddr*)&(socket_comm->\
 									get_sockaddr_in()),
 									&socket_comm->get_sockaddr_len());
@@ -224,3 +224,14 @@ class SockListen : public Socket
 			/* Tmp print to debug */
 		}
 };
+
+void	initialize_html_return_code_page(t_return_codes *return_codes);
+
+template <typename T>
+void	set_default_return_code(T & data);
+
+void		set_location_block(Server & server, request_t & request);
+Location	*choose_location(Server & server, request_t & request);
+void		set_location_options(Server & server, request_t & request, Location & location);
+void		choose_return_code_for_requested_ressource(std::string & root_path, \
+			std::string & index_file, bool & autoindex,  request_t & request);
