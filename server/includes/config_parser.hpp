@@ -11,6 +11,7 @@
 #include <dirent.h>
 #include "helper_functions.hpp"
 #include "Server.hpp"
+#include "webserver.hpp"
 
 enum REQUEST_METHODS {
 	GET = 0,

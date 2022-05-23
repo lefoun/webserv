@@ -3,6 +3,7 @@
 #include <string>
 #include <sys/types.h>
 #include <sstream>
+#include <netinet/in.h>
 
 typedef struct request
 {

@@ -536,7 +536,7 @@ static void	enriche_configuration(std::vector<Server>& servers,
 			if (it->get_locations()[i].get_root_path().empty())
 				it->get_locations()[i].
 				set_root_path(it->get_root_path());
-			if (it->get_locations()[i].index_file.empty())
+			if (it->get_locations()[i].get_index_file().empty())
 				it->get_locations()[i].set_index_file("index.html");
 			if (it->get_locations()[i].get_is_auto_index_set() == false)
 				it->get_locations()[i].set_auto_index(false);
