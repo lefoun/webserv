@@ -247,6 +247,8 @@ void	set_default_return_code(T & datas)
 	return_codes = &datas.return_codes;
 	initialize_html_return_code_page(&(*return_codes));
 	root_path = datas.get_root_path();
+	if (--(*root_path.end()) != '/')
+		root_path += '/';
 	for (; it != it_end; ++it)
 	{
 		switch (it->first)
