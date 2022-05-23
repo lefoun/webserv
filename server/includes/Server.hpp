@@ -80,3 +80,5 @@ class Server
 		std::vector<ip_port_pair>&				get_implicit_port_ip_pairs()
 		{ return _implicit_port_ip_pairs; }
 };
+
+typedef std::pair<Server::ip_port_pair, std::vector<std::string> >  ips_ports_server_names;
