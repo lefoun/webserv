@@ -68,7 +68,7 @@ void	send_response(request_t* request, const int& socket_fd)
 		std::string				serv_response = "HTTP/1.1 200 OK\r\nContent-Type:";
 		std::string				content_type = " text/html";
 		std::string				content_length = "\r\nContent-Length: ";
-		unsigned int			flags = std::ios::in;
+//		unsigned int			flags = std::ios::in;
 
 		std::cout << GREEN "This is file extension " << file_extension 
 			<< RESET << std::endl;
@@ -85,14 +85,14 @@ void	send_response(request_t* request, const int& socket_fd)
 		// else if (file_extension == "ico")
 		// 	content_type = " image/vnd.microsoft.icon";
 
+		std::string path = "www/" + request->target;
+		std::ifstream file;
+	
 		if (content_type == " image/jpeg" || content_type == " image/jpg"
 			|| content_type == " image/vnd.microsoft.icon")
-		{
-			std::cout << "Modifying flags\n";
-			flags = std::ios::in | std::ios::binary;
-		}
-
-		std::ifstream file("www/" + request->target, flags);
+			file.open(path.c_str(), std::ios::in | std::ios::binary);
+		else
+			file.open(path.c_str(), std::ios::in);
 		if (file.fail())
 			throw std::runtime_error("Failed to open file " + request->target);
 		std::ostringstream tmp_ss; 

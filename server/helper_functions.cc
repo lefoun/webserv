@@ -20,7 +20,14 @@ bool is_number(const std::string& s)
 
 bool	is_ip_address(const std::string &ip_str)
 {
-	if (std::count(ip_str.begin(), ip_str.end(), '.') != 3)
+    //std::count n'existe pas en c++ 98
+	int count = 0;
+	for (size_t i = 0; i < ip_str.size(); i++)
+	{
+		if (ip_str[i] == '.')
+			count++;
+	}
+	if (count != 3)
 		return false;
 
 	std::stringstream			ip_ss(ip_str);
@@ -42,11 +49,11 @@ bool	is_ip_address(const std::string &ip_str)
 in_addr_t	ip_to_number(const char * ip)
 {
     /* The return value. */
-    in_addr_t	v = 0;
+	in_addr_t	v = 0;
     /* The count of the number of bytes processed. */
-    int i;
+	int i;
     /* A pointer to the next digit to process. */
-    const char * start;
+	const char * start;
 
     start = ip;
     for (i = 0; i < 4; i++) {

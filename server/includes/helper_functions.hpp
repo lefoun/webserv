@@ -4,6 +4,8 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <netinet/in.h>
+#include <cstdlib>
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
