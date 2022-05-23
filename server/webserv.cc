@@ -350,6 +350,7 @@ void	bind_sockets(std::vector<SockListen>& listen_sockets,
 
 bool	is_complete_request(std::string& request, request_t *rqst)
 {
+	// read_buf(const_cast<char *>(request.c_str()), request.size());
 	if (rqst->method.empty()) /* Request header is not parsed yet */
 	{
 		if (request.find(DOUBLE_CRLF) != std::string::npos)
@@ -492,11 +493,15 @@ void	launch_server(std::vector<Server>& servers,
 							std::cout << "NULL" << std::endl;
 						set_location_block(*serv, socket_it->get_request());
 						send_response(&socket_it->get_request(), socket_it->get_socket_fd());
-						socket_it->get_client_request().clear();
-						std::string tmp = socket_it->get_request().cookie;
-						memset(&socket_it->get_request(), 0, sizeof(request_t));
-						socket_it->get_request().cookie = tmp;
-						socket_it->get_request().body_parsing_state = NOT_STARTED;
+						if (socket_it->get_request().transfer_encoding != "chunked"
+							|| socket_it->get_request().body_parsing_state == COMPLETE)
+						{
+							socket_it->get_client_request().clear();
+							std::string tmp = socket_it->get_request().cookie;
+							memset(&socket_it->get_request(), 0, sizeof(request_t));
+							socket_it->get_request().cookie = tmp;
+							socket_it->get_request().body_parsing_state = NOT_STARTED;
+						}
 					}
 				}
 			}

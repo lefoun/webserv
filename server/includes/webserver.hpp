@@ -38,6 +38,7 @@
 // #define BUFFER_SIZE 1048576
 #define BUFFER_SIZE 4096 
 #define DOUBLE_CRLF "\r\n\r\n"
+#define CRLF "\r\n"
 
 class Socket;
 class SockComm;

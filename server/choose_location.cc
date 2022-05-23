@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include <dirent.h>
-#include "./includes/webserver.hpp"
+#include "webserver.hpp"
 #define DEFAULT_ROOT_PATH "../www"
 
 
@@ -115,7 +115,7 @@ Location *choose_location(Server & server, request_t & request)
 		if (target.compare(0, it->get_path().size(), it->get_path()) == 0)
 		{
 			int len = it->get_path().size();
-			int target_len=	target.size();
+			int target_len = target.size();
 			if (len > max_len && len <= target_len)
 			{
 				max_len = it->get_path().size();
