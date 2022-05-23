@@ -115,7 +115,7 @@ static void	handle_error_directive(std::istream_iterator<std::string>& token,
 {
 	check_valid_token(token);
 	std::istream_iterator<std::string> end_of_file;
-	if (!is_number(*token)) 
+	if (!is_number(*token))
 		throw std::invalid_argument("Unexpected token" + *token);
 	std::string error_nb = *token;
 	std::string error_page = *++token;
@@ -146,7 +146,7 @@ static void	handle_listen(std::istream_iterator<std::string>& token,
 	check_valid_token(token);
 	if (context.top() != "server")
 		throw std::invalid_argument("Unexpected token inside location block");
-	if (*(--(*token).end()) != ';')	
+	if (*(--(*token).end()) != ';')
 		throw std::invalid_argument("Expected token ';'");
 	std::string	trimmed_token = *token;
 	/* Erase the trailing ';' */
@@ -305,7 +305,7 @@ static void	handle_location(std::istream_iterator<std::string>& token,
 	std::istream_iterator<std::string> end_of_file;
 	if (++token == end_of_file)
 		throw std::invalid_argument(
-			"Unexpected end of file near location block"); 
+			"Unexpected end of file near location block");
 	context.push("location");
 }
 
@@ -323,14 +323,14 @@ static void    handle_redirection(std::istream_iterator<std::string>& token,
         if (!server.get_redirections().empty())
             throw std::invalid_argument("Found multipe redirections in block server");
         server.get_redirections() = new_url;
-        std::cout << server.get_redirections() << std::endl; 
+        std::cout << server.get_redirections() << std::endl;
     }
     else if (context.top() == "location")
     {
         if (!server.get_locations().back().get_redirections().empty())
             throw std::invalid_argument("Found multipe redirections in block location");
         server.get_locations().back().get_redirections() = new_url;
-        std::cout << server.get_locations().back().get_redirections() << std::endl; 
+        std::cout << server.get_locations().back().get_redirections() << std::endl;
     }
     ++token;
 }
@@ -367,9 +367,9 @@ static void	handle_body_size_limit(std::istream_iterator<std::string>& token,
 	if (server.get_is_client_body_size_set())
 		throw std::invalid_argument(
 			"Multiple client_body_size_limit directives is not allowed");
-	if (body_size.size() > 4 
+	if (body_size.size() > 4
 		|| (*(--body_size.end()) != 'M' && *(--body_size.end()) != 'm')
-		|| !is_number(body_size.substr(0, body_size.size() - 1)) 
+		|| !is_number(body_size.substr(0, body_size.size() - 1))
 		|| !in_range(1, 100, atoi(body_size.c_str())))
 		throw std::invalid_argument(
 			"Bad argument for client_body_size_limit. Expected token "
@@ -448,10 +448,10 @@ static void	get_server(std::istream_iterator<std::string>& token,
 static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 {
 	int i = 1;
-	for (std::vector<Server>::iterator serv_it = servers.begin(); 
+	for (std::vector<Server>::iterator serv_it = servers.begin();
 			serv_it != servers.end(); ++serv_it)
 	{
-		for (std::vector<uint16_t>::iterator it_port = 
+		for (std::vector<uint16_t>::iterator it_port =
 				serv_it->get_listening_ports().begin();
 				it_port != serv_it->get_listening_ports().end(); ++it_port)
 		{
@@ -467,13 +467,13 @@ static void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 			}
 		}
 		/* printing implicit ip port */
-		for (std::vector<Server::ip_port_pair>::iterator imp_it = 
-				serv_it->get_implicit_port_ip_pairs().begin(); imp_it != 
+		for (std::vector<Server::ip_port_pair>::iterator imp_it =
+				serv_it->get_implicit_port_ip_pairs().begin(); imp_it !=
 				serv_it->get_implicit_port_ip_pairs().end(); ++imp_it)
 		{
-			std::cout << "IP: " << imp_it->first << " Port: " << imp_it->second << "\n"; 
+			std::cout << "IP: " << imp_it->first << " Port: " << imp_it->second << "\n";
 		}
-		
+
 		std::cout << "Server number " << i++ << std::endl;
 	}
 }
@@ -484,7 +484,7 @@ static void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_look
 	std::ifstream	hosts_file("/etc/hosts");
 	if (hosts_file.fail())
 		throw std::invalid_argument("Failed to open hosts file");
-	
+
 	std::string	line;
 	while (std::getline(hosts_file, line))
 	{
@@ -495,7 +495,7 @@ static void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_look
 			std::string	host_name;
 			tmp >> ip_addr;
 			tmp >> host_name;
-			for (std::map<std::string, std::string>::const_iterator it = 
+			for (std::map<std::string, std::string>::const_iterator it =
 				host_ip_lookup.begin(); it != host_ip_lookup.end(); ++it)
 			{
 				if (host_name == it->first)
@@ -545,7 +545,7 @@ void	check_errors(std::vector<Server>& servers)
 		{
 			for (it_ips_ports_names = ips_ports_names.begin();
 				it_ips_ports_names != ips_ports_names.end(); ++it_ips_ports_names)
-				if (it_ips_ports_names->first == 
+				if (it_ips_ports_names->first ==
 						std::make_pair(std::string("127.0.0.1"), *it_listen_ports) &&
 						is_duplicate(it_ips_ports_names->second, it->get_server_names()))
 					throw (std::invalid_argument("Error: found duplicate server_name for same port"));
@@ -557,7 +557,7 @@ void	check_errors(std::vector<Server>& servers)
 			get_ip_port_pairs().begin(); it_ip_port_pair != it->
 			get_ip_port_pairs().end(); ++it_ip_port_pair)
 		{
-			for (it_ips_ports_names = ips_ports_names.begin(); 
+			for (it_ips_ports_names = ips_ports_names.begin();
 			it_ips_ports_names != ips_ports_names.end(); ++it_ips_ports_names)
 				if (*it_ip_port_pair == it_ips_ports_names->first && is_duplicate
 						(it_ips_ports_names->second, it->get_server_names()))
@@ -569,10 +569,10 @@ void	check_errors(std::vector<Server>& servers)
 			get_listening_ips().begin(); it_listen_ips != it->
 			get_listening_ips().end(); ++it_listen_ips)
 		{
-			for (it_ips_ports_names = ips_ports_names.begin(); 
+			for (it_ips_ports_names = ips_ports_names.begin();
 				it_ips_ports_names != ips_ports_names.end(); ++it_ips_ports_names)
 				if (it_ips_ports_names->first == std::make_pair(*it_listen_ips,
-						uint16_t(8000)) && is_duplicate(it_ips_ports_names->second, 
+						uint16_t(8000)) && is_duplicate(it_ips_ports_names->second,
 						it->get_server_names()))
 					throw (std::invalid_argument("Error: found duplicate server_name for same ip"));
 			ips_ports_names.push_back(std::make_pair(std::make_pair
@@ -584,33 +584,65 @@ void	check_errors(std::vector<Server>& servers)
 		{
 			if (it_location->is_location_empty()) //checking if the location is not empty
 				throw (std::invalid_argument("Error: found empty location"));
-			for (std::vector<Location>::iterator it_location2 = it_location + 1; 
+			for (std::vector<Location>::iterator it_location2 = it_location + 1;
 				it_location2 != it->get_locations().end(); ++it_location2)
 			{
-				if (it_location->get_path() == it_location2->get_path() 
+				if (it_location->get_path() == it_location2->get_path()
 						&& it_location != it_location2 )
 					throw (std::invalid_argument("Error: found duplicate location"));
 			}
 		}
 		it++;
 	}
-		
+
 }
 
-static void	enriche_configuration(std::vector<Server>& servers, 
+static void	enriche_configuration(std::vector<Server>& servers,
 									std::map<std::string, std::string>&
 									host_ip_lookup)
 {
-	for (std::vector<Server>::iterator it = servers.begin(); 
+	for (std::vector<Server>::iterator it = servers.begin();
 			it != servers.end(); ++it)
 	{
 		it->set_host_lookup_map(&host_ip_lookup);
 		if (it->get_allowed_methods().empty())
 			set_default_methods(*it);
+		if (it->get_index_file().empty())
+			it->set_index_file("index.html");
+		if (it->get_is_auto_index_set() == false)
+			it->set_auto_index(false);
+		if (it->get_root_path().empty())
+		{
+			try
+			{
+				DIR *dir = opendir("./www"); // peut-etre trouver une meilleure facon de trouver le dossier www plutot que de faire un truc de schlag avec le chemin relatif
+				if (dir)
+				{
+					it->set_root_path("./www");
+					closedir(dir);
+				}
+				else
+					throw std::invalid_argument("You probably erased the default root path damn stupid.");
+			}
+			catch (std::exception& e)
+			{
+				std::cerr << e.what() << std::endl;
+				exit(1);
+			}
+		}
+		set_default_return_code(*it);
 		for (size_t i = 0; i < it->get_locations().size(); ++i)
 		{
 			if (!it->get_locations()[i].get_allowed_methods().empty())
 				set_default_methods(it->get_locations()[i]);
+			if (it->get_locations()[i].get_root_path().empty())
+				it->get_locations()[i].
+				set_root_path(it->get_root_path());
+			if (it->get_locations()[i].get_index_file().empty())
+				it->get_locations()[i].set_index_file("index.html");
+			if (it->get_locations()[i].get_is_auto_index_set() == false)
+				it->get_locations()[i].set_auto_index(false);
+			set_default_return_code(it->get_locations()[i]);
 		}
 		if (it->get_listening_ips().empty() && it->get_listening_ports().empty()
 			&& it->get_ip_port_pairs().empty())
@@ -620,7 +652,7 @@ static void	enriche_configuration(std::vector<Server>& servers,
 	set_implicit_ip_port_pairs(servers);
 }
 
-bool	parse_config_file(const std::string& file_name, 
+bool	parse_config_file(const std::string& file_name,
 							std::vector<Server>& servers,
 							std::map<std::string, std::string>& host_ip_lookup)
 {
@@ -660,5 +692,5 @@ bool	parse_config_file(const std::string& file_name,
 	enriche_configuration(servers, host_ip_lookup);
 	check_errors(servers);
 	config_file.close();
-	return true;	
+	return true;
 }
