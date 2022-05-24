@@ -181,6 +181,20 @@ void	parse_request_header(std::string& header, request_t* request)
 	std::cout << header << std::endl;
 }
 
+void		strip_chunked_encoding_chars(std::string& body)
+{
+	std::istringstream	stream(body);
+	std::string			tmp;
+	body.clear();
+	while (std::getline(stream, tmp, '\r'))
+	{
+		stream.get(); /* to take the \n of the hexadecimal number line out */
+		std::getline(stream, tmp, '\r');
+		body.append(tmp);
+		body.append("\n");
+	}
+}
+
 void		parse_request_body(std::string& client_req, request_t* request)
 {
 	if (request->method == "GET")
@@ -193,22 +207,21 @@ void		parse_request_body(std::string& client_req, request_t* request)
 	{
 		if (!request->content_length.empty())
 			request->body.reserve(request->content_length.size());
-		if (request->content_type == "multipart/form-data")
+		if (request->transfer_encoding == "chunked")
+		{
+			std::string::size_type	pos = client_req.find(DOUBLE_CRLF);
+			if (pos != std::string::npos)
+				client_req = client_req.substr(pos + 4);
+			std::cout << "This is chunked:" << client_req << std::endl;
+			request->body_parsing_state = INCOMPLETE;
+		}
+		else if (request->content_type == "multipart/form-data")
 		{
 			/*Get to boundary 1 and then look for second boundary */
 			client_req = client_req.substr(client_req.find(request->boundary)
 											+ request->boundary.size() + 2);
 			request->body_parsing_state = INCOMPLETE;
 			std::cout << "this is the rest of the body\n" << client_req << std::endl;
-		}
-		else if (request->transfer_encoding == "chunked")
-		{
-			std::string::size_type	pos = client_req.find(DOUBLE_CRLF);
-			if (pos != std::string::npos)
-				client_req = client_req.substr(pos + 4);
-			std::cout << "This is chunked:" << client_req << std::endl;
-			// request->body.append(client_req);
-			request->body_parsing_state = INCOMPLETE;
 		}
 		else
 		{
@@ -232,7 +245,8 @@ void		parse_request_body(std::string& client_req, request_t* request)
 		{
 			/* chunked content naive solution just to make the tester happy
 			 I'll finish the implementation tomorrow */
-			if (client_req.find("0"DOUBLE_CRLF) != std::string::npos)
+			if (client_req.size() > 5 && client_req.find(
+				 "0"DOUBLE_CRLF, client_req.size() - 5) != std::string::npos)
 			{
 				request->body.append(client_req);
 				request->body_parsing_state = COMPLETE;
