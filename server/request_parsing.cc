@@ -1,4 +1,5 @@
 #include "request_parsing.hpp"
+#include "response.hpp"
 #include "webserver.hpp"
 
 void		print_request_content(const request_t& request)
@@ -29,6 +30,25 @@ void		print_request_content(const request_t& request)
 	// std::string	script_name;
 	// std::string	host;
 	// std::string	body;
+}
+
+static void	set_ip_port(request_t* request, const std::string& host_port,
+						const std::map<std::string, std::string>& host_ip_lookup)
+{
+	size_t pos = host_port.find(':');
+	std::string ip;
+	if (pos != std::string::npos)
+	{
+		ip = host_port.substr(0, pos);
+		if (pos < host_port.size())
+			request->port = atoi(host_port.substr(
+				pos + 1, host_port.size() - pos).c_str());
+	}
+	if (!is_ip_address(ip))
+	{
+		ip = host_ip_lookup.at(ip);
+	}
+	request->ip = ip_to_number(ip.c_str());
 }
 
 static void	parse_target_arguments(request_t* request)
@@ -78,7 +98,9 @@ static void	skip_crlf_and_space_if_any(std::istringstream& ss)
 		ss >> c;
 }
 
-void	parse_request_header(std::string& header, request_t* request)
+void	parse_request_header(std::string& header, request_t* request,
+								const std::map<std::string, std::string>&
+								host_ip_lookup)
 {
 	/* Lookup table to avoid typos when searching for keys inside request */
 	static const char *lookup[REQUEST_KEYS_SIZE];
@@ -120,6 +142,7 @@ void	parse_request_header(std::string& header, request_t* request)
 		throw std::invalid_argument("Expected host");
 	check_char_in_stream(' ', ss);
 	ss >> request->host;
+	set_ip_port(request, request->host, host_ip_lookup);
 	check_char_in_stream('\r', ss);
 	check_char_in_stream('\n', ss);
 	while (ss)
@@ -266,18 +289,4 @@ void		parse_request_body(std::string& client_req, request_t* request)
 	}
 	if (request->transfer_encoding != "chunked")
 		client_req.clear();
-}
-
-request_t*	get_parsed_request(std::string& header)
-{
-	/* check request
-	 * HOSTNAME:PORT
-	 * PORT
-	 * IP
-	 * server_name
-	*/
-	request_t	*request = new request_t;
-	parse_request_header(header, request);
-	// request->path_info = 
-	return request;
 }

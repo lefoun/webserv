@@ -353,7 +353,9 @@ void	bind_sockets(std::vector<SockListen>& listen_sockets,
 	}
 }
 
-bool	is_complete_request(std::string& request, request_t *rqst)
+bool	is_complete_request(std::string& request, request_t *rqst,
+							const std::map<std::string, std::string>&
+							host_ip_lookup)
 {
 	// read_buf(const_cast<char *>(request.c_str()), request.size());
 	if (rqst->method.empty()) /* Request header is not parsed yet */
@@ -363,7 +365,7 @@ bool	is_complete_request(std::string& request, request_t *rqst)
 			/* parse_request_body:
 			 * Parses the request and put teh values in the struct rqst and
 			 * trunks the request string to leave only the body */
-			parse_request_header(request, rqst);
+			parse_request_header(request, rqst, host_ip_lookup);
 			parse_request_body(request, rqst);
 		}
 		else
@@ -488,7 +490,8 @@ void	launch_server(std::vector<Server>& servers,
 					std::cout << BLUE "Received data from client "
 								<< socket_fd << "\n"RESET;
 					if (is_complete_request(socket_it->get_client_request(),
-											&socket_it->get_request()))
+											&socket_it->get_request(),
+											host_ip_lookup))
 					{
 						std::cout << BLUE "Sending data To client " << socket_fd
 							<< "\n"RESET;
@@ -496,7 +499,7 @@ void	launch_server(std::vector<Server>& servers,
 						std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
 						if (serv == NULL)
 							std::cout << "NULL" << std::endl;
-						set_location_block(*serv, socket_it->get_request());
+						set_location_block(*serv, &socket_it->get_request());
 						if (socket_it->get_request().transfer_encoding != "chunked"
 							|| socket_it->get_request().body_parsing_state == COMPLETE)
 						{

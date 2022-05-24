@@ -242,12 +242,11 @@ class SockListen : public Socket
 
 void	initialize_html_return_code_page(t_return_codes *return_codes);
 
-void		set_location_block(Server & server, request_t & request);
-Location	*choose_location(Server & server, request_t & request);
+void		set_location_block(Server & server, request_t* request);
+Location	*choose_location(Server & server, request_t* request);
 void		change_default_html_return_code(std::string path, std::string *return_code);
-int			set_location_options(Server & server, request_t & request, Location & location);
-int			choose_return_code_for_requested_ressource(std::string & root_path, \
-			std::string & index_file, bool & autoindex,  request_t & request);
+int			set_location_options(Server & server, request_t* request, Location & location);
+int			choose_return_code_for_requested_ressource(Server& server, request_t* request);
 
 template <typename T>
 void	set_default_return_code(T & datas)

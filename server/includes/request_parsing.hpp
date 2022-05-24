@@ -6,6 +6,8 @@
 #include <sstream>
 #include "helper_functions.hpp"
 #include "colors.hpp"
+#include <netinet/in.h>
+#include <map>
 
 #define NOT_STARTED 0
 #define INCOMPLETE 1
@@ -32,7 +34,6 @@ enum request_keys_e
 	TRANSFER_ENCODING,
 	REQUEST_KEYS_SIZE
 };
-#include <netinet/in.h>
 
 typedef struct request
 {
@@ -59,6 +60,8 @@ typedef struct request
 } request_t;
 
 
-void		parse_request_header(std::string& header, request_t* request);
+void		parse_request_header(std::string& header, request_t* request,
+									const std::map<std::string, std::string>&
+									host_ip_lookup);
 void		parse_request_body(std::string& client_req, request_t* request);
 request_t*	get_parsed_request(const std::string& header);
