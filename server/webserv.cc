@@ -371,7 +371,7 @@ void	launch_server(std::vector<Server>& servers,
 						std::cout << BLUE "Sending data To client " << i
 							<< "\n" RESET;
 						set_location_block(*serv, *request);
-						//send_response(request, it->get_socket_fd());
+						send_response(request, it->get_socket_fd());
 					}
 				}
 			}
