@@ -1,6 +1,8 @@
 #include <unistd.h>
 #include <dirent.h>
 #include "webserver.hpp"
+#include "response.hpp"
+#include "helper_functions.hpp"
 #define DEFAULT_ROOT_PATH "../www"
 
 
@@ -10,8 +12,27 @@
 //Il faut check si les methodes sont autorisees quand il n'y a pas 
 //de location (le serveur sans options)
 
+void	fill_response(response_t* response,
+						const bool& return_code = 200,
+						const uint8_t& state = NOT_STARTED,
+						const bool& is_auto_index = false,
+						const std::string& location = "/",
+						const std::string& file_path = "/",
+						const std::string& body = "",
+						const std::string& content_type = "text/html")
+{
+	response->return_code = return_code;
+	response->is_auto_index = is_auto_index;
+	response->date = get_current_time();
+	response->content_type = content_type;
+	response->location = location;
+	response->body = body;
+	response->response_state = state;
+	response->file_path = file_path;
 
-int	choose_return_code_for_requested_ressource(Server& server, request_t* request)
+}
+
+void	choose_return_code_for_requested_ressource(Server& server, request_t* request, response_t* response)
 {
 	if (request->method.compare("GET") == 0)
 	{
@@ -28,7 +49,7 @@ int	choose_return_code_for_requested_ressource(Server& server, request_t* reques
 			{
 				//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 				std::cout << server.return_codes.err_405 << std::endl;
-				return 405;
+				return fill_response(response, 405, COMPLETE, false, "", "", server.return_codes.err_405);
 			}
 		}
 		std::string full_path = server.get_root_path() + request->target;
@@ -37,30 +58,31 @@ int	choose_return_code_for_requested_ressource(Server& server, request_t* reques
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return 301;
-				// std::cout << "301 REDIRECTION avec /" << std::endl;
+				return fill_response(response, 301, COMPLETE, false, request->target.append("/"));
 			else
 			{
 				full_path.append(server.get_index_file());
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-					return 200;//	std::cout << "200 OK (index)" << full_path << std::endl;
+					return fill_response(response, 200, NOT_STARTED, false, full_path);
 				else if (server.get_auto_index() == true)
-					return 200;//std::cout << "200 OK (AUTOINDEX ON)" << full_path << std::endl;
+					return fill_response(response, 200, NOT_STARTED, true, full_path);
 				else
-					return 403;//std::cout << "403 Forbidden (ERROR PAGE)" << std::endl;
+					return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
 			}
 		}
 		else if (access(full_path.c_str(), R_OK) == 0)
-			return 200;//std::cout << "200 OK" << full_path << std::endl;
+			return fill_response(response, 200, NOT_STARTED, false, full_path);
 		else if (access(full_path.c_str(), R_OK) != 0)
-			return 403;//std::cout << "403 Forbidden (ERROR PAGE)" << full_path << std::endl;
-		return 404;//std::cout << "404 Not Found" << std::endl;
+			return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+		else
+			return fill_response(response, 404, COMPLETE, false, "", server.return_codes.err_404);
 	}
-	return 500;
+	fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
 }
 
-int	set_location_options(Server & server, request_t* request, Location & location)
+void	set_location_options(Server & server, request_t* request, Location & location, response_t* response)
 {
+	(void)response;
 	std::string root_path = server.get_root_path();
 	std::string index_file = server.get_index_file();
 	bool autoindex = server.get_auto_index();
@@ -82,14 +104,14 @@ int	set_location_options(Server & server, request_t* request, Location & locatio
 			{
 				//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 				std::cout << location.return_codes.err_405 << std::endl;
-				return 405;
+				return fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
 			}
 		}
 		if (!location.get_redirections().empty())
 		{
 			std::string new_url = location.get_redirections() + request->target;
 			std::cout << "301 REDIRECTION (new URL = " << new_url << " )" << std::endl;
-			return 301;
+			return fill_response(response, 301, COMPLETE, false, new_url);
 		}
 		std::string full_path = root_path + request->target;
 		DIR *dir = opendir(full_path.c_str());
@@ -97,31 +119,32 @@ int	set_location_options(Server & server, request_t* request, Location & locatio
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return 301;//std::cout << "301 REDIRECTION avec /" << std::endl;
+				return fill_response(response, 301, COMPLETE, false, request->target.append("/"));
 			else
 			{
 				full_path.append(index_file);
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-					return 200;//std::cout << "200 OK (index)" << full_path << std::endl;
+					return fill_response(response, 200, NOT_STARTED, false, "", full_path); 
 				else if (autoindex == true)
-					return 200;//std::cout << "200 OK (AUTOINDEX ON)" << full_path << std::endl;
+					return fill_response(response, 200, NOT_STARTED, true, "", full_path); 
 				else
-					return 403;//std::cout << location.return_codes.err_403 << std::endl;
+					return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403); 
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-			return 200;//std::cout << "200 OK SEND RESSOURCE" << full_path << std::endl;
+			return fill_response(response, 200, NOT_STARTED, false, "", full_path); 
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-			return 403;//std::cout << location.return_codes.err_403 << std::endl;
+				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403); 
 		else
-			return 404;//std::cout << location.return_codes.err_404 << std::endl;
+			return fill_response(response, 404, COMPLETE, false, "", "", server.return_codes.err_404); 
 	}
-	return 500;
+	return fill_response(response, 500, COMPLETE, false, "", "", server.return_codes.err_500); 
 }
 
 // Check if the required URI correspond to a directory and if the URI finish with a slash. If no, we directly redirect to the directory without the slash.
-Location *choose_location(Server & server, request_t* request)
+Location *choose_location(Server & server, request_t* request, response_t *response)
 {
+	(void)response;
 	Location				*location = NULL;
 	std::string target =	request->target;
 	std::vector<Location>::iterator	it;
@@ -143,20 +166,22 @@ Location *choose_location(Server & server, request_t* request)
 	return (location);
 }
 
-void	set_location_block(Server& server, request_t* request)
+void	set_response(Server& server, request_t* request, response_t* response)
 {
 	Location						*location = NULL;
 	// check if there is location block inside the choosen server
 	// then we check if the target is inside the location block (exactly)
 	// then we crop the uri name to find if an inexact location's name fit with a part of the URI
 	if (server.get_locations().size() == 0)
-		choose_return_code_for_requested_ressource(server, request);
+		choose_return_code_for_requested_ressource(server, request, response);
 	else
-		location = choose_location(server, request);
+		location = choose_location(server, request, response);
 	if (location == NULL)
-		choose_return_code_for_requested_ressource(server, request);
+		choose_return_code_for_requested_ressource(server, request, response);
 	else
-		set_location_options(server, request, *location);
+		set_location_options(server, request, *location, response);
+	
+	/* call function to create response(return_code, location, server) */
 	std::cout << "The choosen location is : " << location->get_path() << std::endl;
 }
 

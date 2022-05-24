@@ -27,9 +27,8 @@ print(field_of_study)
 file_name = "cgi-bin/cgi_serv_communication_file.txt"
 cookie = os.environ['HTTP_COOKIE']
 if cookie:
-    file_name = "cgi-bin/cookies/" + cookie + "_dir/" + cookie
+    file_name = "cgi-bin/cookies/" + cookie + "_form" 
     print("file_name is a Cookie " + os.environ['HTTP_COOKIE'])
-    os.makedirs("cgi-bin/cookies/" + cookie + "_dir/", exist_ok=True)
 with open(file_name, "w") as response_file:
     with open("cgi-bin/allin.html", 'r') as original:
         data = original.read()

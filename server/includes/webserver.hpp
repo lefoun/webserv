@@ -33,6 +33,7 @@
 #include "Server.hpp"
 #include "request_parsing.hpp"
 #include "colors.hpp"
+#include "response.hpp"
 
 /* for the buffer that reads the clients' message */
 // #define BUFFER_SIZE 1048576
@@ -77,7 +78,7 @@ class SockComm : public Socket
 		Server*		_server;
 		std::string	_client_request;
 		request_t	_parsed_request;
-		// size_t		_content_length;
+		response_t	_response;
 
 	public:
 		SockComm(const uint16_t& port, const in_addr_t& ip, Server* server = NULL)
@@ -123,6 +124,7 @@ class SockComm : public Socket
 		void			set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
 		int				close_socket() { return close(get_socket_fd()); }
 		request_t&		get_request() { return _parsed_request; }
+		response_t&		get_response() { return _response; }
 		void			init_sock_com()
 		{
 				if (fcntl(_socket_fd, F_SETFL, O_NONBLOCK) == -1)
@@ -242,11 +244,15 @@ class SockListen : public Socket
 
 void	initialize_html_return_code_page(t_return_codes *return_codes);
 
-void		set_location_block(Server & server, request_t* request);
+void		set_response(Server & server, request_t* request,
+									response_t* response);
 Location	*choose_location(Server & server, request_t* request);
-void		change_default_html_return_code(std::string path, std::string *return_code);
-int			set_location_options(Server & server, request_t* request, Location & location);
-int			choose_return_code_for_requested_ressource(Server& server, request_t* request);
+void		change_default_html_return_code(std::string path,
+									std::string *return_code);
+void	set_location_options(Server & server, request_t* request,
+									Location & location, response_t* response);
+void	choose_return_code_for_requested_ressource(Server& server,
+									request_t* request, response_t* response);
 
 template <typename T>
 void	set_default_return_code(T & datas)

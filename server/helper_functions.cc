@@ -110,3 +110,13 @@ void	read_buf(char buffer[], size_t size)
 		std::cout << std::endl;
 	}
 }
+
+std::string get_current_time()
+{
+    time_t now = time(0);
+    struct tm *tstruct = gmtime(&now);
+    char *date = asctime(tstruct);
+    std::string str(date);
+    str.append(" GMT");
+    return (str);
+}

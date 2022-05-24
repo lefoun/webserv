@@ -45,7 +45,8 @@ void	set_cgi_env_variables(const request_t* request)
 	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
 }
 
-void	get_cgi_response(const request_t* request, std::string& response)
+void	get_cgi_response(const request_t* request, response_t* response,
+							std::string& response_str)
 {
 	pid_t child_pid = 1;
 	
@@ -90,10 +91,11 @@ void	get_cgi_response(const request_t* request, std::string& response)
 		response_file.close();
 		std::string	header_response = "HTTP/1.1 200 OK\nContent-Type:"
 										" text/html\nContent-Length: ";
-		response.append(header_response);
-		response.append(SSTR(tmp.str().size()));
-		response.append("\n\n");
-		response.append(tmp.str());
+		response_str.append(header_response);
+		response_str.append(SSTR(tmp.str().size()));
+		response_str.append("\n\n");
+		response_str.append(tmp.str());
+		(void)response;
 	}
 }
 
@@ -119,65 +121,155 @@ std::string	get_content_type(const std::string& file_extension)
 }
 
 
-void	send_response(request_t* request, const int& socket_fd)
+void	construct_header(response_t* response, request_t* request,
+							std::string& header)
 {
-	std::string response;
-	std::string				file_extension =
-		request->target.substr(request->target.find_last_of(".") + 1);
-
-	if (file_extension == "py" || file_extension == "php")
+	header.reserve(100);
+	header.append("HTTP/1.1 ");
+	header.append(SSTR(response->return_code) + CRLF);
+	if (response->return_code != 302 && response->return_code != 301)
 	{
-		std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
-		get_cgi_response(request, response);
+		std::string content_type = get_content_type(
+			request->target.substr(request->target.find_last_of(".") + 1));
+		header.append("content-type: " );
+		header.append(content_type.append(CRLF));
+		header.append("content-length: ");
+		header.append(SSTR(response->body.size()));
 	}
-	else
+	if (response->is_chunked)
+		header.append("content-encoding: chunked\r\n");
+	header.append("date: ");
+	header.append(response->date.append(CRLF));
+	if (response->return_code == 200 && request->cookie.empty())
+		header.append("\nSet-Cookie: tracking-cookie="
+		+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
+}
+
+void	send_response(request_t* request, const int& socket_fd, response_t* response)
+{
+	std::string	response_str;
+	if (response->response_state == COMPLETE)
 	{
-		// if (request->method == "POST")
-		// 	serv_response = "HTTP/1.1 405 Not Allowed\r\nContent-Type:";
-		std::string				serv_response = "HTTP/1.1 200 OK\r\nContent-Type:";
-		std::string				content_type = " text/html";
-		std::string				content_length = "\r\nContent-Length: ";
-
-		content_type = get_content_type(file_extension);
-
-		std::string		file_path = "www" + request->target;
-		if (!request->cookie.empty() && request->target.find("html", 0) != std::string::npos)
+		construct_header(response, request, response_str);
+		if (!request->body.empty())
+			response_str.append(CRLF + response->body);
+		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
+			throw std::runtime_error(
+				"Failed to send data to socket " + SSTR(socket_fd));
+	}
+	else if (response->response_state == INCOMPLETE)
+	{
+		/* is chunked */
+	}
+	else /* Not started all Get/Post/Delete Requests that are valid (till now) */
+	{
+		std::string file_extension = request->target.substr(
+									request->target.find_last_of(".") + 1);
+		if (file_extension == "py" || file_extension == "php")
 		{
-			file_path = "cgi-bin/cookies/" + request->cookie + "_dir/" + request->cookie;
-			if (access(file_path.c_str(), F_OK) == -1)
-				file_path = "www" + request->target;
-			else
-				std::cout << RED "File " + file_path + " Not found\n";
+			std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
+			get_cgi_response(request, response, response_str);
+		}
+		else
+		{
+			if (!request->cookie.empty()
+				&& (request->target.find("index.html", 0) != std::string::npos
+				|| request->target.find("form.html", 0) != std::string::npos))
+			{
+				std::string cookie_file_path = "cgi-bin/cookies/"
+												+ request->cookie + "_form";
+				if (access(cookie_file_path.c_str(), R_OK) == -1)
+				{
+					perror(cookie_file_path.c_str());
+					response->file_path = cookie_file_path;
+				}
+			}
 		}
 		std::ifstream	file;
 		if (content_type.find("image", 0) != std::string::npos)
 			file.open(file_path.c_str(), std::ios::in | std::ios::binary);
 		else
 			file.open(file_path.c_str(), std::ios::in);
-
 		if (file.fail())
 			throw std::runtime_error("Failed to open file " + file_path);
 		std::ostringstream tmp_ss; 
 		tmp_ss << file.rdbuf();
-		std::string follow_up_rsp(tmp_ss.str());
-		content_length.append(SSTR(follow_up_rsp.size()));
-		serv_response.append(content_type);
-		serv_response.append(content_length);
-		if (request->cookie.empty() && file_extension == "html")
-			serv_response.append("\nSet-Cookie: tracking-cookie="
-			+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
-		serv_response.append("\nConnection: keep-alive");
-		serv_response.append("\n\n");
-		serv_response.append(follow_up_rsp);
-		file.close();
-		response = serv_response;
 	}
-	// if (file_extension != "css")
-		// std::cout << response << std::endl;
-	if (send(socket_fd, response.c_str(), response.length(), 0) < 0)
-		throw std::runtime_error(
-			"Failed to send data to socket " + SSTR(socket_fd));
 }
+
+	// 	std::string follow_up_rsp(tmp_ss.str());
+	// 	content_length.append(SSTR(follow_up_rsp.size()));
+	// 	serv_response_str.append(content_type);
+	// 	serv_response_str.append(content_length);
+	// 	if (request->cookie.empty() && file_extension == "html")
+	// 		serv_response_str.append("\nSet-Cookie: tracking-cookie="
+	// 		+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
+	// 	serv_response_str.append("\nConnection: keep-alive");
+	// 	serv_response_str.append("\n\n");
+	// 	serv_response_str.append(follow_up_rsp);
+	// 	file.close();
+	// 	response_str = serv_response_str;
+	// }
+	// if (send(socket_fd, header.c_str(), response_str.length(), 0) < 0)
+	// 	throw std::runtime_error(
+	// 		"Failed to send data to socket " + SSTR(socket_fd));
+// }
+
+// void	send_response(request_t* request, const int& socket_fd, response_t* response)
+// 	std::string response_str;
+// 	std::string				file_extension =
+// 		request->target.substr(request->target.find_last_of(".") + 1);
+
+// 	if (file_extension == "py" || file_extension == "php")
+// 	{
+// 		std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
+// 		get_cgi_response(request, response_str);
+// 	}
+// 	else
+// 	{
+// 		std::string				serv_response_str = "HTTP/1.1 200 OK\r\nContent-Type:";
+// 		std::string				content_type = " text/html";
+// 		std::string				content_length = "\r\nContent-Length: ";
+
+// 		content_type = get_content_type(file_extension);
+
+// 		std::string		file_path = "www" + request->target;
+// 		if (!request->cookie.empty() && request->target.find("html", 0) != std::string::npos)
+// 		{
+// 			file_path = "cgi-bin/cookies/" + request->cookie + "_dir/" + request->cookie;
+// 			if (access(file_path.c_str(), F_OK) == -1)
+// 				file_path = "www" + request->target;
+// 			else
+// 				std::cout << RED "File " + file_path + " Not found\n";
+// 		}
+// 		std::ifstream	file;
+// 		if (content_type.find("image", 0) != std::string::npos)
+// 			file.open(file_path.c_str(), std::ios::in | std::ios::binary);
+// 		else
+// 			file.open(file_path.c_str(), std::ios::in);
+
+// 		if (file.fail())
+// 			throw std::runtime_error("Failed to open file " + file_path);
+// 		std::ostringstream tmp_ss; 
+// 		tmp_ss << file.rdbuf();
+// 		std::string follow_up_rsp(tmp_ss.str());
+// 		content_length.append(SSTR(follow_up_rsp.size()));
+// 		serv_response_str.append(content_type);
+// 		serv_response_str.append(content_length);
+// 		if (request->cookie.empty() && file_extension == "html")
+// 			serv_response_str.append("\nSet-Cookie: tracking-cookie="
+// 			+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
+// 		serv_response_str.append("\nConnection: keep-alive");
+// 		serv_response_str.append("\n\n");
+// 		serv_response_str.append(follow_up_rsp);
+// 		file.close();
+// 		response_str = serv_response_str;
+// 	}
+// 	if (send(socket_fd, header.c_str(), response_str.length(), 0) < 0)
+// 		throw std::runtime_error(
+// 			"Failed to send data to socket " + SSTR(socket_fd));
+// }
+
 
 Server*	get_server_associated_with_request(std::vector<Server>& servers,
 											const request_t *request)
@@ -444,7 +536,7 @@ void	launch_server(std::vector<Server>& servers,
 		// accept incoming connections
 		if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
 		{
-			perror("Call to Select() failed"); 
+			perror("Call to Select() failed");
 			throw std::runtime_error("Call to select() failed");
 		}
 		for (int socket_fd = 0; socket_fd <= fd_max_nb; ++socket_fd)
@@ -495,16 +587,18 @@ void	launch_server(std::vector<Server>& servers,
 					{
 						std::cout << BLUE "Sending data To client " << socket_fd
 							<< "\n"RESET;
-						Server* serv = get_server_associated_with_request(servers, &socket_it->get_request());
-						std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
-						if (serv == NULL)
-							std::cout << "NULL" << std::endl;
-						set_location_block(*serv, &socket_it->get_request());
 						if (socket_it->get_request().transfer_encoding != "chunked"
 							|| socket_it->get_request().body_parsing_state == COMPLETE)
 						{
+							Server* serv = get_server_associated_with_request(servers, &socket_it->get_request());
+							std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
+							if (serv == NULL)
+								std::cout << "NULL" << std::endl;
+							set_response(*serv, &socket_it->get_request(),
+												 &socket_it->get_response());
 							send_response(&socket_it->get_request(),
-											socket_it->get_socket_fd());
+											socket_it->get_socket_fd(),
+											&socket_it->get_response());
 							socket_it->get_client_request().clear();
 							std::string tmp = socket_it->get_request().cookie;
 							memset(&socket_it->get_request(), 0, sizeof(request_t));
