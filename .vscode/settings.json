@@ -74,7 +74,9 @@
         "queue": "cpp",
         "hash_map": "cpp",
         "hash_set": "cpp",
-        "forward_list": "cpp"
+        "forward_list": "cpp",
+        "numeric": "cpp",
+        "random": "cpp"
     },
     "C_Cpp.dimInactiveRegions": true
 }

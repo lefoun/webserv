@@ -7,36 +7,82 @@
 	* htons converts host to network short and htonl to long.
 	*/
 
-
 void	send_response()
 {
 	std::cout << "413 Request(entity) too large\n";
 }
 
-void	get_cgi_response(request_t* request, std::string& response)
+std::string	generate_cookie(const size_t size = 32)
 {
-	pid_t child_pid = fork();
-	char	*arg[1];
-	arg[0] = NULL;
+	static const char alphanum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+    std::string tmp_s;
+    tmp_s.reserve(size);
+
+	srand(time(NULL));
+    for (size_t i = 0; i < size; ++i)
+        tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+    
+    return tmp_s;
+}
+
+void	set_cgi_env_variables(const request_t* request)
+{
+	setenv("CONTENT_TYPE", request->method.c_str(), 1);
+	setenv("CONTENT_LENGTH", request->content_length.c_str(), 1);
+	setenv("HTTP_COOKIE", request->cookie.c_str(), 1);
+	setenv("HTTP_USER_AGENT", request->user_agent.c_str(), 1);
+	setenv("PATH_INFO", request->path_info.c_str(), 1);
+	setenv("QUERY_STRING", request->query_string.c_str(), 1);
+	setenv("REMOTE_ADDR", request->remote_addr.c_str(), 1);
+	setenv("REMOTE_HOST", request->remote_host.c_str(), 1);
+	setenv("REQUEST_METHOD", request->method.c_str(), 1);
+	setenv("SCRIPT_FILENAME", request->script_path.c_str(), 1);
+	setenv("SCRIPT_NAME", request->script_name.c_str(), 1);
+	setenv("SERVER_NAME", request->host.c_str(), 1);
+	setenv("CONNECTION", request->connection.c_str(), 1);
+	setenv("SERVER_SOFTWARE", "WebServ", 1);
+	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+}
+
+void	get_cgi_response(const request_t* request, std::string& response)
+{
+	pid_t child_pid = 1;
+	
+	child_pid = fork();
 
 	if (child_pid < 0)
 	{
 		std::cout << "Failed to create a new process\n";
 		return ;
 	}
-	unsetenv("QUERY_STRING");
-	setenv("QUERY_STRING", request->args.c_str(), 1);
 	if (child_pid == 0) /* Child process */
 	{
 		extern char **environ;
-		execve("cgi-bin/cgi_test.py", arg, environ);
+		char *args[3];
+		args[0] = const_cast<char *const>(request->path_info.c_str());
+		args[1] = const_cast<char *const>(request->body.c_str());
+		args[2] = NULL;
+		set_cgi_env_variables(request);
 		std::cout << "Executed process CGI TEST\n";
+		std::cout << request->path_info << std::endl;
+		execve(*args, args + 1, environ);
+		perror("execve failed\n");
 		exit(0);
 	}
 	else /* parent */
 	{
 		wait(NULL);
-		std::ifstream response_file("cgi-bin/cgi_serv_communication_file.txt");
+		std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
+		std::string	file_suffix = "uploaded";
+		if (request->path_info.find("upload") == std::string::npos)
+			file_suffix.clear();
+		if (!request->cookie.empty())
+		{
+			file_name = "cgi-bin/cookies/" + request->cookie + "_dir/"
+						+ request->cookie + file_suffix;
+		}
+		std::ifstream response_file(file_name);
 		if (response_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");
 		std::stringstream tmp;
@@ -46,11 +92,32 @@ void	get_cgi_response(request_t* request, std::string& response)
 										" text/html\nContent-Length: ";
 		response.append(header_response);
 		response.append(SSTR(tmp.str().size()));
-		response.append("\nConnection: keep-alive\n");
 		response.append("\n\n");
 		response.append(tmp.str());
 	}
 }
+
+/*
+ * Response: Header + Body(optional)
+ * 
+*/
+
+std::string	get_content_type(const std::string& file_extension)
+{
+	std::string content_type = " text/html";
+	if (file_extension == "css")
+		content_type = " text/css";
+	else if (file_extension == "jpeg")
+		content_type = " image/jpeg";
+	else if (file_extension == "jpg")
+		content_type = " image/jpg";
+	else if (file_extension == "js")
+		content_type = " text/javascript";
+	else if (file_extension == "ico")
+		content_type = " image/png";
+	return content_type;
+}
+
 
 void	send_response(request_t* request, const int& socket_fd)
 {
@@ -58,56 +125,55 @@ void	send_response(request_t* request, const int& socket_fd)
 	std::string				file_extension =
 		request->target.substr(request->target.find_last_of(".") + 1);
 
-	if (request->method == "GET" && file_extension == "py")
+	if (file_extension == "py" || file_extension == "php")
 	{
-		std::cout << GREEN "Calling CGI Python\n" RESET;
+		std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
 		get_cgi_response(request, response);
 	}
 	else
 	{
+		// if (request->method == "POST")
+		// 	serv_response = "HTTP/1.1 405 Not Allowed\r\nContent-Type:";
 		std::string				serv_response = "HTTP/1.1 200 OK\r\nContent-Type:";
 		std::string				content_type = " text/html";
 		std::string				content_length = "\r\nContent-Length: ";
-//		unsigned int			flags = std::ios::in;
 
-		std::cout << GREEN "This is file extension " << file_extension
-			<< RESET << std::endl;
-		if (file_extension == "css")
-			content_type = " text/css";
-		else if (file_extension == "jpeg")
-			content_type = " image/jpeg";
-		else if (file_extension == "jpg")
-			content_type = " image/jpg";
-		else if (file_extension == "js")
-			content_type = " text/javascript";
-		else if (file_extension == "ico")
-			content_type = " image/png";
-		// else if (file_extension == "ico")
-		// 	content_type = " image/vnd.microsoft.icon";
+		content_type = get_content_type(file_extension);
 
-		std::string path = "www/" + request->target;
-		std::ifstream file;
-
-		if (content_type == " image/jpeg" || content_type == " image/jpg"
-			|| content_type == " image/vnd.microsoft.icon")
-			file.open(path.c_str(), std::ios::in | std::ios::binary);
+		std::string		file_path = "www" + request->target;
+		if (!request->cookie.empty() && request->target.find("html", 0) != std::string::npos)
+		{
+			file_path = "cgi-bin/cookies/" + request->cookie + "_dir/" + request->cookie;
+			if (access(file_path.c_str(), F_OK) == -1)
+				file_path = "www" + request->target;
+			else
+				std::cout << RED "File " + file_path + " Not found\n";
+		}
+		std::ifstream	file;
+		if (content_type.find("image", 0) != std::string::npos)
+			file.open(file_path.c_str(), std::ios::in | std::ios::binary);
 		else
-			file.open(path.c_str(), std::ios::in);
+			file.open(file_path.c_str(), std::ios::in);
+
 		if (file.fail())
-			throw std::runtime_error("Failed to open file " + request->target);
-		std::ostringstream tmp_ss;
+			throw std::runtime_error("Failed to open file " + file_path);
+		std::ostringstream tmp_ss; 
 		tmp_ss << file.rdbuf();
 		std::string follow_up_rsp(tmp_ss.str());
 		content_length.append(SSTR(follow_up_rsp.size()));
 		serv_response.append(content_type);
 		serv_response.append(content_length);
-		// serv_response.append("\r\nConnection: keep-alive\n");
+		if (request->cookie.empty() && file_extension == "html")
+			serv_response.append("\nSet-Cookie: tracking-cookie="
+			+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
+		serv_response.append("\nConnection: keep-alive");
 		serv_response.append("\n\n");
 		serv_response.append(follow_up_rsp);
 		file.close();
 		response = serv_response;
 	}
-	std::cout << response << std::endl;
+	// if (file_extension != "css")
+		// std::cout << response << std::endl;
 	if (send(socket_fd, response.c_str(), response.length(), 0) < 0)
 		throw std::runtime_error(
 			"Failed to send data to socket " + SSTR(socket_fd));
@@ -187,7 +253,7 @@ int	return_error(const std::string& error_msg)
 }
 
 template <typename T>
-int get_socket_index(const std::vector<T>& vec, int socket)
+int get_socket_index(const std::vector<T>& vec, const int& socket)
 {
 	for (size_t i = 0; i < vec.size(); ++i)
 	{
@@ -271,20 +337,9 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 	}
 }
 
-void	launch_server(std::vector<Server>& servers,
-						std::map<std::string, std::string>& host_ip_lookup)
+void	bind_sockets(std::vector<SockListen>& listen_sockets,
+						fd_set& master_socket_list)
 {
-	SockComm*			new_connect;
-	std::vector<SockListen> listen_sockets;
-	std::vector<SockComm> communication_sockets;
-	fd_set				master_socket_list, copy_socket_list;
-	char				buffer[BUFFER_SIZE + 1];
-
-	(void)host_ip_lookup;
-	// creates the socket
-	open_listening_sockets(listen_sockets, servers);
-	FD_ZERO(&master_socket_list);
-	FD_ZERO(&copy_socket_list);
 	for (std::vector<SockListen>::iterator it = listen_sockets.begin();
 		it != listen_sockets.end(); ++it)
 	{
@@ -296,34 +351,110 @@ void	launch_server(std::vector<Server>& servers,
 				<< " and ip " << inet_ntoa(it->get_sockaddr_in().sin_addr)
 				<< "\n" RESET;
 	}
+}
+
+bool	is_complete_request(std::string& request, request_t *rqst)
+{
+	// read_buf(const_cast<char *>(request.c_str()), request.size());
+	if (rqst->method.empty()) /* Request header is not parsed yet */
+	{
+		if (request.find(DOUBLE_CRLF) != std::string::npos)
+		{
+			/* parse_request_body:
+			 * Parses the request and put teh values in the struct rqst and
+			 * trunks the request string to leave only the body */
+			parse_request_header(request, rqst);
+			parse_request_body(request, rqst);
+		}
+		else
+			return false;
+	} 
+	if (rqst->body_parsing_state == NOT_STARTED) 
+	{
+		/* we parsed the request header but request_body is not yet parsed*/
+		if (rqst->transfer_encoding == "chunked")
+		{
+
+			std::string::size_type pos = request.find(DOUBLE_CRLF, 57);
+			if (pos != std::string::npos)
+				if (request.find(DOUBLE_CRLF, pos + 4) != std::string::npos)
+				{
+					parse_request_body(request, rqst);
+					return true;
+				}
+			return false;
+		}
+		else /* Request is unchunked */
+		{
+			/*
+			 * Either content_type is multiform data which comes in many steps
+			 * or comes in a single time
+			*/
+			parse_request_body(request, rqst);
+		}
+	} /* Need to add Delete Request */
+	if (rqst->body_parsing_state == INCOMPLETE)
+		parse_request_body(request, rqst);
+	if (rqst->body_parsing_state == COMPLETE)
+		return true;
+	return false;
+}
+
+void	close_socket(const ssize_t nb_bytes, fd_set& master_socket_list,
+						sock_com_it_t& socket_it, std::vector<SockComm>&
+						communication_sockets)
+{
+	if (nb_bytes == 0)
+		std::cout << RED"Connection closed from Socket "
+					<< socket_it->get_socket_fd() << RESET << std::endl;
+	else if (nb_bytes < 0)
+		perror("Recv failed");
+	FD_CLR(socket_it->get_socket_fd(), &master_socket_list);
+	communication_sockets.erase(socket_it);	
+	socket_it->close_socket();
+}
+
+void	launch_server(std::vector<Server>& servers,
+						std::map<std::string, std::string>& host_ip_lookup)
+{
+	SockComm*				new_connect;
+	std::vector<SockListen> listen_sockets;
+	std::vector<SockComm> 	communication_sockets;
+	fd_set					master_socket_list, copy_socket_list;
+	char					buffer[BUFFER_SIZE + 1];
+	int						index = 0;
+
+	(void)host_ip_lookup;
+	/* creates the sockets */
+	FD_ZERO(&master_socket_list);
+	FD_ZERO(&copy_socket_list);
+	open_listening_sockets(listen_sockets, servers);
+	bind_sockets(listen_sockets, master_socket_list);
 	int	fd_max_nb = listen_sockets.back().get_socket_fd();
 	while (true)
 	{
 		std::cout << MAGENTA "====== Waiting for incoming new connections "
 						<< "======\n" RESET;
 		/* Copy our original socket list into copy because Select() will erase
-		 * its contents and leave only read-ready sockets
-		 */
+		 * its contents and leave only read-ready sockets */
 		copy_socket_list = master_socket_list;
 
 		// accept incoming connections
 		if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
 		{
-			perror("failed select\n");
+			perror("Call to Select() failed"); 
 			throw std::runtime_error("Call to select() failed");
 		}
-
-		for (int i = 0; i <= fd_max_nb; ++i)
+		for (int socket_fd = 0; socket_fd <= fd_max_nb; ++socket_fd)
 		{
-			if (FD_ISSET(i, &copy_socket_list))
+			if (FD_ISSET(socket_fd, &copy_socket_list))
 			{
-				int index = get_socket_index(listen_sockets, i);
+				index = get_socket_index(listen_sockets, socket_fd);
 				if (index != -1)
 				{
 					try
 					{
-						new_connect = listen_sockets[index].\
-													accept_connection();
+						new_connect = listen_sockets[index].accept_connection();
 						std::cout << "Before closing any socket\n";
 						communication_sockets.push_back(*new_connect);
 						FD_SET(new_connect->get_socket_fd(), &master_socket_list);
@@ -333,45 +464,50 @@ void	launch_server(std::vector<Server>& servers,
 							GREEN "Server Accepted new connection on socket "
 							<< listen_sockets[index].get_port() << "\n" RESET;
 					}
-					catch (std::exception& e)
-					{
-						std::cout << e.what() << "\n";
-						continue;
-					}
+					catch (std::exception& e) { std::cout << e.what() << "\n"; }
 				}
 				else
 				{
-					ssize_t nb_bytes = recv(i, buffer, BUFFER_SIZE, 0);
-					if (nb_bytes <= 0)
+					sock_com_it_t socket_it = communication_sockets.begin()
+							+ get_socket_index(communication_sockets, socket_fd);
+					memset(buffer, 0, BUFFER_SIZE);
+					int nb_bytes = recv(
+						socket_fd, buffer, BUFFER_SIZE, 0);
+					if (socket_it->get_client_request().empty() && nb_bytes <= 0)
 					{
-						if (nb_bytes == 0)
-							std::cout << "Connection closed from Socket "
-										<< i << std::endl;
-						else if (nb_bytes < 0)
-							perror("Recv failed");
-						sock_com_it_t it = communication_sockets.begin()
-								+ get_socket_index(communication_sockets, i);
-						communication_sockets.erase(it);
-						it->close_socket();
-						FD_CLR(i, &master_socket_list);
+						close_socket(nb_bytes, master_socket_list, socket_it,
+										communication_sockets);
+						continue ;
 					}
-					else
+					if (nb_bytes > -1)
+						socket_it->get_client_request().append(buffer, nb_bytes);
+					std::cout << "This is header\n" << 
+								socket_it->get_client_request()
+								<< std::endl;
+					std::cout << "This is buffer size " << nb_bytes << std::endl;
+					std::cout << BLUE "Received data from client "
+								<< socket_fd << "\n"RESET;
+					if (is_complete_request(socket_it->get_client_request(),
+											&socket_it->get_request()))
 					{
-						std::cout << BLUE "Received data from client " << i
-							<< "\n" RESET;
-						read_buf(buffer, nb_bytes);
-						sock_com_it_t it = communication_sockets.begin()
-								+ get_socket_index(communication_sockets, i);
-						request_t *request = get_parsed_request(buffer);
-						Server* serv = get_server_associated_with_request(servers, request);
+						std::cout << BLUE "Sending data To client " << socket_fd
+							<< "\n"RESET;
+						Server* serv = get_server_associated_with_request(servers, &socket_it->get_request());
+						std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
 						if (serv == NULL)
 							std::cout << "NULL" << std::endl;
-					//	(void)serv;
-						std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
-						std::cout << BLUE "Sending data To client " << i
-							<< "\n" RESET;
-						set_location_block(*serv, *request);
-						send_response(request, it->get_socket_fd());
+						set_location_block(*serv, socket_it->get_request());
+						if (socket_it->get_request().transfer_encoding != "chunked"
+							|| socket_it->get_request().body_parsing_state == COMPLETE)
+						{
+							send_response(&socket_it->get_request(),
+											socket_it->get_socket_fd());
+							socket_it->get_client_request().clear();
+							std::string tmp = socket_it->get_request().cookie;
+							memset(&socket_it->get_request(), 0, sizeof(request_t));
+							socket_it->get_request().cookie = tmp;
+							socket_it->get_request().body_parsing_state = NOT_STARTED;
+						}
 					}
 				}
 			}
@@ -379,20 +515,23 @@ void	launch_server(std::vector<Server>& servers,
 	}
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	std::vector<Server>					servers;
 	std::map<std::string, std::string>	host_ip_lookup;
-	if (!parse_config_file("../parser/server_config.conf", servers,
-		host_ip_lookup))
-		return 1;
-	std::cout << GREEN "Loaded config file.\n\n" RESET;
-	std::cout << GREEN"Starting WebServer...\n" RESET;
-	launch_server(servers, host_ip_lookup);
-	return 0;
+	std::string							config_file;
+	if (argc < 2)
+		config_file = "server_config.conf";
+	else
+		config_file = argv[0];
+	try 
+	{
+		parse_config_file(config_file, servers, host_ip_lookup);
+		std::cout << GREEN "Loaded config file.\n\n"
+					<< "Starting WebServer...\n"RESET;
+		launch_server(servers, host_ip_lookup);
+		return 0;
+	}
+	catch (std::exception &e) { std::cout << e.what() << std::endl; }
+	return 1;
 }
-
-
-/* We receive a request:
- * We search IP:PORT pairs
-*/

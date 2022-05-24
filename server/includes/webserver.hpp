@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <ctime>
 
 /* Socket | Inet libraries to enable communication */
 #include <sys/socket.h>
@@ -34,7 +35,10 @@
 #include "colors.hpp"
 
 /* for the buffer that reads the clients' message */
-#define BUFFER_SIZE 4096
+// #define BUFFER_SIZE 1048576
+#define BUFFER_SIZE 4096 
+#define DOUBLE_CRLF "\r\n\r\n"
+#define CRLF "\r\n"
 
 class Socket;
 class SockComm;
@@ -71,6 +75,9 @@ class SockComm : public Socket
 {
 	private:
 		Server*		_server;
+		std::string	_client_request;
+		request_t	_parsed_request;
+		// size_t		_content_length;
 
 	public:
 		SockComm(const uint16_t& port, const in_addr_t& ip, Server* server = NULL)
@@ -79,12 +86,16 @@ class SockComm : public Socket
 			_port = port;
 			_ip = ip;
 			_server = server;
+			_parsed_request.body_parsing_state = NOT_STARTED;
+			// _parsed_request = new request_t;
 		}
 
 		SockComm(const SockComm& copy)
 		{
 			*this = copy;
 			std::cout << RED "Callign copy constructor\n" RESET;
+			_parsed_request.body_parsing_state = NOT_STARTED;
+			// _parsed_request = new request_t;
 		}
 
 		SockComm&	operator=(const SockComm& cop)
@@ -95,6 +106,8 @@ class SockComm : public Socket
 			this->_socket_fd = cop.get_socket_fd();
 			this->_sockaddr_len = cop._sockaddr_len;
 			this->_socket_addr = cop._socket_addr;
+			/* need a profound copy here */
+			_parsed_request = cop._parsed_request;
 			return *this;
 		}
 
@@ -105,10 +118,12 @@ class SockComm : public Socket
 			// close(_socket_fd);
 		}
 
-		Server*		get_server() { return _server; }
-		void		set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
-		int			close_socket() { return close(get_socket_fd()); }
-		void		init_sock_com()
+		Server*			get_server() { return _server; }
+		std::string&	get_client_request() { return _client_request; }
+		void			set_socket_fd(int socket_fd) { _socket_fd = socket_fd; }
+		int				close_socket() { return close(get_socket_fd()); }
+		request_t&		get_request() { return _parsed_request; }
+		void			init_sock_com()
 		{
 				if (fcntl(_socket_fd, F_SETFL, O_NONBLOCK) == -1)
 					throw std::runtime_error(
@@ -230,8 +245,8 @@ void	initialize_html_return_code_page(t_return_codes *return_codes);
 void		set_location_block(Server & server, request_t & request);
 Location	*choose_location(Server & server, request_t & request);
 void		change_default_html_return_code(std::string path, std::string *return_code);
-void		set_location_options(Server & server, request_t & request, Location & location);
-void		choose_return_code_for_requested_ressource(std::string & root_path, \
+int			set_location_options(Server & server, request_t & request, Location & location);
+int			choose_return_code_for_requested_ressource(std::string & root_path, \
 			std::string & index_file, bool & autoindex,  request_t & request);
 
 template <typename T>

@@ -13,12 +13,6 @@
 #include "Server.hpp"
 #include "webserver.hpp"
 
-enum REQUEST_METHODS {
-	GET = 0,
-	POST,
-	DELETE
-};
-
 enum DIRECTIVES {
 	UNKNOWN_DIRECTIVE = -1,
 	SERVER,

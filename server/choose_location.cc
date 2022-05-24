@@ -1,11 +1,16 @@
 #include <unistd.h>
 #include <dirent.h>
-#include "./includes/webserver.hpp"
+#include "webserver.hpp"
 #define DEFAULT_ROOT_PATH "../www"
 
 
-//changer ca pour le bon return code
-void	choose_return_code_for_requested_ressource(std::string & root_path, std::string & index_file, bool & autoindex,  request_t & request)
+//Changer ca pour le bon return code
+//Comment fait on pour transmettre le file ? 
+//Comment fait on pour differencier deux 200 ?? autoindex ok ou file a renvoyer ok
+//Il faut check si les methodes sont autorisees quand il n'y a pas 
+//de location (le serveur sans options)
+
+int	choose_return_code_for_requested_ressource(std::string & root_path, std::string & index_file, bool & autoindex,  request_t & request)
 {
 	if (request.method.compare("GET") == 0)
 	{
@@ -15,28 +20,29 @@ void	choose_return_code_for_requested_ressource(std::string & root_path, std::st
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				std::cout << "301 REDIRECTION avec /" << std::endl;
+				return 301;
+				// std::cout << "301 REDIRECTION avec /" << std::endl;
 			else
 			{
 				full_path.append(index_file);
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-					std::cout << "200 OK (index)" << full_path << std::endl;
+					return 200;//	std::cout << "200 OK (index)" << full_path << std::endl;
 				else if (autoindex == true)
-					std::cout << "200 OK (AUTOINDEX ON)" << full_path << std::endl;
+					return 200;//std::cout << "200 OK (AUTOINDEX ON)" << full_path << std::endl;
 				else
-					std::cout << "403 Forbidden (ERROR PAGE)" << std::endl;
+					return 403;//std::cout << "403 Forbidden (ERROR PAGE)" << std::endl;
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-			std::cout << "200 OK" << full_path << std::endl;
+			return 200;//std::cout << "200 OK" << full_path << std::endl;
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-			std::cout << "403 Forbidden (ERROR PAGE)" << full_path << std::endl;
-		else
-			std::cout << "404 Not Found" << std::endl;
+			return 403;//std::cout << "403 Forbidden (ERROR PAGE)" << full_path << std::endl;
+		return 404;//std::cout << "404 Not Found" << std::endl;
 	}
+	return 999;
 }
 
-void	set_location_options(Server & server, request_t & request, Location & location)
+int	set_location_options(Server & server, request_t & request, Location & location)
 {
 	std::string root_path = server.get_root_path();
 	std::string index_file = server.get_index_file();
@@ -59,14 +65,14 @@ void	set_location_options(Server & server, request_t & request, Location & locat
 			{
 				//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 				std::cout << location.return_codes.err_405 << std::endl;
-				return ;
+				return 405;
 			}
 		}
 		if (!location.get_redirections().empty())
 		{
 			std::string new_url = location.get_redirections() + request.target;
 			std::cout << "301 REDIRECTION (new URL = " << new_url << " )" << std::endl;
-			return ;
+			return 301;
 		}
 		if (!location.get_root_path().empty())
 			root_path = location.get_root_path();
@@ -80,26 +86,26 @@ void	set_location_options(Server & server, request_t & request, Location & locat
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				std::cout << "301 REDIRECTION avec /" << std::endl;
+				return 301;//std::cout << "301 REDIRECTION avec /" << std::endl;
 			else
 			{
 				full_path.append(index_file);
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-					std::cout << "200 OK (index)" << full_path << std::endl;
+					return 200;//std::cout << "200 OK (index)" << full_path << std::endl;
 				else if (autoindex == true)
-					std::cout << "200 OK (AUTOINDEX ON)" << full_path << std::endl;
+					return 200;//std::cout << "200 OK (AUTOINDEX ON)" << full_path << std::endl;
 				else
-					std::cout << location.return_codes.err_403 << std::endl;
+					return 403;//std::cout << location.return_codes.err_403 << std::endl;
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-			std::cout << "200 OK SEND RESSOURCE" << full_path << std::endl;
+			return 200;//std::cout << "200 OK SEND RESSOURCE" << full_path << std::endl;
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-			std::cout << location.return_codes.err_403 << std::endl;
+			return 403;//std::cout << location.return_codes.err_403 << std::endl;
 		else
-			std::cout << location.return_codes.err_404 << std::endl;
+			return 404;//std::cout << location.return_codes.err_404 << std::endl;
 	}
-	return ;
+	return 999;
 }
 
 // Check if the required URI correspond to a directory and if the URI finish with a slash. If no, we directly redirect to the directory without the slash.
@@ -115,7 +121,7 @@ Location *choose_location(Server & server, request_t & request)
 		if (target.compare(0, it->get_path().size(), it->get_path()) == 0)
 		{
 			int len = it->get_path().size();
-			int target_len=	target.size();
+			int target_len = target.size();
 			if (len > max_len && len <= target_len)
 			{
 				max_len = it->get_path().size();
