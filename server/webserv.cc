@@ -45,6 +45,60 @@ void	set_cgi_env_variables(const request_t* request)
 	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
 }
 
+// void	get_cgi_response(const request_t* request, response_t* response,
+// 							std::string& response_str)
+// {
+// 	pid_t child_pid = 1;
+
+// 	child_pid = fork();
+
+// 	if (child_pid < 0)
+// 	{
+// 		std::cout << "Failed to create a new process\n";
+// 		return ;
+// 	}
+// 	if (child_pid == 0) /* Child process */
+// 	{
+// 		extern char **environ;
+// 		char *args[3];
+// 		args[0] = const_cast<char *const>(request->path_info.c_str());
+// 		args[1] = const_cast<char *const>(request->body.c_str());
+// 		args[2] = NULL;
+// 		set_cgi_env_variables(request);
+// 		std::cout << "Executed process CGI TEST\n";
+// 		std::cout << request->path_info << std::endl;
+// 		execve(*args, args + 1, environ);
+// 		perror("execve failed\n");
+// 		exit(0);
+// 	}
+// 	else /* parent */
+// 	{
+// 		wait(NULL);
+// 		std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
+// 		std::string	file_suffix = "uploaded";
+// 		if (request->path_info.find("upload") == std::string::npos)
+// 			file_suffix.clear();
+// 		if (!request->cookie.empty())
+// 		{
+// 			file_name = "cgi-bin/cookies/" + request->cookie + "_dir/"
+// 						+ request->cookie + file_suffix;
+// 		}
+// 		std::ifstream response_file(file_name);
+// 		if (response_file.fail())
+// 			throw std::runtime_error("Failed to send a response from CGI");
+// 		std::stringstream tmp;
+// 		tmp << response_file.rdbuf();
+// 		response_file.close();
+// 		std::string	header_response = "HTTP/1.1 200 OK\nContent-Type:"
+// 										" text/html\nContent-Length: ";
+// 		response_str.append(header_response);
+// 		response_str.append(SSTR(tmp.str().size()));
+// 		response_str.append("\n\n");
+// 		response_str.append(tmp.str());
+// 		(void)response;
+// 	}
+// }
+
 void	get_cgi_response(const request_t* request, response_t* response,
 							std::string& response_str)
 {
@@ -75,30 +129,22 @@ void	get_cgi_response(const request_t* request, response_t* response,
 	{
 		wait(NULL);
 		std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
-		std::string	file_suffix = "uploaded";
-		if (request->path_info.find("upload") == std::string::npos)
-			file_suffix.clear();
-		if (!request->cookie.empty())
-		{
-			file_name = "cgi-bin/cookies/" + request->cookie + "_dir/"
-						+ request->cookie + file_suffix;
-		}
-		std::ifstream response_file(file_name);
-		if (response_file.fail())
-			throw std::runtime_error("Failed to send a response from CGI");
-		std::stringstream tmp;
-		tmp << response_file.rdbuf();
-		response_file.close();
-		std::string	header_response = "HTTP/1.1 200 OK\nContent-Type:"
-										" text/html\nContent-Length: ";
-		response_str.append(header_response);
-		response_str.append(SSTR(tmp.str().size()));
-		response_str.append("\n\n");
-		response_str.append(tmp.str());
-		(void)response;
+		std::string	file_suffix;
+		if (request->path_info.find("form"))
+			file_suffix = "_form";
+		else if (request->path_info.find("upload"))
+			file_suffix = "_upload";
+		response->file_path = "cgi-bin/cookies/" + request->cookie + file_suffix;
+		(void)response_str;
+		// std::ifstream file(file_name);
+		// if (response_file.fail())
+		// 	throw std::runtime_error("Failed to send a response from CGI");
+		// std::stringstream tmp;
+		// tmp << response_file.rdbuf();
+		// response_file.close();
+		// response_str.append(tmp.str());
 	}
 }
-
 /*
  * Response: Header + Body(optional)
  *
@@ -134,19 +180,19 @@ void	construct_header(response_t* response, request_t* request,
 		header.append("content-type: " );
 		header.append(content_type.append(CRLF));
 		header.append("content-length: ");
-		header.append(SSTR(response->body.size()));
+		header.append(SSTR(response->body.size()) + CRLF);
 	}
 	if (response->is_chunked)
 		header.append("content-encoding: chunked\r\n");
 	header.append("date: ");
 	header.append(response->date.append(CRLF));
+	header.append(CRLF);
 	/**
 	 * @brief Creating a persistent cookie
-	 * Voir pour changer la path.
 	 */
-	if (response->return_code == 200 && request->cookie.empty())
-		header.append("\nSet-Cookie: tracking-cookie="
-		+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
+	// if (response->return_code == 200 && request->cookie.empty())
+	// 	header.append("\nSet-Cookie: tracking-cookie="
+	// 	+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
 }
 
 void	send_response(request_t* request, const int& socket_fd,
@@ -177,53 +223,34 @@ void	send_response(request_t* request, const int& socket_fd,
 		}
 		else
 		{
-			/**
-			 * @brief A changer. On peut inclue un path specifique dans un cookie.
-			 * Nul besoin de faire ce genre de check, le client renverra le cookie uniquement si le path et/ou dom correspondent.
-			 *
-			 */
-			if (!request->cookie.empty()
-				&& (request->target.find("index.html", 0) != std::string::npos
-				|| request->target.find("form.html", 0) != std::string::npos))
+			if (!request->cookie.empty())
 			{
 				std::string cookie_file_path = "cgi-bin/cookies/"
 												+ request->cookie + "_form";
 				if (access(cookie_file_path.c_str(), R_OK) == -1)
-				{
 					perror(cookie_file_path.c_str());
+				else
 					response->file_path = cookie_file_path;
-				}
 			}
 		}
 		std::ifstream	file;
-		if (content_type.find("image", 0) != std::string::npos)
-			file.open(file_path.c_str(), std::ios::in | std::ios::binary);
+		if (response->content_type.find("image", 0) != std::string::npos)
+			file.open(response->file_path.c_str(), std::ios::in | std::ios::binary);
 		else
-			file.open(file_path.c_str(), std::ios::in);
+			file.open(response->file_path.c_str(), std::ios::in);
 		if (file.fail())
-			throw std::runtime_error("Failed to open file " + file_path);
+			throw std::runtime_error("Failed to open file " + response->file_path);
 		std::ostringstream tmp_ss;
 		tmp_ss << file.rdbuf();
+		response->body = tmp_ss.str();
+		construct_header(response, request, response_str);
+		response_str.append(response->body);
+		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
+			throw std::runtime_error(
+				"Failed to send data to socket " + SSTR(socket_fd));
+		file.close();
 	}
 }
-
-	// 	std::string follow_up_rsp(tmp_ss.str());
-	// 	content_length.append(SSTR(follow_up_rsp.size()));
-	// 	serv_response_str.append(content_type);
-	// 	serv_response_str.append(content_length);
-	// 	if (request->cookie.empty() && file_extension == "html")
-	// 		serv_response_str.append("\nSet-Cookie: tracking-cookie="
-	// 		+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
-	// 	serv_response_str.append("\nConnection: keep-alive");
-	// 	serv_response_str.append("\n\n");
-	// 	serv_response_str.append(follow_up_rsp);
-	// 	file.close();
-	// 	response_str = serv_response_str;
-	// }
-	// if (send(socket_fd, header.c_str(), response_str.length(), 0) < 0)
-	// 	throw std::runtime_error(
-	// 		"Failed to send data to socket " + SSTR(socket_fd));
-// }
 
 // void	send_response(request_t* request, const int& socket_fd, response_t* response)
 // 	std::string response_str;

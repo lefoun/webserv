@@ -40,6 +40,7 @@ typedef struct request
 	std::string	content_type;
 	std::string	content_length;
 	std::string	cookie;
+	std::string	permanent_cookie;
 	std::string	user_agent;
 	std::string	path_info;
 	std::string	query_string;
