@@ -125,6 +125,8 @@ int remove_files_and_dir(const char *fpath, const struct stat *sb,
                    int typeflag, struct FTW *ftwbuf)
 {
     std::cout << fpath << " " << typeflag << std::endl;
+    (void)ftwbuf;
+    (void)sb;
  /*   if (typeflag == FTW_F)
         if (unlink(fpath) == -1)
             return (-1);
