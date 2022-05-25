@@ -1,9 +1,7 @@
 HTTP/1.1 200 OK
 content-type: text/html
-content-length: 309083
-date: Wed, 25 May 2022 15:53:07 GMT
-Set-Cookie: tracking-cookie=6b7145a574727d32b229d474b1bb85c7
-
+content-length: 309082
+date: Wed, 25 May 2022 15:43:51 GMT
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -11567,7 +11565,7 @@ Set-Cookie: tracking-cookie=6b7145a574727d32b229d474b1bb85c7
                 <!-- <img class="rounded-circle mb-5" src="../static/assets/img/noufel_resized.jpeg" alt="..." /> -->
                 
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm hello 👋</h1>
+                <h1 class="masthead-heading title mb-0">Hello, I'm Cherif 👋</h1>
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
@@ -11575,7 +11573,7 @@ Set-Cookie: tracking-cookie=6b7145a574727d32b229d474b1bb85c7
                     <div class="divider-custom-line"></div>
                 </div>
                 <!-- Masthead Subheading-->
-                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Info <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
+                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying ok <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
                 <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
                 <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
             </div>

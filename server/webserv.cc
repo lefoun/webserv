@@ -7,6 +7,8 @@
 	* htons converts host to network short and htonl to long.
 	*/
 
+size_t SockComm::session = 0;
+
 void	send_response()
 {
 	std::cout << "413 Request(entity) too large\n";
@@ -100,12 +102,14 @@ void	set_cgi_env_variables(const request_t* request)
 // }
 
 void	get_cgi_response(const request_t* request, response_t* response,
-							std::string& response_str)
+							std::string& response_str, const int& socket_fd)
 {
 	pid_t child_pid = 1;
+	// int pipe_fds[2];
 
 	child_pid = fork();
 
+	// pipe(pipe_fds);
 	if (child_pid < 0)
 	{
 		std::cout << "Failed to create a new process\n";
@@ -113,6 +117,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 	}
 	if (child_pid == 0) /* Child process */
 	{
+		// dup2(pipe_fds[0], STDOUT_FILENO);
 		extern char **environ;
 		char *args[3];
 		args[0] = const_cast<char *const>(request->path_info.c_str());
@@ -121,6 +126,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 		set_cgi_env_variables(request);
 		std::cout << "Executed process CGI TEST\n";
 		std::cout << request->path_info << std::endl;
+		dup2(STDIN_FILENO, STDOUT_FILENO);
 		execve(*args, args + 1, environ);
 		perror("execve failed\n");
 		exit(0);
@@ -128,21 +134,18 @@ void	get_cgi_response(const request_t* request, response_t* response,
 	else /* parent */
 	{
 		wait(NULL);
+		(void)response;
 		std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
-		std::string	file_suffix;
-		if (request->path_info.find("form"))
-			file_suffix = "_form";
-		else if (request->path_info.find("upload"))
-			file_suffix = "_upload";
-		response->file_path = "cgi-bin/cookies/" + request->cookie + file_suffix;
-		(void)response_str;
-		// std::ifstream file(file_name);
-		// if (response_file.fail())
-		// 	throw std::runtime_error("Failed to send a response from CGI");
-		// std::stringstream tmp;
-		// tmp << response_file.rdbuf();
-		// response_file.close();
-		// response_str.append(tmp.str());
+		std::ifstream cgi_output_file(file_name.c_str());
+		if (cgi_output_file.fail())
+			throw std::runtime_error("Failed to send a response from CGI");
+		std::stringstream tmp;
+		tmp << cgi_output_file.rdbuf();
+		cgi_output_file.close();
+		response_str = tmp.str();
+		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
+			throw std::runtime_error(
+				"Failed to send data to socket " + SSTR(socket_fd));
 	}
 }
 /*
@@ -187,9 +190,6 @@ void	construct_header(response_t* response, request_t* request,
 	header.append("date: ");
 	header.append(response->date.append(CRLF));
 	header.append(CRLF);
-	/**
-	 * @brief Creating a persistent cookie
-	 */
 	// if (response->return_code == 200 && request->cookie.empty())
 	// 	header.append("\nSet-Cookie: tracking-cookie="
 	// 	+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
@@ -219,7 +219,8 @@ void	send_response(request_t* request, const int& socket_fd,
 		if (file_extension == "py" || file_extension == "php")
 		{
 			std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
-			get_cgi_response(request, response, response_str);
+			get_cgi_response(request, response, response_str, socket_fd);
+			return ;
 		}
 		else
 		{
@@ -243,6 +244,7 @@ void	send_response(request_t* request, const int& socket_fd,
 		std::ostringstream tmp_ss;
 		tmp_ss << file.rdbuf();
 		response->body = tmp_ss.str();
+		// response->body.insert(response_str.size() - std::atoi("</html>\n</body>"), "<div>" + SSTR(socket_fd) + "</div>");
 		construct_header(response, request, response_str);
 		response_str.append(response->body);
 		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
@@ -545,6 +547,28 @@ void	close_socket(const ssize_t nb_bytes, fd_set& master_socket_list,
 	socket_it->close_socket();
 }
 
+void clear_request(request_t & request)
+{
+    request.content_type.clear();
+    request.content_length.clear();
+    request.user_agent.clear();
+    request.path_info.clear();
+    request.query_string.clear();
+    request.remote_addr.clear();
+    request.remote_host.clear();
+    request.method.clear();
+    request.script_path.clear();
+    request.script_name.clear();
+    request.target.clear();
+    request.host.clear();
+    request.connection.clear();
+    request.body.clear();
+    request.boundary.clear();
+    request.transfer_encoding.clear();
+    request.ip = 0;
+    request.port = 0;
+}
+
 void	launch_server(std::vector<Server>& servers,
 						std::map<std::string, std::string>& host_ip_lookup)
 {
@@ -637,9 +661,10 @@ void	launch_server(std::vector<Server>& servers,
 											socket_it->get_socket_fd(),
 											&socket_it->get_response());
 							socket_it->get_client_request().clear();
-							std::string tmp = socket_it->get_request().cookie;
-							memset(&socket_it->get_request(), 0, sizeof(request_t));
-							socket_it->get_request().cookie = tmp;
+							clear_request(socket_it->get_request());
+							// std::string tmp = socket_it->get_request().cookie;
+							// memset(&socket_it->get_request(), 0, sizeof(request_t));
+							// socket_it->get_request().cookie = tmp;4
 							socket_it->get_request().body_parsing_state = NOT_STARTED;
 						}
 					}

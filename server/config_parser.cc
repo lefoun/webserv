@@ -636,8 +636,7 @@ static void	enriche_configuration(std::vector<Server>& servers,
 			if (it->get_locations()[i].get_allowed_methods().empty())
 				set_default_methods(it->get_locations()[i]);
 			if (it->get_locations()[i].get_root_path().empty())
-				it->get_locations()[i].
-				set_root_path(it->get_root_path());
+				it->get_locations()[i].set_root_path(it->get_root_path());
 			if (it->get_locations()[i].get_index_file().empty())
 				it->get_locations()[i].set_index_file("index.html");
 			if (it->get_locations()[i].get_is_auto_index_set() == false)
@@ -647,7 +646,7 @@ static void	enriche_configuration(std::vector<Server>& servers,
 		if (it->get_listening_ips().empty() && it->get_listening_ports().empty()
 			&& it->get_ip_port_pairs().empty())
 			servers.begin()->get_ip_port_pairs().push_back(
-				std::make_pair("127.0.0.1", 80));
+				std::make_pair("127.0.0.1", 8000));
 	}
 	set_implicit_ip_port_pairs(servers);
 }

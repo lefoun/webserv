@@ -111,8 +111,6 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 void	set_location_options(Server & server, request_t* request, Location & location, response_t* response)
 {
 	(void)response;
-	std::string root_path = server.get_root_path();
-	std::string index_file = server.get_index_file();
 	bool autoindex = server.get_auto_index();
 
 	std::cout << location.get_path() << std::endl;
@@ -143,7 +141,7 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 			std::cout << "301 REDIRECTION (new URL = " << new_url << " )" << std::endl;
 			return fill_response(response, 301, COMPLETE, false, new_url);
 		}
-		std::string full_path = root_path + request->target;
+		std::string full_path = location.get_root_path() + request->target;
 		DIR *dir = opendir(full_path.c_str());
 		if (dir != NULL)
 		{
@@ -152,7 +150,7 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 				return fill_response(response, 301, COMPLETE, false, request->target.append("/"));
 			else
 			{
-				full_path.append(index_file);
+				full_path.append(location.get_index_file());
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
 					return fill_response(response, 200, NOT_STARTED, false, "", full_path);
 				else if (autoindex == true)
