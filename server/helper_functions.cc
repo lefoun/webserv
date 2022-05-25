@@ -120,3 +120,25 @@ std::string get_current_time()
     str.append(" GMT");
     return (str);
 }
+
+int remove_files_and_dir(const char *fpath, const struct stat *sb,
+                   int typeflag, struct FTW *ftwbuf)
+{
+    std::cout << fpath << " " << typeflag << std::endl;
+ /*   if (typeflag == FTW_F)
+        if (unlink(fpath) == -1)
+            return (-1);
+    if (typeflag == FTW_D)
+
+        if (rmdir(fpath) == -1)
+            return (-1);*/
+    if (remove(fpath))
+        return -1;
+    return 0;
+}
+
+int remove_dir(const char* dir_path)
+{
+
+    return nftw(dir_path, remove_files_and_dir, 64, FTW_DEPTH);
+}

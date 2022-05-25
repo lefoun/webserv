@@ -50,31 +50,62 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 			return fill_response(response, 405, COMPLETE, false, "", "", server.return_codes.err_405);
 		}
 	}
-	std::string full_path = server.get_root_path() + request->target;
-	DIR *dir = opendir(full_path.c_str());
-	if (dir != NULL)
+	if (request->method == "GET")
 	{
-		closedir(dir);
-		if (*(--full_path.end()) != '/')
-			return fill_response(response, 301, COMPLETE, false, request->target.append("/"));
-		else
+		std::string full_path = server.get_root_path() + request->target;
+		DIR *dir = opendir(full_path.c_str());
+		if (dir != NULL)
 		{
+			closedir(dir);
+			if (*(--full_path.end()) != '/')
+				return fill_response(response, 301, COMPLETE, false, request->target.append("/"));
+			else
+			{
+			//	full_path.append(server.get_index_file());
+				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
+					return fill_response(response, 200, NOT_STARTED, false, full_path);
+				else if (server.get_auto_index() == true)
+					return fill_response(response, 200, NOT_STARTED, true, full_path);
+				else
+					return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+			}
+		}
+		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
+			return fill_response(response, 200, NOT_STARTED, false, full_path);
+		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
+			return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+		else
+			return fill_response(response, 404, COMPLETE, false, "", server.return_codes.err_404);
+	}
+	if (request->method == "DELETE")
+	{
+		std::string full_path = server.get_root_path() + request->target;
+		DIR *dir = opendir(full_path.c_str());
+		if (dir != NULL)
+		{
+			closedir(dir);
 			full_path.append(server.get_index_file());
-			if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
+			if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
+			{
+				if (remove(full_path.c_str()) != 0)
+					fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
 				return fill_response(response, 200, NOT_STARTED, false, full_path);
-			else if (server.get_auto_index() == true)
-				return fill_response(response, 200, NOT_STARTED, true, full_path);
+			}
 			else
 				return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
 		}
+		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
+		{
+			if (remove(full_path.c_str()) != 0)
+				fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
+			return fill_response(response, 200, NOT_STARTED, false, full_path);
+		}
+		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) != 0)
+			return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+		else
+			return fill_response(response, 404, COMPLETE, false, "", server.return_codes.err_404);
 	}
-	else if (access(full_path.c_str(), R_OK) == 0)
-		return fill_response(response, 200, NOT_STARTED, false, full_path);
-	else if (access(full_path.c_str(), R_OK) != 0)
-		return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
-	else
-		return fill_response(response, 404, COMPLETE, false, "", server.return_codes.err_404);
-	fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
+	fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
 }
 
 void	set_location_options(Server & server, request_t* request, Location & location, response_t* response)
@@ -84,26 +115,27 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 	std::string index_file = server.get_index_file();
 	bool autoindex = server.get_auto_index();
 
+	std::cout << location.get_path() << std::endl;
+		
+	if (!location.get_allowed_methods().empty())
+	{
+		std::vector<std::string>::iterator it = location.get_allowed_methods().begin();
+		for (; it != location.get_allowed_methods().end(); ++it)
+		{
+			std::cout << "allowed method : " << *it << std::endl;
+			if (request->method.compare(*it) == 0)
+				break;
+		}
+		if  (it == location.get_allowed_methods().end())
+		{
+			//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
+			std::cout << location.return_codes.err_405 << std::endl;
+			return fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
+		}
+	}
 	if (request->method.compare("GET") == 0)
 	{
-		std::cout << location.get_path() << std::endl;
 		std::cout << "GET request->inside set_location_options" << std::endl;
-		if (!location.get_allowed_methods().empty())
-		{
-			std::vector<std::string>::iterator it = location.get_allowed_methods().begin();
-			for (; it != location.get_allowed_methods().end(); ++it)
-			{
-				std::cout << "allowed method : " << *it << std::endl;
-				if (request->method.compare(*it) == 0)
-					break;
-			}
-			if  (it == location.get_allowed_methods().end())
-			{
-				//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
-				std::cout << location.return_codes.err_405 << std::endl;
-				return fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
-			}
-		}
 		if (!location.get_redirections().empty())
 		{
 			std::string new_uri = request->target.erase(0, location.get_path().length());
@@ -136,7 +168,36 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		else
 			return fill_response(response, 404, COMPLETE, false, "", "", server.return_codes.err_404);
 	}
-	return fill_response(response, 500, COMPLETE, false, "", "", server.return_codes.err_500);
+	if (request->method.compare("DELETE") == 0)
+	{
+		std::cout << "DELETE request->inside set_location_options" << std::endl;
+		std::string full_path = root_path + request->target;
+		DIR *dir = opendir(full_path.c_str());
+		if (dir != NULL)
+		{
+			closedir(dir);
+		//	full_path.append(index_file);
+			if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
+			{
+				if (remove(full_path.c_str()) != 0)
+					fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
+				return fill_response(response, 200, NOT_STARTED, false, full_path);
+			}
+			else
+				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
+		}
+		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
+		{
+			if (remove(full_path.c_str()) != 0)
+				fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
+			return fill_response(response, 200, NOT_STARTED, false, full_path);
+		}
+		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) != 0)
+				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
+		else
+			return fill_response(response, 404, COMPLETE, false, "", "", server.return_codes.err_404);
+	}
+	fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
 }
 
 // Check if the required URI correspond to a directory and if the URI finish with a slash. If no, we directly redirect to the directory without the slash.
