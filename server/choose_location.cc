@@ -114,7 +114,7 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 	bool autoindex = server.get_auto_index();
 
 	std::cout << location.get_path() << std::endl;
-		
+
 	if (!location.get_allowed_methods().empty())
 	{
 		std::vector<std::string>::iterator it = location.get_allowed_methods().begin();
@@ -169,7 +169,7 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 	if (request->method.compare("DELETE") == 0)
 	{
 		std::cout << "DELETE request->inside set_location_options" << std::endl;
-		std::string full_path = root_path + request->target;
+		std::string full_path = location.get_root_path() + request->target;
 		DIR *dir = opendir(full_path.c_str());
 		if (dir != NULL)
 		{
