@@ -547,6 +547,28 @@ void	close_socket(const ssize_t nb_bytes, fd_set& master_socket_list,
 	socket_it->close_socket();
 }
 
+void clear_request(request_t & request)
+{
+    request.content_type.clear();
+    request.content_length.clear();
+    request.user_agent.clear();
+    request.path_info.clear();
+    request.query_string.clear();
+    request.remote_addr.clear();
+    request.remote_host.clear();
+    request.method.clear();
+    request.script_path.clear();
+    request.script_name.clear();
+    request.target.clear();
+    request.host.clear();
+    request.connection.clear();
+    request.body.clear();
+    request.boundary.clear();
+    request.transfer_encoding.clear();
+    request.ip = 0;
+    request.port = 0;
+}
+
 void	launch_server(std::vector<Server>& servers,
 						std::map<std::string, std::string>& host_ip_lookup)
 {
@@ -639,9 +661,10 @@ void	launch_server(std::vector<Server>& servers,
 											socket_it->get_socket_fd(),
 											&socket_it->get_response());
 							socket_it->get_client_request().clear();
-							std::string tmp = socket_it->get_request().cookie;
-							memset(&socket_it->get_request(), 0, sizeof(request_t));
-							socket_it->get_request().cookie = tmp;
+							clear_request(&socket_it->get_request());
+							// std::string tmp = socket_it->get_request().cookie;
+							// memset(&socket_it->get_request(), 0, sizeof(request_t));
+							// socket_it->get_request().cookie = tmp;4
 							socket_it->get_request().body_parsing_state = NOT_STARTED;
 						}
 					}

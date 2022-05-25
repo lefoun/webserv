@@ -7,16 +7,16 @@ CC = c++
 INCLUDES = includes/
 OBJS = $(SRCS:.cc=.o)
 DEPS = $(SRCS:.cc=.d)
-NAME = server 
+NAME = server
 FLAGS = -std=c++98 -pedantic
 ifeq ($(NOFLAGS), 1)
-	FLAGS = 
+	FLAGS =
 else
 	FLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
 endif
 
 ifeq ($(debug), 1)
-	FLAGS += -g
+	FLAGS += -g -fstandalone-debug
 	PRINTED_MESSAGE = "$(GREEN)Buckle up we're in Debug mode chief$(RESET)"
 else
 #	FLAGS += -D NDEBUG
