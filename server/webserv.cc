@@ -145,7 +145,8 @@ void	construct_header(response_t* response, request_t* request,
 		+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
 }
 
-void	send_response(request_t* request, const int& socket_fd, response_t* response)
+void	send_response(request_t* request, const int& socket_fd,
+						response_t* response)
 {
 	std::string	response_str;
 	if (response->response_state == COMPLETE)
