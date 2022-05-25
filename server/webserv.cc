@@ -661,7 +661,7 @@ void	launch_server(std::vector<Server>& servers,
 											socket_it->get_socket_fd(),
 											&socket_it->get_response());
 							socket_it->get_client_request().clear();
-							clear_request(&socket_it->get_request());
+							clear_request(socket_it->get_request());
 							// std::string tmp = socket_it->get_request().cookie;
 							// memset(&socket_it->get_request(), 0, sizeof(request_t));
 							// socket_it->get_request().cookie = tmp;4
