@@ -7,9 +7,9 @@
 
 
 //Changer ca pour le bon return code
-//Comment fait on pour transmettre le file ? 
+//Comment fait on pour transmettre le file ?
 //Comment fait on pour differencier deux 200 ?? autoindex ok ou file a renvoyer ok
-//Il faut check si les methodes sont autorisees quand il n'y a pas 
+//Il faut check si les methodes sont autorisees quand il n'y a pas
 //de location (le serveur sans options)
 
 void	fill_response(response_t* response,
@@ -109,7 +109,8 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		}
 		if (!location.get_redirections().empty())
 		{
-			std::string new_url = location.get_redirections() + request->target;
+			std::string new_uri = request.target.erase(0, location.get_path().length());
+			std::string new_url = location.get_redirections() + new_uri;
 			std::cout << "301 REDIRECTION (new URL = " << new_url << " )" << std::endl;
 			return fill_response(response, 301, COMPLETE, false, new_url);
 		}
@@ -124,21 +125,21 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 			{
 				full_path.append(index_file);
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-					return fill_response(response, 200, NOT_STARTED, false, "", full_path); 
+					return fill_response(response, 200, NOT_STARTED, false, "", full_path);
 				else if (autoindex == true)
-					return fill_response(response, 200, NOT_STARTED, true, "", full_path); 
+					return fill_response(response, 200, NOT_STARTED, true, "", full_path);
 				else
-					return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403); 
+					return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-			return fill_response(response, 200, NOT_STARTED, false, "", full_path); 
+			return fill_response(response, 200, NOT_STARTED, false, "", full_path);
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403); 
+				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
 		else
-			return fill_response(response, 404, COMPLETE, false, "", "", server.return_codes.err_404); 
+			return fill_response(response, 404, COMPLETE, false, "", "", server.return_codes.err_404);
 	}
-	return fill_response(response, 500, COMPLETE, false, "", "", server.return_codes.err_500); 
+	return fill_response(response, 500, COMPLETE, false, "", "", server.return_codes.err_500);
 }
 
 // Check if the required URI correspond to a directory and if the URI finish with a slash. If no, we directly redirect to the directory without the slash.
@@ -180,7 +181,7 @@ void	set_response(Server& server, request_t* request, response_t* response)
 		choose_return_code_for_requested_ressource(server, request, response);
 	else
 		set_location_options(server, request, *location, response);
-	
+
 	/* call function to create response(return_code, location, server) */
 	std::cout << "The choosen location is : " << location->get_path() << std::endl;
 }
