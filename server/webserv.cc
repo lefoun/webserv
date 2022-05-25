@@ -22,7 +22,7 @@ std::string	generate_cookie(const size_t size = 32)
 	srand(time(NULL));
     for (size_t i = 0; i < size; ++i)
         tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
-    
+
     return tmp_s;
 }
 
@@ -49,7 +49,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 							std::string& response_str)
 {
 	pid_t child_pid = 1;
-	
+
 	child_pid = fork();
 
 	if (child_pid < 0)
@@ -101,7 +101,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 
 /*
  * Response: Header + Body(optional)
- * 
+ *
 */
 
 std::string	get_content_type(const std::string& file_extension)
@@ -140,6 +140,10 @@ void	construct_header(response_t* response, request_t* request,
 		header.append("content-encoding: chunked\r\n");
 	header.append("date: ");
 	header.append(response->date.append(CRLF));
+	/**
+	 * @brief Creating a persistent cookie
+	 * Voir pour changer la path.
+	 */
 	if (response->return_code == 200 && request->cookie.empty())
 		header.append("\nSet-Cookie: tracking-cookie="
 		+ generate_cookie() + "; Expires=Tue, 03 May 2023 09:09:09 GMT");
@@ -173,6 +177,11 @@ void	send_response(request_t* request, const int& socket_fd,
 		}
 		else
 		{
+			/**
+			 * @brief A changer. On peut inclue un path specifique dans un cookie.
+			 * Nul besoin de faire ce genre de check, le client renverra le cookie uniquement si le path et/ou dom correspondent.
+			 *
+			 */
 			if (!request->cookie.empty()
 				&& (request->target.find("index.html", 0) != std::string::npos
 				|| request->target.find("form.html", 0) != std::string::npos))
@@ -193,7 +202,7 @@ void	send_response(request_t* request, const int& socket_fd,
 			file.open(file_path.c_str(), std::ios::in);
 		if (file.fail())
 			throw std::runtime_error("Failed to open file " + file_path);
-		std::ostringstream tmp_ss; 
+		std::ostringstream tmp_ss;
 		tmp_ss << file.rdbuf();
 	}
 }
@@ -251,7 +260,7 @@ void	send_response(request_t* request, const int& socket_fd,
 
 // 		if (file.fail())
 // 			throw std::runtime_error("Failed to open file " + file_path);
-// 		std::ostringstream tmp_ss; 
+// 		std::ostringstream tmp_ss;
 // 		tmp_ss << file.rdbuf();
 // 		std::string follow_up_rsp(tmp_ss.str());
 // 		content_length.append(SSTR(follow_up_rsp.size()));
@@ -463,8 +472,8 @@ bool	is_complete_request(std::string& request, request_t *rqst,
 		}
 		else
 			return false;
-	} 
-	if (rqst->body_parsing_state == NOT_STARTED) 
+	}
+	if (rqst->body_parsing_state == NOT_STARTED)
 	{
 		/* we parsed the request header but request_body is not yet parsed*/
 		if (rqst->transfer_encoding == "chunked")
@@ -505,7 +514,7 @@ void	close_socket(const ssize_t nb_bytes, fd_set& master_socket_list,
 	else if (nb_bytes < 0)
 		perror("Recv failed");
 	FD_CLR(socket_it->get_socket_fd(), &master_socket_list);
-	communication_sockets.erase(socket_it);	
+	communication_sockets.erase(socket_it);
 	socket_it->close_socket();
 }
 
@@ -576,7 +585,7 @@ void	launch_server(std::vector<Server>& servers,
 					}
 					if (nb_bytes > -1)
 						socket_it->get_client_request().append(buffer, nb_bytes);
-					std::cout << "This is header\n" << 
+					std::cout << "This is header\n" <<
 								socket_it->get_client_request()
 								<< std::endl;
 					std::cout << "This is buffer size " << nb_bytes << std::endl;
@@ -622,7 +631,7 @@ int main(int argc, char **argv)
 		config_file = "server_config.conf";
 	else
 		config_file = argv[0];
-	try 
+	try
 	{
 		parse_config_file(config_file, servers, host_ip_lookup);
 		std::cout << GREEN "Loaded config file.\n\n"
