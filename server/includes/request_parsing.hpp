@@ -29,9 +29,11 @@ enum request_keys_e
 	CONNECTION,
 	HOST,
 	PROTOCOL,
+	SESSION_COOKIE,
 	TRACKING_COOKIE,
 	BOUNDARY,
 	TRANSFER_ENCODING,
+	REFERER,
 	REQUEST_KEYS_SIZE
 };
 
@@ -39,7 +41,7 @@ typedef struct request
 {
 	std::string	content_type;
 	std::string	content_length;
-	std::string	cookie;
+	std::string	session_cookie;
 	std::string	permanent_cookie;
 	std::string	user_agent;
 	std::string	path_info;
@@ -55,6 +57,7 @@ typedef struct request
 	std::string	body;
 	std::string	boundary;
 	std::string	transfer_encoding;
+	std::string	referer;
 	in_addr_t	ip;
 	uint16_t	port;
 	int			body_parsing_state;

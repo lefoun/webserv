@@ -36,8 +36,10 @@
 #include "response.hpp"
 
 /* for the buffer that reads the clients' message */
-// #define BUFFER_SIZE 1048576
-#define BUFFER_SIZE 4096 
+// #define BUFFER_SIZE 30
+// #define BUFFER_SIZE 127670
+// #define BUFFER_SIZE 4096
+#define BUFFER_SIZE 65536 
 #define DOUBLE_CRLF "\r\n\r\n"
 #define CRLF "\r\n"
 

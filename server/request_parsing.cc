@@ -6,7 +6,8 @@ void		print_request_content(const request_t& request)
 {
 	std::cout << "CONTENT_TYPE :" << request.content_type << std::endl;
 	std::cout << "CONTENT_LENGTH:" << request.content_length<< std::endl;
-	std::cout << "HTTP_COOKIE:" << request.cookie<< std::endl;
+	std::cout << "HTTP_COOKIE:" << request.permanent_cookie<< std::endl;
+	std::cout << "HTTP_SESSION_COOKIE:" << request.session_cookie<< std::endl;
 	std::cout << "HTTP_USER_AGENT:" << request.user_agent<< std::endl;
 	std::cout << "PATH_INFO:" << request.path_info<< std::endl;
 	std::cout << "QUERY_STRING:" << request.query_string<< std::endl;
@@ -23,6 +24,7 @@ void		print_request_content(const request_t& request)
 	std::cout << "BODY:" << request.body << std::endl;
 	std::cout << "CONNECTION:" << request.connection << std::endl;
 	std::cout << "TRANSFER-ENCODING:" << request.transfer_encoding << std::endl;
+	std::cout << "REFERER:" << request.referer << std::endl;
 	// std::string	path_info;
 	// std::string	remote_addr;
 	// std::string	remote_host;
@@ -115,8 +117,10 @@ void	parse_request_header(std::string& header, request_t* request,
 	lookup[CONTENT_LENGTH] = "Content-Length: ";
 	lookup[CONTENT_TYPE] = "Content-Type: ";
 	lookup[TRACKING_COOKIE] = "tracking-cookie=";
+	lookup[SESSION_COOKIE] = "session-cookie=";
 	lookup[BOUNDARY] = " boundary=";
 	lookup[TRANSFER_ENCODING] = "Transfer-Encoding: ";
+	lookup[REFERER] = "Referer: ";
 	std::string			line;
 	std::istringstream	ss(header);
 
@@ -160,8 +164,11 @@ void	parse_request_header(std::string& header, request_t* request,
 										strlen(lookup[CONTENT_LENGTH]));
 		else if (request->transfer_encoding.empty()
 				&& line.find(lookup[TRANSFER_ENCODING], 0) != std::string::npos)
-			request->transfer_encoding= line.substr(
+			request->transfer_encoding = line.substr(
 										strlen(lookup[TRANSFER_ENCODING]));
+		else if (request->referer.empty()
+				&& line.find(lookup[REFERER], 0) != std::string::npos)
+				request->referer = line.substr(strlen(lookup[REFERER]));
 		else if (request->content_type.empty()
 				&& line.find(lookup[CONTENT_TYPE], 0) != std::string::npos)
 		{
@@ -179,16 +186,19 @@ void	parse_request_header(std::string& header, request_t* request,
 				request->content_type = line.substr(
 										strlen(lookup[CONTENT_TYPE])); 
 		}
-		else if (request->cookie.empty()
+		else if ((request->permanent_cookie.empty() || request->session_cookie.empty())
 				&& line.find(lookup[COOKIE], 0) != std::string::npos)
 		{
 			std::string::size_type pos = line.find(lookup[TRACKING_COOKIE]);
 			if (pos != std::string::npos)
-				request->cookie = line.substr(
+				request->permanent_cookie = line.substr(
 					pos + strlen(lookup[TRACKING_COOKIE]), 32);
+			pos = line.find(lookup[SESSION_COOKIE]);
+			if (pos != std::string::npos)
+				request->session_cookie = line.substr(
+					pos + strlen(lookup[SESSION_COOKIE]), 32);
 			skip_crlf_and_space_if_any(ss);
 		}
-		std::cout << "This is get " << ss.get() << std::endl;
 		if (ss.peek() == '\r')
 			break ;
 	}

@@ -1,24 +1,34 @@
-#!/usr/bin/python3
-
+#!/Users/noufel/anaconda3/bin/python3
+# a#!/usr/bin/python3.9
+# c!/Library/Frameworks/Python.framework/Versions/3.9/bin/python3.9
 # Import modules for CGI handling 
 import cgi, cgitb, os, sys
 import fileinput
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def construct_response(return_code, body, cookie, set_cookie):
+    is_chunked = False
     response = "HTTP/1.1 " + str(return_code)
     if return_code == 500:
         return response
     time = datetime.today().strftime("%a, %d %b %Y %H:%M:%S GMT")
     response += "\r\ncontent-type: text/html"
-    response += "\r\ncontent-length: " + str(len(body))
+    if len(body) < BUFFER_SIZE:
+        response += "\r\ncontent-length: " + str(len(body))
     response += "\r\ndate: " + time
+    if len(body) >= BUFFER_SIZE:
+        is_chunked = True
+        response += "\r\nTransfer-Encoding: chunked"
     if set_cookie:
-        response += "\r\nSet-Cookie: tracking-cookie=" + str(cookie) + "\r\n"
+        cookie_date = datetime.today() + timedelta(days=365)
+        # cookie_date = cookie_date.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        response += "\r\nSet-Cookie: session-cookie=" + str(cookie) + "; Path=/noufel_website/" + "\r\n"
+        #+ "; Expires=" + cookie_date "\r\n"
+    # elif is_chunked:
     response += "\r\n"
-    print("This is header inside CGI: " + response)
+    response += "\r\n"
     response += body
     return response
 
@@ -30,8 +40,12 @@ if __name__ == '__main__':
     # Get CGI environment variables
     path_info = os.environ['PATH_INFO']
     request_method = os.environ['REQUEST_METHOD']
-    cookie = os.environ['HTTP_COOKIE']
-
+    # cookie = os.environ['HTTP_COOKIE']
+    BUFFER_SIZE = os.environ['BUFFER_SIZE']
+    if BUFFER_SIZE is None or BUFFER_SIZE == "":
+        BUFFER_SIZE = 4096
+    else:
+        BUFFER_SIZE = int(BUFFER_SIZE)
     # Get data from fields
     first_name = form.getvalue('first_name')
     field_of_study = form.getvalue('field_of_study')
@@ -54,14 +68,16 @@ if __name__ == '__main__':
 
     # If we didn't find a cookie we generate a cookie
     set_cookie = False
-    if cookie is None or cookie == "":
-        cookie = secrets.token_hex(nbytes=16)
-        set_cookie = True
+    # if cookie is None or cookie == "":
+    cookie = secrets.token_hex(nbytes=16)
+    set_cookie = True
     if cookie:
         file_name = "cgi-bin/cookies/" + cookie + "_form" 
-        print("file_name is a Cookie " + os.environ['HTTP_COOKIE'])
+        # print("file_name is a Cookie " + os.environ['HTTP_COOKIE'])
     with open(file_name, "w") as response_file:
-        with open("cgi-bin/allin.html", 'r') as original:
+        with open("cgi-bin/form_response.html", 'r') as original:
+        # with open("cgi-bin/allin.html", 'r') as original:
+        # with open("cgi-bin/index.html", 'r') as original:
             data = original.read()
             if first_name:
                 data = data.replace('Person', first_name)
@@ -71,4 +87,4 @@ if __name__ == '__main__':
         print(data, file=response_file)
     with open(default_file, 'w') as file:
         print(data, file=file)
-    exit(0)
+    sys.exit(0)
