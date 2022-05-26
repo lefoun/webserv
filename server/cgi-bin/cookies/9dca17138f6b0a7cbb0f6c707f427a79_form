@@ -1,3 +1,10 @@
+HTTP/1.1 200 OK
+content-type: text/html
+content-length: 3642
+date: Thu, 26 May 2022 21:47:39 GMT
+Set-Cookie: session-cookie=9dca17138f6b0a7cbb0f6c707f427a79; Path=/noufel_website/
+
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -34,7 +41,7 @@
                 <!-- Masthead Avatar Image-->
                 <!-- <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." /> -->
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm Person 👋</h1>
+                <h1 class="masthead-heading title mb-0">Hello, I'm noufel 👋</h1>
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
@@ -57,3 +64,4 @@
         <script src="http://localhost:22222/noufel_website/js/scripts.js"></script>
     </body>
 </html>
+

@@ -206,9 +206,11 @@ void	construct_header(response_t* response, request_t* request,
 		header.append("location: ");
 		header.append(response->location.append(CRLF));
 	}
+		/* If the user visits an html page we track them */
 	if (request->permanent_cookie.empty() && response->content_type == "text/html")
 	{
-		header.append("Set-Cookie: tracking-cookie=" + generate_cookie() + "; Expires=" + get_current_time(1));
+		header.append("Set-Cookie: tracking-cookie=" + generate_cookie()
+						+ "; Expires=" + get_current_time(1));
 		header.append(CRLF);
 		std::cout << "Appending time\n\n";
 	}
@@ -242,12 +244,16 @@ void	send_response(request_t* request, const int& socket_fd,
 		{
 			if (file_extension == "html" && !request->session_cookie.empty())
 			{
-				std::string cookie_file_path = "cgi-bin/cookies/"
-												+ request->session_cookie + "_form";
-				if (access(cookie_file_path.c_str(), R_OK) == -1)
-					perror(cookie_file_path.c_str());
-				else
-					response->file_path = cookie_file_path;
+				/* If the file is not download.html serve CGI output file */
+				if (response->file_path.find("download.html") == std::string::npos)
+				{
+					std::string cookie_file_path = "cgi-bin/cookies/"
+													+ request->session_cookie + "_form";
+					if (access(cookie_file_path.c_str(), R_OK) == -1)
+						perror(cookie_file_path.c_str());
+					else
+						response->file_path = cookie_file_path;
+				}
 			}
 		}
 		std::ifstream	file;

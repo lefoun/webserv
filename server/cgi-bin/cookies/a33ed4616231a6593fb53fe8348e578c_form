@@ -1,3 +1,10 @@
+HTTP/1.1 200 OK
+content-type: text/html
+content-length: 3537
+date: Thu, 26 May 2022 21:46:37 GMT
+Set-Cookie: session-cookie=a33ed4616231a6593fb53fe8348e578c; Path=/noufel_website/
+
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -7,9 +14,9 @@
         <meta name="author" content="" />
         <title>WebServ</title>
         <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="http://localhost:22222/noufel_website/static/assets/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="../static/assets/favicon.ico" />
         <!-- Core theme CSS-->
-        <link href="http://localhost:22222/noufel_website/static/css/styles.css" rel="stylesheet" />
+        <link href="../static/css/styles.css" rel="stylesheet" />
     </head>
     <body id="page-top">
         <!-- Navigation-->
@@ -34,7 +41,7 @@
                 <!-- Masthead Avatar Image-->
                 <!-- <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." /> -->
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm Person 👋</h1>
+                <h1 class="masthead-heading title mb-0">Hello, I'm noufel 👋</h1>
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
@@ -54,6 +61,7 @@
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
-        <script src="http://localhost:22222/noufel_website/js/scripts.js"></script>
+        <script src="../js/scripts.js"></script>
     </body>
 </html>
+
