@@ -74,13 +74,13 @@ void	send_chunked_response(response_t* response, std::string& response_str,
 		std::string rsp_str;
 		if (contains_header)
 			 rsp_str = response_str.substr(0,
-						chunk_len_line_pos + chunk_len_line.size() + BUFFER_SIZE); 
+						chunk_len_line_pos + chunk_len_line.size() + BUFFER_SIZE);
 		else if (response_str.size() > BUFFER_SIZE)
 			rsp_str = response_str.substr(
-				0, chunk_len_line.size() + BUFFER_SIZE); 
+				0, chunk_len_line.size() + BUFFER_SIZE);
 		else
 			 rsp_str = response_str.substr(
-				 0, chunk_len_line.size() + response_str.size()); 
+				 0, chunk_len_line.size() + response_str.size());
 
 		if (rsp_str.size() < BUFFER_SIZE)
 		{
@@ -190,27 +190,26 @@ void	construct_header(response_t* response, request_t* request,
 		header.append("content-type: " );
 		response->content_type = content_type;
 		header.append(content_type.append(CRLF));
-		if (!response->is_chunked)
-		{
-			header.append("content-length: ");
-			header.append(SSTR(response->body.size()) + CRLF);
-		}
 	}
-	header.append("content-length: ");
-	header.append(SSTR(response->body.size()) + CRLF);
+	if (!response->is_chunked)
+	{
+		header.append("content-length: ");
+		header.append(SSTR(response->body.size()) + CRLF);
+	}
 	if (response->is_chunked)
 		header.append("Transfer-Encoding: chunked\r\n");
 	header.append("date: ");
 	header.append(response->date.append(CRLF));
+	if (response->return_code == 302)
+	{
+		header.append("location: ");
+		header.append(response->location.append(CRLF));
+	}
 	if (request->permanent_cookie.empty() && response->content_type == "text/html")
 	{
 		header.append("Set-Cookie: tracking-cookie=" + generate_cookie() + "; Expires=" + get_current_time());
 		header.append(CRLF);
 		std::cout << "Appending time\n\n";
-	if (response->return_code == 302)
-	{
-		header.append("location: ");
-		header.append(response->location.append(CRLF));
 	}
 	header.append(CRLF);
 }
@@ -228,10 +227,6 @@ void	send_response(request_t* request, const int& socket_fd,
 			throw std::runtime_error(
 				"Failed to send data to socket " + SSTR(socket_fd));
 	}
-	else if (response->response_state == INCOMPLETE)
-	{
-		/* is chunked */
-	}
 	else /* Not started all Get/Post/Delete Requests that are valid (till now) */
 	{
 		std::string file_extension = request->target.substr(
@@ -247,7 +242,7 @@ void	send_response(request_t* request, const int& socket_fd,
 			if (!request->session_cookie.empty())
 			{
 				std::string cookie_file_path = "cgi-bin/cookies/"
-												+ request->permanent_cookie+ "_form";
+												+ request->session_cookie + "_form";
 				if (access(cookie_file_path.c_str(), R_OK) == -1)
 					perror(cookie_file_path.c_str());
 				else
@@ -264,15 +259,15 @@ void	send_response(request_t* request, const int& socket_fd,
 		std::ostringstream tmp_ss;
 		tmp_ss << file.rdbuf();
 		response->body = tmp_ss.str();
-		if (response->body.size() > BUFFER_SIZE)
-		{
-			response->is_chunked = true;
-			construct_header(response, request, response_str);
-			response_str.append(tmp_ss.str());
-			send_chunked_response(response, response_str, socket_fd);
-			file.close();
-			return ;
-		}
+		// if (response->body.size() > BUFFER_SIZE)
+		// {
+		// 	response->is_chunked = true;
+		// 	construct_header(response, request, response_str);
+		// 	response_str.append(tmp_ss.str());
+		// 	send_chunked_response(response, response_str, socket_fd);
+		// 	file.close();
+		// 	return ;
+		// }
 		construct_header(response, request, response_str);
 		response_str.append(response->body);
 		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
@@ -575,7 +570,7 @@ void	launch_server(std::vector<Server>& servers,
 				throw std::runtime_error("Call to select() failed");
 			}
 		}
-		catch (std::runtime_error& e)
+		catch (std::exception & e)
 		{
 			std::cerr << RED "Error: " << e.what() << RESET << std::endl;
 		}

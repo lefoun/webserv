@@ -117,8 +117,8 @@ std::string get_current_time()
     tstruct->tm_year += 1;
     char *date = asctime(tstruct);
     std::string str(date);
-    str[str.size() - 1] = '\0';
-    str.append(" GMT");
+    str[str.size() - 1] = ' ';
+    str.append("GMT");
     return (str);
 }
 

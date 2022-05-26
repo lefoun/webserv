@@ -1,7 +1,7 @@
 #!/Users/noufel/anaconda3/bin/python3
 # a#!/usr/bin/python3.9
 # c!/Library/Frameworks/Python.framework/Versions/3.9/bin/python3.9
-# Import modules for CGI handling 
+# Import modules for CGI handling
 import cgi, cgitb, os, sys
 import fileinput
 import secrets
@@ -30,9 +30,9 @@ def construct_response(return_code, body, cookie, set_cookie):
     return response
 
 if __name__ == '__main__':
-    # Create instance of FieldStorage 
+    # Create instance of FieldStorage
     cgitb.enable()
-    form = cgi.FieldStorage() 
+    form = cgi.FieldStorage()
 
     # Get CGI environment variables
     path_info = os.environ['PATH_INFO']
@@ -63,18 +63,13 @@ if __name__ == '__main__':
     file_name = ""
     default_file = "cgi-bin/cgi_serv_communication_file.txt"
 
-    # If we didn't find a cookie we generate a cookie
-    set_cookie = False
-    # if cookie is None or cookie == "":
     cookie = secrets.token_hex(nbytes=16)
     set_cookie = True
     if cookie:
-        file_name = "cgi-bin/cookies/" + cookie + "_form" 
+        file_name = "cgi-bin/cookies/" + cookie + "_form"
         # print("file_name is a Cookie " + os.environ['HTTP_COOKIE'])
     with open(file_name, "w") as response_file:
         with open("cgi-bin/form_response.html", 'r') as original:
-        # with open("cgi-bin/allin.html", 'r') as original:
-        # with open("cgi-bin/index.html", 'r') as original:
             data = original.read()
             if first_name:
                 data = data.replace('Person', first_name)
