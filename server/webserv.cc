@@ -155,17 +155,17 @@ void	get_cgi_response(const request_t* request, response_t* response,
 
 std::string	get_content_type(const std::string& file_extension)
 {
-	std::string content_type = " text/html";
+	std::string content_type = "text/html";
 	if (file_extension == "css")
-		content_type = " text/css";
+		content_type = "text/css";
 	else if (file_extension == "jpeg")
-		content_type = " image/jpeg";
+		content_type = "image/jpeg";
 	else if (file_extension == "jpg")
-		content_type = " image/jpg";
+		content_type = "image/jpg";
 	else if (file_extension == "js")
-		content_type = " text/javascript";
+		content_type = "text/javascript";
 	else if (file_extension == "ico")
-		content_type = " image/png";
+		content_type = "image/png";
 	return content_type;
 }
 
@@ -175,20 +175,27 @@ void	construct_header(response_t* response, request_t* request,
 {
 	header.reserve(100);
 	header.append("HTTP/1.1 ");
-	header.append(SSTR(response->return_code) + CRLF);
-	if (response->return_code != 302 && response->return_code != 301)
+	header.append(SSTR(response->return_code));
+	header.append(" ");
+	header.append(response->return_message + CRLF);
+	if (response->return_code != 302)
 	{
 		std::string content_type = get_content_type(
 			request->target.substr(request->target.find_last_of(".") + 1));
-		header.append("content-type: " );
+		header.append("content-type: ");
 		header.append(content_type.append(CRLF));
-		header.append("content-length: ");
-		header.append(SSTR(response->body.size()) + CRLF);
 	}
+	header.append("content-length: ");
+	header.append(SSTR(response->body.size()) + CRLF);
 	if (response->is_chunked)
 		header.append("content-encoding: chunked\r\n");
 	header.append("date: ");
 	header.append(response->date.append(CRLF));
+	if (response->return_code == 302)
+	{
+		header.append("location: ");
+		header.append(response->location.append(CRLF));
+	}
 	header.append(CRLF);
 	// if (response->return_code == 200 && request->cookie.empty())
 	// 	header.append("\nSet-Cookie: tracking-cookie="
@@ -202,8 +209,8 @@ void	send_response(request_t* request, const int& socket_fd,
 	if (response->response_state == COMPLETE)
 	{
 		construct_header(response, request, response_str);
-		if (!request->body.empty())
-			response_str.append(CRLF + response->body);
+		if (!response->body.empty())
+			response_str.append(response->body);
 		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
 			throw std::runtime_error(
 				"Failed to send data to socket " + SSTR(socket_fd));
@@ -549,24 +556,24 @@ void	close_socket(const ssize_t nb_bytes, fd_set& master_socket_list,
 
 void clear_request(request_t & request)
 {
-    request.content_type.clear();
-    request.content_length.clear();
-    request.user_agent.clear();
-    request.path_info.clear();
-    request.query_string.clear();
-    request.remote_addr.clear();
-    request.remote_host.clear();
-    request.method.clear();
-    request.script_path.clear();
-    request.script_name.clear();
-    request.target.clear();
-    request.host.clear();
-    request.connection.clear();
-    request.body.clear();
-    request.boundary.clear();
-    request.transfer_encoding.clear();
-    request.ip = 0;
-    request.port = 0;
+	request.content_type.clear();
+	request.content_length.clear();
+	request.user_agent.clear();
+	request.path_info.clear();
+	request.query_string.clear();
+	request.remote_addr.clear();
+	request.remote_host.clear();
+	request.method.clear();
+	request.script_path.clear();
+	request.script_name.clear();
+	request.target.clear();
+	request.host.clear();
+	request.connection.clear();
+	request.body.clear();
+	request.boundary.clear();
+	request.transfer_encoding.clear();
+	request.ip = 0;
+	request.port = 0;
 }
 
 void	launch_server(std::vector<Server>& servers,
@@ -595,10 +602,17 @@ void	launch_server(std::vector<Server>& servers,
 		copy_socket_list = master_socket_list;
 
 		// accept incoming connections
-		if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
+		try
 		{
-			perror("Call to Select() failed");
-			throw std::runtime_error("Call to select() failed");
+			if (select(fd_max_nb + 1, &copy_socket_list, NULL, NULL, NULL) == -1)
+			{
+				perror("Call to Select() failed");
+				throw std::runtime_error("Call to select() failed");
+			}
+		}
+		catch (std::runtime_error& e)
+		{
+			std::cerr << RED "Error: " << e.what() << RESET << std::endl;
 		}
 		for (int socket_fd = 0; socket_fd <= fd_max_nb; ++socket_fd)
 		{
@@ -655,11 +669,15 @@ void	launch_server(std::vector<Server>& servers,
 							std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
 							if (serv == NULL)
 								std::cout << "NULL" << std::endl;
-							set_response(*serv, &socket_it->get_request(),
-												 &socket_it->get_response());
-							send_response(&socket_it->get_request(),
-											socket_it->get_socket_fd(),
-											&socket_it->get_response());
+							try
+							{
+								set_response(*serv, &socket_it->get_request(),
+													 &socket_it->get_response());
+								send_response(&socket_it->get_request(),
+												socket_it->get_socket_fd(),
+												&socket_it->get_response());
+							}
+							catch (std::exception& e) { std::cout << e.what() << "\n"; }
 							socket_it->get_client_request().clear();
 							clear_request(socket_it->get_request());
 							// std::string tmp = socket_it->get_request().cookie;

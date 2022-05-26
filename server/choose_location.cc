@@ -14,6 +14,7 @@
 
 void	fill_response(response_t* response,
 						const int& return_code = 200,
+						const std::string& return_message = "OK",
 						const uint8_t& state = NOT_STARTED,
 						const bool& is_auto_index = false,
 						const std::string& location = "/",
@@ -22,6 +23,7 @@ void	fill_response(response_t* response,
 						const std::string& content_type = "text/html")
 {
 	response->return_code = return_code;
+	response->return_message = return_message;
 	response->is_auto_index = is_auto_index;
 	response->date = get_current_time();
 	response->content_type = content_type;
@@ -47,7 +49,7 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 		{
 			//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 			std::cout << server.return_codes.err_405 << std::endl;
-			return fill_response(response, 405, COMPLETE, false, "", "", server.return_codes.err_405);
+			return fill_response(response, 405, "Method Not Allowed" ,COMPLETE, false, "", "", server.return_codes.err_405);
 		}
 	}
 	if (request->method == "GET")
@@ -58,24 +60,24 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return fill_response(response, 301, COMPLETE, false, request->target.append("/"));
+				return fill_response(response, 302, "Found" ,COMPLETE, false, request->target.append("/"));
 			else
 			{
-			//	full_path.append(server.get_index_file());
-				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-					return fill_response(response, 200, NOT_STARTED, false, full_path);
+				std::string index_file = full_path.append(server.get_index_file());
+				if (access(index_file.c_str(), F_OK) == 0 && access(index_file.c_str(), R_OK) == 0)
+					return fill_response(response, 200, "OK",NOT_STARTED, false, "", index_file);
 				else if (server.get_auto_index() == true)
-					return fill_response(response, 200, NOT_STARTED, true, full_path);
+					return fill_response(response, 200, "OK", NOT_STARTED, true, "", full_path);
 				else
-					return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+					return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-			return fill_response(response, 200, NOT_STARTED, false, full_path);
+			return fill_response(response, 200, "OK",NOT_STARTED, false, full_path);
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-			return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+			return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 		else
-			return fill_response(response, 404, COMPLETE, false, "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
 	}
 	if (request->method == "DELETE")
 	{
@@ -88,24 +90,24 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 			if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
 			{
 				if (remove(full_path.c_str()) != 0)
-					fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
-				return fill_response(response, 200, NOT_STARTED, false, full_path);
+					fill_response(response, 500, "Internal Server Error",COMPLETE, false, "", "", server.return_codes.err_500);
+				return fill_response(response, 200, "OK",NOT_STARTED, false, full_path);
 			}
 			else
-				return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
 		{
 			if (remove(full_path.c_str()) != 0)
-				fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
-			return fill_response(response, 200, NOT_STARTED, false, full_path);
+				fill_response(response, 500, "Internal Server Error",COMPLETE, false, "", "", server.return_codes.err_500);
+			return fill_response(response, 200, "OK",NOT_STARTED, false, full_path);
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) != 0)
-			return fill_response(response, 403, COMPLETE, false, "", server.return_codes.err_403);
+			return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 		else
-			return fill_response(response, 404, COMPLETE, false, "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
 	}
-	fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
+	fill_response(response, 501, "Not Implemented",COMPLETE, false, "", "", server.return_codes.err_501);
 }
 
 void	set_location_options(Server & server, request_t* request, Location & location, response_t* response)
@@ -128,7 +130,7 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		{
 			//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 			std::cout << location.return_codes.err_405 << std::endl;
-			return fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
+			return fill_response(response, 405, "Method Not Allowed",COMPLETE, false, "", server.return_codes.err_405);
 		}
 	}
 	if (request->method.compare("GET") == 0)
@@ -136,10 +138,13 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		std::cout << "GET request->inside set_location_options" << std::endl;
 		if (!location.get_redirections().empty())
 		{
+			std::string root = "/";
+			if (location.get_redirections().at(0) == '/')
+				root = "";
 			std::string new_uri = request->target.erase(0, location.get_path().length());
-			std::string new_url = location.get_redirections() + new_uri;
-			std::cout << "301 REDIRECTION (new URL = " << new_url << " )" << std::endl;
-			return fill_response(response, 301, COMPLETE, false, new_url);
+			std::string new_url = root + location.get_redirections() + new_uri;
+			std::cout << "302 REDIRECTION (new URL = " << new_url << " )" << std::endl;
+			return fill_response(response, 302, "Found",COMPLETE, false, new_url);
 		}
 		std::string full_path = location.get_root_path() + request->target;
 		DIR *dir = opendir(full_path.c_str());
@@ -147,24 +152,24 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return fill_response(response, 301, COMPLETE, false, request->target.append("/"));
+				return fill_response(response, 302, "Found",COMPLETE, false, request->target.append("/"));
 			else
 			{
 				full_path.append(location.get_index_file());
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-					return fill_response(response, 200, NOT_STARTED, false, "", full_path);
+					return fill_response(response, 200, "OK",NOT_STARTED, false, "", full_path);
 				else if (autoindex == true)
-					return fill_response(response, 200, NOT_STARTED, true, "", full_path);
+					return fill_response(response, 200, "OK",NOT_STARTED, true, "", full_path);
 				else
-					return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
+					return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
-			return fill_response(response, 200, NOT_STARTED, false, "", full_path);
+			return fill_response(response, 200, "OK",NOT_STARTED, false, "", full_path);
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 		else
-			return fill_response(response, 404, COMPLETE, false, "", "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
 	}
 	if (request->method.compare("DELETE") == 0)
 	{
@@ -178,27 +183,36 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 			if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
 			{
 				if (remove(full_path.c_str()) != 0)
-					fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
-				return fill_response(response, 200, NOT_STARTED, false, full_path);
+					fill_response(response, 500, "Internal Server Error",COMPLETE, false, "", server.return_codes.err_500);
+				return fill_response(response, 200, "OK",NOT_STARTED, false, full_path);
 			}
 			else
-				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) == 0)
 		{
 			if (remove(full_path.c_str()) != 0)
-				fill_response(response, 500, COMPLETE, false, "", server.return_codes.err_500);
-			return fill_response(response, 200, NOT_STARTED, false, full_path);
+				fill_response(response, 500, "Internal Server Error",COMPLETE, false, "", server.return_codes.err_500);
+			return fill_response(response, 200, "OK",NOT_STARTED, false, full_path);
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), W_OK) != 0)
-				return fill_response(response, 403, COMPLETE, false, "", "", server.return_codes.err_403);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
 		else
-			return fill_response(response, 404, COMPLETE, false, "", "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
 	}
-	fill_response(response, 405, COMPLETE, false, "", server.return_codes.err_405);
+	fill_response(response, 501, "Not Implemented",COMPLETE, false, "", "", server.return_codes.err_501);
 }
 
-// Check if the required URI correspond to a directory and if the URI finish with a slash. If no, we directly redirect to the directory without the slash.
+/**
+ * @brief Find in the server if a corresponding location exists for the requested URI.
+ * @example URI = "/article/index.html", loc1 = /article, loc2 = /article/
+ * @result loc2 is returned
+ *
+ * @param server
+ * @param request
+ * @param response
+ * @return Location*
+ */
 Location *choose_location(Server & server, request_t* request, response_t *response)
 {
 	(void)response;
@@ -223,12 +237,17 @@ Location *choose_location(Server & server, request_t* request, response_t *respo
 	return (location);
 }
 
+/**
+ * @brief Set the response object. If a location is found, we set the options for it.
+ * Else, we set the options for the default server.
+ *
+ * @param server
+ * @param request
+ * @param response
+ */
 void	set_response(Server& server, request_t* request, response_t* response)
 {
 	Location						*location = NULL;
-	// check if there is location block inside the choosen server
-	// then we check if the target is inside the location block (exactly)
-	// then we crop the uri name to find if an inexact location's name fit with a part of the URI
 	if (server.get_locations().size() == 0)
 		choose_return_code_for_requested_ressource(server, request, response);
 	else
@@ -242,29 +261,3 @@ void	set_response(Server& server, request_t* request, response_t* response)
 	if (location)
 		std::cout << "The choosen location is : " << location->get_path() << std::endl;
 }
-
-// int main(void)
-// {
-// 	request_t req;
-// 	Location loc("/author/articles/subject/");;
-// 	Location loc4("/author/articles/subject");;
-// 	Location loc2("/author/articles/subje");
-// 	Location loc3("/author/articles/su");
-// 	std::pair<uint16_t, std::string> ret;
-// 	ret.first = 404;
-// 	ret.second = "/404.html";
-// 	req.method = "GET";
-// 	req.target = "/author/articles/subject/index.html";
-// 	Server server;
-// 	loc4.get_error_pages().push_back(ret);
-// 	std::cout << loc4.return_codes.err_404 << std::endl;
-// 	server.get_auto_index() = true;
-// 	server.get_index_file() = "/index.html";
-// 	server.get_root_path() = DEFAULT_ROOT_PATH;
-// 	server.get_locations().push_back(loc3);
-// 	server.get_locations().push_back(loc4);
-// 	server.get_locations().push_back(loc2);
-// 	server.get_locations().push_back(loc);
-
-// 	set_location_block(server, req);
-// }

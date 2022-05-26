@@ -8,6 +8,7 @@ typedef struct
 {
 	uint8_t			response_state;
 	uint16_t		return_code;
+	std::string		return_message;
 	bool			is_auto_index;
 	bool			is_chunked;
 	std::string		date;

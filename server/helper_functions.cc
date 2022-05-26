@@ -20,7 +20,6 @@ bool is_number(const std::string& s)
 
 bool	is_ip_address(const std::string &ip_str)
 {
-    //std::count n'existe pas en c++ 98
 	int count = 0;
 	for (size_t i = 0; i < ip_str.size(); i++)
 	{
@@ -113,12 +112,14 @@ void	read_buf(char buffer[], size_t size)
 
 std::string get_current_time()
 {
-    time_t now = time(0);
-    struct tm *tstruct = gmtime(&now);
-    char *date = asctime(tstruct);
-    std::string str(date);
-    str.append(" GMT");
-    return (str);
+	time_t now = time(0);
+	struct tm *tstruct = gmtime(&now);
+	char *date = asctime(tstruct);
+	date[strlen(date) - 1] = '\0';
+	std::string str(date);
+	str.append(" GMT");
+	std::cout << str << std::endl;
+	return (str);
 }
 
 int remove_files_and_dir(const char *fpath, const struct stat *sb,
@@ -134,8 +135,8 @@ int remove_files_and_dir(const char *fpath, const struct stat *sb,
 
         if (rmdir(fpath) == -1)
             return (-1);*/
-    if (remove(fpath))
-        return -1;
+    // if (remove(fpath))
+    //     return -1;
     return 0;
 }
 
