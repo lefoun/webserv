@@ -23,10 +23,7 @@ def construct_response(return_code, body, cookie, set_cookie):
         response += "\r\nTransfer-Encoding: chunked"
     if set_cookie:
         cookie_date = datetime.today() + timedelta(days=365)
-        # cookie_date = cookie_date.strftime("%a, %d %b %Y %H:%M:%S GMT")
         response += "\r\nSet-Cookie: session-cookie=" + str(cookie) + "; Path=/noufel_website/" + "\r\n"
-        #+ "; Expires=" + cookie_date "\r\n"
-    # elif is_chunked:
     response += "\r\n"
     response += "\r\n"
     response += body

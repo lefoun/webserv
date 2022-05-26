@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstdlib>
+#include <cstring>
 #include <ftw.h>
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
