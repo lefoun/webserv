@@ -31,6 +31,7 @@ void	fill_response(response_t* response,
 	response->body = body;
 	response->response_state = state;
 	response->file_path = file_path;
+	response->is_chunked = false;
 
 }
 

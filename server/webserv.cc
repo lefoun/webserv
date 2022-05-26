@@ -90,7 +90,7 @@ void	send_chunked_response(response_t* response, std::string& response_str,
 		else
 			rsp_str.append("\r\n");
 
-		std::cout << "response to send:\n" << rsp_str << std::endl;
+		// std::cout << "response to send:\n" << rsp_str << std::endl;
 
 		if (send(socket_fd, rsp_str.c_str(), rsp_str.size(), 0) < 0)
 			throw std::runtime_error("Failed to send data to socket " +
@@ -190,6 +190,7 @@ void	construct_header(response_t* response, request_t* request,
 		header.append("content-type: " );
 		response->content_type = content_type;
 		header.append(content_type.append(CRLF));
+		header.append("Connection: keep-alive\r\n");
 	}
 	if (!response->is_chunked)
 	{
@@ -239,7 +240,7 @@ void	send_response(request_t* request, const int& socket_fd,
 		}
 		else
 		{
-			if (!request->session_cookie.empty())
+			if (file_extension == "html" && !request->session_cookie.empty())
 			{
 				std::string cookie_file_path = "cgi-bin/cookies/"
 												+ request->session_cookie + "_form";
