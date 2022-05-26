@@ -4,9 +4,9 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
-#include "Server.hpp"
 #include <iostream>
 #include <stdlib.h>
+#include <ctime>
 using namespace std;
 
 const string ENV[ 24 ] = {
@@ -20,34 +20,27 @@ const string ENV[ 24 ] = {
    "SERVER_NAME","SERVER_PORT","SERVER_PROTOCOL",     
    "SERVER_SIGNATURE","SERVER_SOFTWARE" };   
 
+/*
+Thu, 26 May 2022 16:14:00 GMT
+*/
+std::string get_current_time(int years)
+{
+   (void)years;
+   char    output[100];
+   std::string str;
+   time_t  raw_time;
+   std::time(&raw_time);
+   struct  tm *tstruct = std::gmtime(&raw_time);
+   tstruct->tm_year += years;
+   std::strftime(output, sizeof(output), "%a, %d %b %G %T GMT", tstruct);
+   str = output;
+   return (str);
+}
 int main () {
-   cout << "Content-type:text/html\r\n\r\n";
-   cout << "<html>\n";
-   cout << "<head>\n";
-   cout << "<title>CGI Environment Variables</title>\n";
-   cout << "</head>\n";
-   cout << "<body>\n";
-   cout << "<table border = \"0\" cellspacing = \"2\">";
-
-   for ( int i = 0; i < 24; i++ ) {
-      cout << "<tr><td>" << ENV[ i ] << "</td><td>";
-      
-      // attempt to retrieve value of environment variable
-      char *value = getenv( ENV[ i ].c_str() );  
-      if ( value != 0 ) {
-         cout << value;                                 
-      } else {
-         cout << "Environment variable does not exist.";
-      }
-      cout << "</td></tr>\n";
-   }
-   
-   cout << "</table><\n";
-   cout << "</body>\n";
-   cout << "</html>\n";
-   
+ std::cout <<  get_current_time(0) << std::endl; 
    return 0;
 }
+
 // une fonction qui
 
 // int main(int ac, char **av)

@@ -110,17 +110,30 @@ void	read_buf(char buffer[], size_t size)
 	}
 }
 
-std::string get_current_time()
+std::string get_current_time(int years)
 {
-    time_t now = time(0);
-    struct tm *tstruct = gmtime(&now);
-    tstruct->tm_year += 1;
-    char *date = asctime(tstruct);
-    std::string str(date);
-    str[str.size() - 1] = ' ';
-    str.append("GMT");
-    return (str);
+   char    output[100];
+   std::string str;
+   time_t  raw_time;
+   std::time(&raw_time);
+   struct  tm *tstruct = std::gmtime(&raw_time);
+   tstruct->tm_year += years;
+   std::strftime(output, sizeof(output), "%a, %d %b %G %T GMT", tstruct);
+   str = output;
+   return (str);
 }
+// std::string get_current_time(int years)
+// {
+//     time_t now = time(0);
+//     struct tm *tstruct = gmtime(&now);
+//     tstruct->tm_year += years;
+//     char *date = asctime(tstruct);
+//     std::string str(date);
+//     str[3] = ',';
+//     str[str.size() - 1] = ' ';
+//     str.append("GMT");
+//     return (str);
+// }
 
 int remove_files_and_dir(const char *fpath, const struct stat *sb,
                    int typeflag, struct FTW *ftwbuf)

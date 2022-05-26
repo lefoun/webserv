@@ -207,7 +207,7 @@ void	construct_header(response_t* response, request_t* request,
 	}
 	if (request->permanent_cookie.empty() && response->content_type == "text/html")
 	{
-		header.append("Set-Cookie: tracking-cookie=" + generate_cookie() + "; Expires=" + get_current_time());
+		header.append("Set-Cookie: tracking-cookie=" + generate_cookie() + "; Expires=" + get_current_time(1));
 		header.append(CRLF);
 		std::cout << "Appending time\n\n";
 	}
@@ -259,15 +259,15 @@ void	send_response(request_t* request, const int& socket_fd,
 		std::ostringstream tmp_ss;
 		tmp_ss << file.rdbuf();
 		response->body = tmp_ss.str();
-		// if (response->body.size() > BUFFER_SIZE)
-		// {
-		// 	response->is_chunked = true;
-		// 	construct_header(response, request, response_str);
-		// 	response_str.append(tmp_ss.str());
-		// 	send_chunked_response(response, response_str, socket_fd);
-		// 	file.close();
-		// 	return ;
-		// }
+		if (response->body.size() > BUFFER_SIZE)
+		{
+			response->is_chunked = true;
+			construct_header(response, request, response_str);
+			response_str.append(tmp_ss.str());
+			send_chunked_response(response, response_str, socket_fd);
+			file.close();
+			return ;
+		}
 		construct_header(response, request, response_str);
 		response_str.append(response->body);
 		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)

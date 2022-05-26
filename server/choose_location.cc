@@ -25,7 +25,7 @@ void	fill_response(response_t* response,
 	response->return_code = return_code;
 	response->return_message = return_message;
 	response->is_auto_index = is_auto_index;
-	response->date = get_current_time();
+	response->date = get_current_time(0);
 	response->content_type = content_type;
 	response->location = location;
 	response->body = body;
