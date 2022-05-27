@@ -1,2 +1,3 @@
-
-
+server/*.o
+server/*.d
+server/webserv
