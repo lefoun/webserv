@@ -132,7 +132,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 			else
 			{
 				cgi_communication_file << request->body;
-				std::cout << request->body;
+				std::cout << "This is request body: " << request->body << std::endl;
 				cgi_communication_file.close();
 			}
 		}

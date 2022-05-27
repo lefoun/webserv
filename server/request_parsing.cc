@@ -152,6 +152,7 @@ void	parse_request_header(std::string& header, request_t* request,
 	while (ss)
 	{
 		std::getline(ss, line, '\r');
+		ss.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		if (request->connection.empty()
 			&& line.find(lookup[CONNECTION], 0) != std::string::npos)
 			request->connection = line.substr(strlen(lookup[CONNECTION]));
@@ -161,14 +162,11 @@ void	parse_request_header(std::string& header, request_t* request,
 		else if (!request->is_content_length_set
 				&& line.find(lookup[CONTENT_LENGTH], 0) != std::string::npos)
 			request->content_length = std::atoll(line.substr(
-										strlen(lookup[CONTENT_LENGTH]) + 1).c_str());
+										strlen(lookup[CONTENT_LENGTH])).c_str());
 		else if (request->transfer_encoding.empty()
 				&& line.find(lookup[TRANSFER_ENCODING], 0) != std::string::npos)
 			request->transfer_encoding = line.substr(
 										strlen(lookup[TRANSFER_ENCODING]));
-		else if (request->referer.empty()
-				&& line.find(lookup[REFERER], 0) != std::string::npos)
-				request->referer = line.substr(strlen(lookup[REFERER]));
 		else if (request->content_type.empty()
 				&& line.find(lookup[CONTENT_TYPE], 0) != std::string::npos)
 		{
@@ -210,7 +208,7 @@ void	parse_request_header(std::string& header, request_t* request,
 	if (pos == std::string::npos)
 		header.clear();
 	else if (ss.peek() == '\r')
-		header = header.substr(pos + 2);
+		header = header.substr(pos + 2); /* to take what's \r\n only */
 	else
 		header = header.substr(pos);
 	std::cout << GREEN "This is the rest of the body\n" RESET;

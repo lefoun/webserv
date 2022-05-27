@@ -38,15 +38,19 @@ if __name__ == '__main__':
         BUFFER_SIZE = 4096
     else:
         BUFFER_SIZE = int(BUFFER_SIZE)
-    
+
+    first_name = None
+    field_of_study = None 
+
     if request_method == 'POST':
         with open("cgi-bin/cgi_serv_communication_file.txt", 'r') as infile:
             content_file = infile.read()
-            query_string = cgi.urllib.parse.parse_qs(content_file)
-            if 'first_name' in query_string:
-                first_name = query_string['first_name'][0]
-            if 'field_of_study'in query_string:
-                field_of_study = query_string['field_of_study'][0]
+            parsed_arg = cgi.urllib.parse.parse_qs(content_file)
+            print("this is parsed arg", parsed_arg)
+            if 'first_name' in parsed_arg:
+                first_name = parsed_arg['first_name'][0]
+            if 'field_of_study'in parsed_arg:
+                field_of_study = parsed_arg['field_of_study'][0]
     else: 
         form = cgi.FieldStorage()
         first_name = form.getvalue('first_name')
@@ -56,13 +60,14 @@ if __name__ == '__main__':
     # Get CGI environment variables
     # Get data from fields
 
-    print("This is first name ", first_name)
-    print("This is field ", field_of_study)
     # Check if first_name and field of study exist
     if first_name is None:
         first_name = "No One"
     if field_of_study is None:
         field_of_study = "Nothing"
+
+    print("This is first name ", first_name)
+    print("This is field ", field_of_study)
 
     # "Sanitize" script
     if "<script>" in first_name:
