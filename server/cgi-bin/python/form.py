@@ -31,10 +31,6 @@ def construct_response(return_code, body, cookie, set_cookie):
 
 if __name__ == '__main__':
     # Create instance of FieldStorage
-    cgitb.enable()
-    form = cgi.FieldStorage()
-
-    # Get CGI environment variables
     request_method = os.environ['REQUEST_METHOD']
     cookie = os.environ['SESSION_COOKIE']
     BUFFER_SIZE = os.environ['BUFFER_SIZE']
@@ -42,10 +38,26 @@ if __name__ == '__main__':
         BUFFER_SIZE = 4096
     else:
         BUFFER_SIZE = int(BUFFER_SIZE)
-    # Get data from fields
-    first_name = form.getvalue('first_name')
-    field_of_study = form.getvalue('field_of_study')
+    
+    if request_method == 'POST':
+        with open("cgi-bin/cgi_serv_communication_file.txt", 'r') as infile:
+            content_file = infile.read()
+            query_string = cgi.urllib.parse.parse_qs(content_file)
+            if 'first_name' in query_string:
+                first_name = query_string['first_name'][0]
+            if 'field_of_study'in query_string:
+                field_of_study = query_string['field_of_study'][0]
+    else: 
+        form = cgi.FieldStorage()
+        first_name = form.getvalue('first_name')
+        field_of_study = form.getvalue('field_of_study')
 
+    cgitb.enable()
+    # Get CGI environment variables
+    # Get data from fields
+
+    print("This is first name ", first_name)
+    print("This is field ", field_of_study)
     # Check if first_name and field of study exist
     if first_name is None:
         first_name = "No One"

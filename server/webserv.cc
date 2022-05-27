@@ -108,6 +108,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 							std::string& response_str, const int& socket_fd)
 {
 	pid_t child_pid = 1;
+	std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
 
 	child_pid = fork();
 
@@ -121,8 +122,20 @@ void	get_cgi_response(const request_t* request, response_t* response,
 		extern char **environ;
 		char *args[3];
 		args[0] = const_cast<char *const>(request->path_info.c_str());
-		args[1] = const_cast<char *const>(request->body.c_str());
-		args[2] = NULL;
+		args[1] = NULL;
+		if (request->method == "POST")
+		{
+			std::ofstream cgi_communication_file(file_name);
+			if (cgi_communication_file.fail())
+				throw std::runtime_error(
+					"Failed to send a POST request to CGI");
+			else
+			{
+				cgi_communication_file << request->body;
+				std::cout << request->body;
+				cgi_communication_file.close();
+			}
+		}
 		set_cgi_env_variables(request);
 		std::cout << "Executed process CGI TEST\n";
 		std::cout << request->path_info << std::endl;
@@ -133,7 +146,6 @@ void	get_cgi_response(const request_t* request, response_t* response,
 	else /* parent */
 	{
 		wait(NULL);
-		std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
 		std::ifstream cgi_output_file(file_name.c_str());
 		if (cgi_output_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");
