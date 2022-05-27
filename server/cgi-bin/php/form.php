@@ -1,61 +1,31 @@
+#!/usr/bin/php-cgi
+<!--
+<html>
+<h1>Thanks for filling out the survey</h1>
+We will record your information as follows:
+<p>
+<b>Name:</b> <php echo $_POST["first_name"]; ?><br>
+<b>Last Name:</b> <php echo $_POST["last_name"]; ?><br>
+<b>Organization:</b> <php echo $_POST["org"]; ?><br>
+<b>Email:</b> <php echo $_POST["email"]; ?><br>
+<b>The browser you used:</b> <php echo $_POST["browser"]; ?><br>
+<b>Bye !</b> -->
+
+
 <?php
-
-function construct_response($return_code, $body, $cookie, $set_cookie)
-{
-	date_default_timezone_set('GMT');
-	$response = 'HTTP/1.1 ' . $return_code . '\r\n';
-	if ($return_code == 500)
-		return $response;
-	$time = date('D, d M Y H:i:s T');
-	echo $time;
-	$response .= 'content-type: text/html\r\n';
-	$response .= 'date: ' . $time . '\r\n';
-	if ($set_cookie == 1)
-		$response .= 'set-cookie: tracking-cookie-php=' . $cookie . '\r\n';
-	$response .= '\r\n';
-	$response .= $body;
-	return $response;
-}
-
-$path = $_SERVER['PATH_INFO'];
-$request_method = $_SERVER['REQUEST_METHOD'];
-$first_name = form_get_field('first_name');
-$field_of_study = form_get_field('field_of_study');
-$default_file = 'cgi-bin/cgi_serv_communication_file.txt';
-$cookie;
-$set_cookie = 0;
-if (!$cookie)
-{
-
-	$token = bin2hex(openssl_random_pseudo_bytes(16));
-	//token generated
-	echo "The generated cookie is : " + $token;
-	setcookie('tracking-cookie-php', $token);
-}
-    // # default filename
-    // file_name = ""
-    // default_file = "cgi-bin/cgi_serv_communication_file.txt"
-
-    // # If we didn't find a cookie we generate a cookie
-    // print(os.getcwd())
-    // cookie = None
-    // set_cookie = False
-    // if cookie is None or cookie == "":
-    //     cookie = secrets.token_hex(nbytes=16)
-    //     set_cookie = True
-    // if cookie:
-    //     file_name = "cgi-bin/cookies/" + cookie + "_form"
-    //     print("file_name is a Cookie " + cookie)
-    // with open(file_name, "w+") as response_file:
-    //     with open("cgi-bin/allin.html", 'r') as original:
-    //         data = original.read()
-    //         if first_name:
-    //             data = data.replace('Person', first_name)
-    //         if field_of_study:
-    //             data = data.replace('Computer Science', field_of_study)
-    //     data = construct_response("200 OK", data, cookie, set_cookie)
-    //     print(data, file=response_file)
-    // with open(default_file, 'w') as file:
-    //     print(data, file=file)
-    // exit(0)
+	echo "In php form.php";
+	$response = "<html>\n<h1>Thanks for filling out the survey</h1>\nWe will record your information as follows:<p>\n<b>Name:</b>";
+	$response .= $_POST["first_name"];
+	$response .= "\n<br><b>Last Name:</b> ";
+	$response .= $_POST["last_name"];
+	$response .= "\n<br><b>Organization:</b> ";
+	$response .= $_POST["org"];
+	$response .= "\n<b>Email:</b> ";
+	$response .= $_POST["email"];
+	$response .= "\n<br><b>The browser you used:</b> ";
+	$response .= $_POST["browser"];
+	$response .= "\n<br><b>Bye !</b>";
+	$file = fopen("../php.txt", "w");
+	$file = fwrite($file, $response);
+	fclose($file);
 ?>

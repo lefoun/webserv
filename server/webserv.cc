@@ -125,7 +125,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 		args[1] = NULL;
 		if (request->method == "POST")
 		{
-			std::ofstream cgi_communication_file(file_name);
+			std::ofstream cgi_communication_file(file_name.c_str());
 			if (cgi_communication_file.fail())
 				throw std::runtime_error(
 					"Failed to send a POST request to CGI");
@@ -227,6 +227,58 @@ void	construct_header(response_t* response, request_t* request,
 	header.append(CRLF);
 }
 
+void	get_cgi_php_response(request_t* request, response_t* response,
+							std::string& response_str, const int& socket_fd)
+{
+	pid_t child_pid = 1;
+	std::string	file_name = "cgi-bin/php.txt";
+
+	child_pid = fork();
+
+	if (child_pid < 0)
+	{
+		std::cout << "Failed to create a new process\n";
+		return ;
+	}
+	if (child_pid == 0) /* Child process */
+	{
+		extern char **environ;
+		char *args[3];
+		args[0] = const_cast<char *const>(request->path_info.c_str());
+		args[1] = NULL;
+		set_cgi_env_variables(request);
+		std::cout << "Executed process CGI TEST\n";
+		std::cout << request->path_info << std::endl;
+		execve(*args, args + 1, environ);
+		perror("execve failed\n");
+		exit(0);
+	}
+	else /* parent */
+	{
+		wait(NULL);
+		response->return_code = 200;
+		response->return_message = "OK";
+		response->date = get_current_time(0);
+		std::string header;
+		construct_header(response, request, header);
+		std::ifstream cgi_output_file(file_name.c_str());
+		if (cgi_output_file.fail())
+			throw std::runtime_error("Failed to send a response from CGI");
+		std::stringstream tmp;
+		tmp << cgi_output_file.rdbuf();
+		cgi_output_file.close();
+		response_str = header + tmp.str();
+		if (response_str.size() >= BUFFER_SIZE)
+		{
+			send_chunked_response(response, response_str, socket_fd);
+			return ;
+		}
+		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
+			throw std::runtime_error(
+				"Failed to send data to socket " + SSTR(socket_fd));
+	}
+}
+
 void	send_response(request_t* request, const int& socket_fd,
 						response_t* response)
 {
@@ -244,10 +296,16 @@ void	send_response(request_t* request, const int& socket_fd,
 	{
 		std::string file_extension = request->target.substr(
 									request->target.find_last_of(".") + 1);
-		if (file_extension == "py" || file_extension == "php")
+		if (file_extension == "py")
 		{
 			std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
 			get_cgi_response(request, response, response_str, socket_fd);
+			return ;
+		}
+		else if (file_extension == "php")
+		{
+			std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
+			get_cgi_php_response(request, response, response_str, socket_fd);
 			return ;
 		}
 		else
