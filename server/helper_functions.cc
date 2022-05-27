@@ -8,14 +8,14 @@ bool	in_range(T low, T high, T num)
 
 bool is_number(const std::string& s)
 {
-    if(s.size() == 0)
+	if(s.size() == 0)
 		return false;
-    for (size_t i = 0; i < s.size(); i++)
+	for (size_t i = 0; i < s.size(); i++)
 	{
-        if ((s[i]>= '0' && s[i] <='9') == false)
-            return false;
-    }
-    return true;
+		if ((s[i]>= '0' && s[i] <='9') == false)
+		return false;
+	}
+	return true;
 }
 
 bool	is_ip_address(const std::string &ip_str)
@@ -112,15 +112,16 @@ void	read_buf(char buffer[], size_t size)
 
 std::string get_current_time(int years)
 {
-   char    output[100];
-   std::string str;
-   time_t  raw_time;
-   std::time(&raw_time);
-   struct  tm *tstruct = std::gmtime(&raw_time);
-   tstruct->tm_year += years;
-   std::strftime(output, sizeof(output), "%a, %d %b %G %T GMT", tstruct);
-   str = output;
-   return (str);
+	char		output[100];
+	std::string	str;
+	time_t		raw_time;
+	std::time(&raw_time);
+	struct tm *tstruct = std::gmtime(&raw_time);
+
+	tstruct->tm_year += years;
+	std::strftime(output, sizeof(output), "%a, %d %b %G %T GMT", tstruct);
+	str = output;
+	return (str);
 }
 // std::string get_current_time(int years)
 // {

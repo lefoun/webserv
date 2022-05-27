@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <ftw.h>
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
