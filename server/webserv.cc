@@ -28,15 +28,18 @@ std::string	generate_cookie(const size_t size = 32)
 void	set_cgi_env_variables(const request_t* request)
 {
 	setenv("CONTENT_TYPE", request->method.c_str(), 1);
+	setenv("REDIRECT_STATUS", "200", 1);
 	setenv("CONTENT_LENGTH", SSTR(request->content_length).c_str(), 1);
 	setenv("HTTP_COOKIE", request->permanent_cookie.c_str(), 1);
 	setenv("SESSION_COOKIE", request->session_cookie.c_str(), 1);
 	setenv("HTTP_USER_AGENT", request->user_agent.c_str(), 1);
 	setenv("PATH_INFO", request->path_info.c_str(), 1);
+	setenv("PATH_TRANSLATED", request->path_info.c_str(), 1);
 	setenv("QUERY_STRING", request->query_string.c_str(), 1);
 	setenv("REMOTE_ADDR", request->remote_addr.c_str(), 1);
 	setenv("REMOTE_HOST", request->remote_host.c_str(), 1);
 	setenv("REQUEST_METHOD", request->method.c_str(), 1);
+	setenv("REQUEST_", request->path_info.c_str(), 1);
 	setenv("SCRIPT_FILENAME", request->script_path.c_str(), 1);
 	setenv("SCRIPT_NAME", request->script_name.c_str(), 1);
 	setenv("SERVER_NAME", request->host.c_str(), 1);
@@ -243,14 +246,17 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 	if (child_pid == 0) /* Child process */
 	{
 		extern char **environ;
-		char *args[3];
-		args[0] = const_cast<char *const>(std::string("php-cgi").c_str());
-		args[1] = const_cast<char *const>(request->path_info.c_str());
-		args[2] = NULL;
+		/* change this to your php-cgi path */
+		std::string path("/opt/homebrew/bin/php-cgi");
+		std::string arg("cgi-bin/php/form.php");
 		set_cgi_env_variables(request);
+		char *args[3] = {
+			const_cast<char *const>(path.c_str()),
+			const_cast<char *const>(arg.c_str())};
 		std::cout << "Executed PHP-CGI TEST\n";
-		std::cout << request->path_info << std::endl;
-		execve(*args, args + 1, environ);
+		std::cout <<"This is request Path Info:" <<  request->path_info << std::endl;
+		execve(args[0], args + 1, environ);
+		std::cout << "Failed to execute execve\n";
 		perror("execve failed\n");
 		exit(0);
 	}
