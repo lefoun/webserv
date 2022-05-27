@@ -1,8 +1,8 @@
 HTTP/1.1 200 OK
 content-type: text/html
-content-length: 3642
-date: Thu, 26 May 2022 21:47:39 GMT
-Set-Cookie: session-cookie=9dca17138f6b0a7cbb0f6c707f427a79; Path=/noufel_website/
+content-length: 3630
+date: Fri, 27 May 2022 13:19:29 GMT
+Set-Cookie: session-cookie=650595e57b3d32ddd91d309edffb51fa; Domain=localhost; Path=/noufel_website; SameSite=Lax
 
 
 <!DOCTYPE html>
@@ -41,7 +41,7 @@ Set-Cookie: session-cookie=9dca17138f6b0a7cbb0f6c707f427a79; Path=/noufel_websit
                 <!-- Masthead Avatar Image-->
                 <!-- <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." /> -->
                 <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm noufel 👋</h1>
+                <h1 class="masthead-heading title mb-0">Hello, I'm Noufel 👋</h1>
                 <!-- Icon Divider-->
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
@@ -49,7 +49,7 @@ Set-Cookie: session-cookie=9dca17138f6b0a7cbb0f6c707f427a79; Path=/noufel_websit
                     <div class="divider-custom-line"></div>
                 </div>
                 <!-- Masthead Subheading-->
-                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Computer Science <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
+                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Info <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
                 <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
                 <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
             </div>

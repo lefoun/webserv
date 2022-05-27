@@ -244,16 +244,16 @@ void	send_response(request_t* request, const int& socket_fd,
 		{
 			if (file_extension == "html" && !request->session_cookie.empty())
 			{
+				std::cout << "Calling CGI " << std::endl;
+				get_cgi_response(request, response, response_str, socket_fd);
+				return ;
 				/* If the file is not download.html serve CGI output file */
-				if (response->file_path.find("download.html") == std::string::npos)
-				{
-					std::string cookie_file_path = "cgi-bin/cookies/"
-													+ request->session_cookie + "_form";
-					if (access(cookie_file_path.c_str(), R_OK) == -1)
-						perror(cookie_file_path.c_str());
-					else
-						response->file_path = cookie_file_path;
-				}
+				std::string cookie_file_path = "cgi-bin/cookies/"
+												+ request->session_cookie + "_form";
+				if (access(cookie_file_path.c_str(), R_OK) == -1)
+					perror(cookie_file_path.c_str());
+				else
+					response->file_path = cookie_file_path;
 			}
 		}
 		std::ifstream	file;

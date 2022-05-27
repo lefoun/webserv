@@ -78,7 +78,8 @@
 		"numeric": "cpp",
 		"random": "cpp",
 		"*.tcc": "cpp",
-		"ranges": "cpp"
+		"ranges": "cpp",
+		"filesystem": "cpp"
 	},
     "C_Cpp.dimInactiveRegions": true
 }
