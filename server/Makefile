@@ -7,7 +7,7 @@ CC = c++
 INCLUDES = includes/
 OBJS = $(SRCS:.cc=.o)
 DEPS = $(SRCS:.cc=.d)
-NAME = server
+NAME = webserv
 FLAGS = -std=c++98 -pedantic
 ifeq ($(NOFLAGS), 1)
 	FLAGS =
