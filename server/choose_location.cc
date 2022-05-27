@@ -141,7 +141,9 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		{
 			std::string root = "/";
 			if (location.get_redirections().at(0) == '/'
-				|| location.get_redirections().compare(0, 7,"http://") == 0)
+				|| location.get_redirections().compare(0, 7,"http://") == 0
+				|| location.get_redirections().compare(0, 8,"https://") == 0
+				|| location.get_redirections().compare(0, 4,"www.") == 0)
 				root = "";
 			std::string new_uri = request->target.erase(0, location.get_path().length());
 			std::string new_url = root + location.get_redirections() + new_uri;
