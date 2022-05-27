@@ -87,18 +87,18 @@ static void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
 		throw std::invalid_argument("Unxpected token");
 }
 
-static void	skip_crlf_and_space_if_any(std::istringstream& ss)
-{
-	char c;
-	c = ss.peek();
-	if (c == '\r')
-	{
-		ss >> c;
-		ss >> c;
-	}
-	else if (c == '\n' || c == ' ')
-		ss >> c;
-}
+// static void	skip_crlf_and_space_if_any(std::istringstream& ss)
+// {
+// 	char c;
+// 	c = ss.peek();
+// 	if (c == '\r')
+// 	{
+// 		ss >> c;
+// 		ss >> c;
+// 	}
+// 	else if (c == '\n' || c == ' ')
+// 		ss >> c;
+// }
 
 void	parse_request_header(std::string& header, request_t* request,
 								const std::map<std::string, std::string>&
@@ -195,7 +195,7 @@ void	parse_request_header(std::string& header, request_t* request,
 			if (pos != std::string::npos)
 				request->session_cookie = line.substr(
 					pos + strlen(lookup[SESSION_COOKIE]), 32);
-			skip_crlf_and_space_if_any(ss);
+			// skip_crlf_and_space_if_any(ss);
 		}
 		char next_char = ss.peek();
 		if (next_char == '\r' || line == "\r")

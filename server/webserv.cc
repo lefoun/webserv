@@ -244,10 +244,11 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 	{
 		extern char **environ;
 		char *args[3];
-		args[0] = const_cast<char *const>(request->path_info.c_str());
-		args[1] = NULL;
+		args[0] = const_cast<char *const>(std::string("php-cgi").c_str());
+		args[1] = const_cast<char *const>(request->path_info.c_str());
+		args[2] = NULL;
 		set_cgi_env_variables(request);
-		std::cout << "Executed process CGI TEST\n";
+		std::cout << "Executed PHP-CGI TEST\n";
 		std::cout << request->path_info << std::endl;
 		execve(*args, args + 1, environ);
 		perror("execve failed\n");
@@ -260,12 +261,13 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 		response->return_message = "OK";
 		response->date = get_current_time(0);
 		std::string header;
-		construct_header(response, request, header);
 		std::ifstream cgi_output_file(file_name.c_str());
 		if (cgi_output_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");
 		std::stringstream tmp;
 		tmp << cgi_output_file.rdbuf();
+		response->body = tmp.str();
+		construct_header(response, request, header);
 		cgi_output_file.close();
 		response_str = header + tmp.str();
 		if (response_str.size() >= BUFFER_SIZE)
@@ -298,13 +300,13 @@ void	send_response(request_t* request, const int& socket_fd,
 									request->target.find_last_of(".") + 1);
 		if (file_extension == "py")
 		{
-			std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
+			std::cout << GREEN "Calling PYTHON-CGI " + file_extension + "\n" RESET;
 			get_cgi_response(request, response, response_str, socket_fd);
 			return ;
 		}
 		else if (file_extension == "php")
 		{
-			std::cout << GREEN "Calling CGI " + file_extension + "\n" RESET;
+			std::cout << GREEN "Calling PHP-CGI " + file_extension + "\n" RESET;
 			get_cgi_php_response(request, response, response_str, socket_fd);
 			return ;
 		}
@@ -312,7 +314,7 @@ void	send_response(request_t* request, const int& socket_fd,
 		{
 			if (file_extension == "html" && !request->session_cookie.empty())
 			{
-				std::cout << "Calling CGI " << std::endl;
+				std::cout << "Found Session Cookies: Calling CGI " << std::endl;
 				get_cgi_response(request, response, response_str, socket_fd);
 				return ;
 				/* If the file is not download.html serve CGI output file */
