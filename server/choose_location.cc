@@ -53,7 +53,7 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 			return fill_response(response, 405, "Method Not Allowed" ,COMPLETE, false, "", "", server.return_codes.err_405);
 		}
 	}
-	if (request->method == "GET")
+	if (request->method == "GET" || request->method == "POST")
 	{
 		std::string full_path = server.get_root_path() + request->target;
 		DIR *dir = opendir(full_path.c_str());
@@ -134,7 +134,7 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 			return fill_response(response, 405, "Method Not Allowed",COMPLETE, false, "", server.return_codes.err_405);
 		}
 	}
-	if (request->method.compare("GET") == 0)
+	if (request->method.compare("GET") == 0 || request->method.compare("POST") == 0)
 	{
 		std::cout << "GET request->inside set_location_options" << std::endl;
 		if (!location.get_redirections().empty())

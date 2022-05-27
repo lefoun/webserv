@@ -7,8 +7,6 @@
 	* htons converts host to network short and htonl to long.
 	*/
 
-size_t SockComm::session = 0;
-
 void	send_response()
 {
 	std::cout << "413 Request(entity) too large\n";
@@ -30,7 +28,7 @@ std::string	generate_cookie(const size_t size = 32)
 void	set_cgi_env_variables(const request_t* request)
 {
 	setenv("CONTENT_TYPE", request->method.c_str(), 1);
-	setenv("CONTENT_LENGTH", request->content_length.c_str(), 1);
+	setenv("CONTENT_LENGTH", SSTR(request->content_length).c_str(), 1);
 	setenv("HTTP_COOKIE", request->permanent_cookie.c_str(), 1);
 	setenv("SESSION_COOKIE", request->session_cookie.c_str(), 1);
 	setenv("HTTP_USER_AGENT", request->user_agent.c_str(), 1);
@@ -178,7 +176,7 @@ std::string	get_content_type(const std::string& file_extension)
 void	construct_header(response_t* response, request_t* request,
 							std::string& header)
 {
-	header.reserve(100);
+	header.reserve(200);
 	header.append("HTTP/1.1 ");
 	header.append(SSTR(response->return_code));
 	header.append(" ");
@@ -524,7 +522,7 @@ void	close_socket(const ssize_t nb_bytes, fd_set& master_socket_list,
 void clear_request(request_t & request)
 {
 	request.content_type.clear();
-	request.content_length.clear();
+	request.is_content_length_set = false;
 	request.user_agent.clear();
 	request.path_info.clear();
 	request.query_string.clear();

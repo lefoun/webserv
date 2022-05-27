@@ -48,9 +48,9 @@ if __name__ == '__main__':
 
     # Check if first_name and field of study exist
     if first_name is None:
-        first_name = ""
+        first_name = "No One"
     if field_of_study is None:
-        field_of_study = ""
+        field_of_study = "Nothing"
 
     # "Sanitize" script
     if "<script>" in first_name:

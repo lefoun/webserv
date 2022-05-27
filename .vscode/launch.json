@@ -10,7 +10,7 @@
             "name": "Debug",
             "console": "integratedTerminal",
             "cwd": "${relativeFileDirname}",
-            "program": "${relativeFileDirname}/server",
+            "program": "${relativeFileDirname}/webserv",
             "preLaunchTask": "build",
             "args": [],
         }

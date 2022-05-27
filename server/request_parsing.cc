@@ -5,7 +5,7 @@
 void		print_request_content(const request_t& request)
 {
 	std::cout << "CONTENT_TYPE :" << request.content_type << std::endl;
-	std::cout << "CONTENT_LENGTH:" << request.content_length<< std::endl;
+	std::cout << "CONTENT_LENGTH:" << SSTR(request.content_length)<< std::endl;
 	std::cout << "HTTP_COOKIE:" << request.permanent_cookie<< std::endl;
 	std::cout << "HTTP_SESSION_COOKIE:" << request.session_cookie<< std::endl;
 	std::cout << "HTTP_USER_AGENT:" << request.user_agent<< std::endl;
@@ -158,10 +158,10 @@ void	parse_request_header(std::string& header, request_t* request,
 		else if (request->user_agent.empty()
 				&& line.find(lookup[USER_AGENT], 0) != std::string::npos)
 			request->user_agent = line.substr(strlen(lookup[USER_AGENT]));
-		else if (request->content_length.empty()
+		else if (!request->is_content_length_set
 				&& line.find(lookup[CONTENT_LENGTH], 0) != std::string::npos)
-			request->content_length = line.substr(
-										strlen(lookup[CONTENT_LENGTH]));
+			request->content_length = std::atoll(line.substr(
+										strlen(lookup[CONTENT_LENGTH]) + 1).c_str());
 		else if (request->transfer_encoding.empty()
 				&& line.find(lookup[TRANSFER_ENCODING], 0) != std::string::npos)
 			request->transfer_encoding = line.substr(
@@ -199,7 +199,8 @@ void	parse_request_header(std::string& header, request_t* request,
 					pos + strlen(lookup[SESSION_COOKIE]), 32);
 			skip_crlf_and_space_if_any(ss);
 		}
-		if (ss.peek() == '\r')
+		char next_char = ss.peek();
+		if (next_char == '\r' || line == "\r")
 			break ;
 	}
 	std::cout << GREEN "Request Parsing Done\n" RESET;
@@ -208,8 +209,10 @@ void	parse_request_header(std::string& header, request_t* request,
 	std::string::size_type pos = ss.tellg();
 	if (pos == std::string::npos)
 		header.clear();
+	else if (ss.peek() == '\r')
+		header = header.substr(pos + 2);
 	else
-		header = header.substr(ss.tellg());
+		header = header.substr(pos);
 	std::cout << GREEN "This is the rest of the body\n" RESET;
 	std::cout << header << std::endl;
 }
@@ -238,8 +241,8 @@ void		parse_request_body(std::string& client_req, request_t* request)
 	}
 	if (request->body_parsing_state == NOT_STARTED)
 	{
-		if (!request->content_length.empty())
-			request->body.reserve(request->content_length.size());
+		if (!request->is_content_length_set)
+			request->body.reserve(request->content_length);
 		if (request->transfer_encoding == "chunked")
 		{
 			std::string::size_type	pos = client_req.find(DOUBLE_CRLF);
@@ -259,7 +262,7 @@ void		parse_request_body(std::string& client_req, request_t* request)
 		else
 		{
 			request->body.append(client_req);
-			if (client_req.size() == request->content_length.size())
+			if (client_req.size() == request->content_length)
 				request->body_parsing_state = COMPLETE;
 		}
 	}

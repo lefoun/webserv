@@ -83,26 +83,23 @@ class SockComm : public Socket
 		response_t	_response;
 
 	public:
-		static size_t	session; 
 
 		SockComm(const uint16_t& port, const in_addr_t& ip, Server* server = NULL)
 		{
-			++session;
 			memset(&_socket_addr, 0, sizeof(_socket_addr));
 			_port = port;
 			_ip = ip;
 			_server = server;
 			_parsed_request.body_parsing_state = NOT_STARTED;
-			// _parsed_request = new request_t;
+			_parsed_request.is_content_length_set = false;
 		}
 
 		SockComm(const SockComm& copy)
 		{
-			++session;
 			*this = copy;
 			std::cout << RED "Callign copy constructor\n" RESET;
 			_parsed_request.body_parsing_state = NOT_STARTED;
-			// _parsed_request = new request_t;
+			_parsed_request.is_content_length_set = false;
 		}
 
 		SockComm&	operator=(const SockComm& cop)

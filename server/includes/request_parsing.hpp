@@ -40,7 +40,8 @@ enum request_keys_e
 typedef struct request
 {
 	std::string	content_type;
-	std::string	content_length;
+	size_t		content_length;
+	bool		is_content_length_set;
 	std::string	session_cookie;
 	std::string	permanent_cookie;
 	std::string	user_agent;
