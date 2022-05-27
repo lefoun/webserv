@@ -125,7 +125,7 @@ void	get_cgi_response(const request_t* request, response_t* response,
 		args[1] = NULL;
 		if (request->method == "POST")
 		{
-			std::ofstream cgi_communication_file(file_name);
+			std::ofstream cgi_communication_file(file_name.c_str());
 			if (cgi_communication_file.fail())
 				throw std::runtime_error(
 					"Failed to send a POST request to CGI");
@@ -225,6 +225,66 @@ void	construct_header(response_t* response, request_t* request,
 		std::cout << "Appending time\n\n";
 	}
 	header.append(CRLF);
+}
+
+void	get_cgi_php_response(const request_t* request, response_t* response,
+							std::string& response_str, const int& socket_fd)
+{
+	pid_t child_pid = 1;
+	std::string	file_name = "cgi-bin/cgi_serv_communication_file.txt";
+
+	child_pid = fork();
+
+	if (child_pid < 0)
+	{
+		std::cout << "Failed to create a new process\n";
+		return ;
+	}
+	if (child_pid == 0) /* Child process */
+	{
+		extern char **environ;
+		char *args[3];
+		args[0] = const_cast<char *const>(request->path_info.c_str());
+		args[1] = NULL;
+		if (request->method == "POST")
+		{
+			std::ofstream cgi_communication_file(file_name.c_str());
+			if (cgi_communication_file.fail())
+				throw std::runtime_error(
+					"Failed to send a POST request to CGI");
+			else
+			{
+				cgi_communication_file << request->body;
+				std::cout << request->body;
+				cgi_communication_file.close();
+			}
+		}
+		set_cgi_env_variables(request);
+		std::cout << "Executed process CGI TEST\n";
+		std::cout << request->path_info << std::endl;
+		execve(*args, args + 1, environ);
+		perror("execve failed\n");
+		exit(0);
+	}
+	else /* parent */
+	{
+		wait(NULL);
+		std::ifstream cgi_output_file(file_name.c_str());
+		if (cgi_output_file.fail())
+			throw std::runtime_error("Failed to send a response from CGI");
+		std::stringstream tmp;
+		tmp << cgi_output_file.rdbuf();
+		cgi_output_file.close();
+		response_str = tmp.str();
+		if (response_str.size() >= BUFFER_SIZE)
+		{
+			send_chunked_response(response, response_str, socket_fd);
+			return ;
+		}
+		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
+			throw std::runtime_error(
+				"Failed to send data to socket " + SSTR(socket_fd));
+	}
 }
 
 void	send_response(request_t* request, const int& socket_fd,
