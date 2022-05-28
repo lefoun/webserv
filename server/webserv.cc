@@ -233,58 +233,7 @@ void	construct_header(response_t* response, request_t* request,
 void	get_cgi_php_response(request_t* request, response_t* response,
 							std::string& response_str, const int& socket_fd)
 {
-	pid_t child_pid = 1;
-	std::string	file_name = "cgi-bin/php.txt";
-
-	child_pid = fork();
-
-	if (child_pid < 0)
-	{
-		std::cout << "Failed to create a new process\n";
-		return ;
-	}
-	if (child_pid == 0) /* Child process */
-	{
-		extern char **environ;
-		/* change this to your php-cgi path */
-		std::string path("/opt/homebrew/bin/php-cgi");
-		std::string arg("cgi-bin/php/form.php");
-		set_cgi_env_variables(request);
-		char *args[3] = {
-			const_cast<char *const>(path.c_str()),
-			const_cast<char *const>(arg.c_str())};
-		std::cout << "Executed PHP-CGI TEST\n";
-		std::cout <<"This is request Path Info:" <<  request->path_info << std::endl;
-		execve(args[0], args + 1, environ);
-		std::cout << "Failed to execute execve\n";
-		perror("execve failed\n");
-		exit(0);
-	}
-	else /* parent */
-	{
-		wait(NULL);
-		response->return_code = 200;
-		response->return_message = "OK";
-		response->date = get_current_time(0);
-		std::string header;
-		std::ifstream cgi_output_file(file_name.c_str());
-		if (cgi_output_file.fail())
-			throw std::runtime_error("Failed to send a response from CGI");
-		std::stringstream tmp;
-		tmp << cgi_output_file.rdbuf();
-		response->body = tmp.str();
-		construct_header(response, request, header);
-		cgi_output_file.close();
-		response_str = header + tmp.str();
-		if (response_str.size() >= BUFFER_SIZE)
-		{
-			send_chunked_response(response, response_str, socket_fd);
-			return ;
-		}
-		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
-			throw std::runtime_error(
-				"Failed to send data to socket " + SSTR(socket_fd));
-	}
+	//TODO: Implement CGI PHP with pipe
 }
 
 void	send_response(request_t* request, const int& socket_fd,

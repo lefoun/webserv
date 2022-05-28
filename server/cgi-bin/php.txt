@@ -1,9 +1,7 @@
-<html>
-<h1>Thanks for filling out the survey</h1>
-We will record your information as follows:<p>
-<b>Name:</b>
-<br><b>Last Name:</b> 
-<br><b>Organization:</b> 
-<b>Email:</b> 
-<br><b>The browser you used:</b> 
-<br><b>Bye !</b>
+HTTP/1.1 200 OK
+Content-Type: text/html
+Date: Sat, 28 May 2022 09:50:58 GMT
+Content-Length: 244
+
+
+<!DOCTYPE html><html><p>Thank to have complete the survey. The information about you :</p><p><b>First name:</b> cherif</p><p><b>Last name:</b> badad</p><p><b>Email:</b> caca</p><p><b>Organization:</b> 42</p><p><b>Browser:</b> firefox</p></html>

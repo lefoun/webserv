@@ -1,31 +1,49 @@
-#!/usr/bin/php-cgi
-<!--
-<html>
-<h1>Thanks for filling out the survey</h1>
-We will record your information as follows:
-<p>
-<b>Name:</b> <php echo $_POST["first_name"]; ?><br>
-<b>Last Name:</b> <php echo $_POST["last_name"]; ?><br>
-<b>Organization:</b> <php echo $_POST["org"]; ?><br>
-<b>Email:</b> <php echo $_POST["email"]; ?><br>
-<b>The browser you used:</b> <php echo $_POST["browser"]; ?><br>
-<b>Bye !</b> -->
-
 
 <?php
-	echo "In php form.php";
-	$response = "<html>\n<h1>Thanks for filling out the survey</h1>\nWe will record your information as follows:<p>\n<b>Name:</b>";
-	$response .= $_POST["first_name"];
-	$response .= "\n<br><b>Last Name:</b> ";
-	$response .= $_POST["last_name"];
-	$response .= "\n<br><b>Organization:</b> ";
-	$response .= $_POST["org"];
-	$response .= "\n<b>Email:</b> ";
-	$response .= $_POST["email"];
-	$response .= "\n<br><b>The browser you used:</b> ";
-	$response .= $_POST["browser"];
-	$response .= "\n<br><b>Bye !</b>";
+	if (!isset($_SERVER['REQUEST_METHOD'])) {
+		$status = "HTTP/1.1 500 Internal Server Error";
+		$rep = "<!DOCTYPE html><html><title>500 Internal Server Error</title><h1>Internal Server Error</h1></html>";
+	}
+	else if ($_SERVER["REQUEST_METHOD"] == "POST"
+		&& isset($_POST['first_name'])
+		&& isset($_POST['last_name'])
+		&& isset($_POST['email'])
+		&&  isset($_POST['org'])
+		&& isset($_POST['browser'])) {
+		$first_name = $_POST['first_name'];
+		$last_name = $_POST['last_name'];
+		$email = $_POST['email'];
+		$org = $_POST['org'];
+		$browser = $_POST['browser'];
+		$status = "HTTP/1.1 200 OK\r\n";
+		echo $rep = "<!DOCTYPE html><html><p>Thank to have complete the survey. The information about you :</p><p><b>First name:</b> $first_name</p><p><b>Last name:</b> $last_name</p><p><b>Email:</b> $email</p><p><p><b>Organization:</b> $org</p><p><b>Browser:</b> $browser</p></html>";
+	}
+	else if ($_SERVER["REQUEST_METHOD"] == "GET"
+		&& isset($_GET['first_name'])
+		&& isset($_GET['last_name'])
+		&& isset($_GET['email'])
+		&&  isset($_GET['org'])
+		&& isset($_GET['browser'])) {
+		$first_name = $_GET['first_name'];
+		$last_name = $_GET['last_name'];
+		$email = $_GET['email'];
+		$org = $_GET['org'];
+		$browser = $_GET['browser'];
+		$status = "HTTP/1.1 200 OK\r\n";
+		$rep = "<!DOCTYPE html><html><p>Thank to have complete the survey. The information about you :</p><p><b>First name:</b> $first_name</p><p><b>Last name:</b> $last_name</p><p><b>Email:</b> $email</p><p><b>Organization:</b> $org</p><p><b>Browser:</b> $browser</p></html>";
+	}
+	else if ($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "POST")
+	{
+		$status = "HTTP/1.1 405 Method Not Allowed";
+		$rep = "<!DOCTYPE html><html><title>405 Method Not Allowed</title><h1>Method Not Allowed</h1></html>";
+	}
+	else
+	{
+		$status = "HTTP/1.1 400 Bad Request\r\n";
+		$rep = "<!DOCTYPE html><html><title>400 Bad request</title><p>Sorry, it seems that there is an error. Please try again later.</p></html>";
+	}
+	$full_rep = $status . "Content-Type: text/html\r\n" . "Date: " . gmdate("D, d M Y H:i:s", time())." GMT\r\n" . "Content-Length: " . strlen($rep) . "\r\n\r\n\n" . $rep;
 	$file = fopen("../php.txt", "w");
-	$file = fwrite($file, $response);
+	fwrite($file, $full_rep);
 	fclose($file);
 ?>
