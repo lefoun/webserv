@@ -1,4 +1,4 @@
-
+#!/usr/bin/php-cgi
 <?php
 	if (!isset($_SERVER['REQUEST_METHOD'])) {
 		$status = "HTTP/1.1 500 Internal Server Error";
@@ -43,7 +43,7 @@
 		$rep = "<!DOCTYPE html><html><title>400 Bad request</title><p>Sorry, it seems that there is an error. Please try again later.</p></html>";
 	}
 	$full_rep = $status . "Content-Type: text/html\r\n" . "Date: " . gmdate("D, d M Y H:i:s", time())." GMT\r\n" . "Content-Length: " . strlen($rep) . "\r\n\r\n\n" . $rep;
-	$file = fopen("../php.txt", "w");
+	$file = fopen("../cgi_serv_communication_file.txt", "w");
 	fwrite($file, $full_rep);
 	fclose($file);
 ?>
