@@ -29,7 +29,10 @@ void	set_cgi_env_variables(const request_t* request)
 {
 	setenv("CONTENT_TYPE", request->method.c_str(), 1);
 	setenv("REDIRECT_STATUS", "200", 1);
-	setenv("CONTENT_LENGTH", SSTR(request->content_length).c_str(), 1);
+	if (request->is_content_length_set)
+		setenv("CONTENT_LENGTH", SSTR(request->content_length).c_str(), 1);
+	else
+		setenv("CONTENT_LENGTH", "", 1);
 	setenv("HTTP_COOKIE", request->permanent_cookie.c_str(), 1);
 	setenv("SESSION_COOKIE", request->session_cookie.c_str(), 1);
 	setenv("HTTP_USER_AGENT", request->user_agent.c_str(), 1);
@@ -40,8 +43,9 @@ void	set_cgi_env_variables(const request_t* request)
 	setenv("REMOTE_HOST", request->remote_host.c_str(), 1);
 	setenv("REQUEST_METHOD", request->method.c_str(), 1);
 	setenv("REQUEST_", request->path_info.c_str(), 1);
-	setenv("SCRIPT_FILENAME", request->script_path.c_str(), 1);
-	setenv("SCRIPT_NAME", request->script_name.c_str(), 1);
+	setenv("SCRIPT_FILENAME", "/mnt/nfs/homes/chbadad/Documents/webserv/server/cgi-bin/php/form.php", 1);
+	// setenv("SCRIPT_NAME", request->script_name.c_str(), 1);
+	setenv("SCRIPT_NAME", request->path_info.c_str(), 1);
 	setenv("SERVER_NAME", request->host.c_str(), 1);
 	setenv("CONNECTION", request->connection.c_str(), 1);
 	setenv("SERVER_SOFTWARE", "WebServ", 1);
@@ -233,7 +237,74 @@ void	construct_header(response_t* response, request_t* request,
 void	get_cgi_php_response(request_t* request, response_t* response,
 							std::string& response_str, const int& socket_fd)
 {
-	//TODO: Implement CGI PHP with pipe
+	std::string file_name = "cgi-bin/cgi_serv_communication_file.txt";
+
+	//fork
+	pid_t pid= fork();
+
+	if (pid < 0)
+	{
+		std::cout << "Failed to create a new process\n";
+		return ;
+	}
+	else if (pid == 0)
+	{
+		int fd_file;
+		//creating a temporary file to store the body for get request
+		FILE *file_in = std::tmpfile();
+		//putting the body in the file
+		fputs(request->body.c_str(), file_in);
+		//rewing the offset to the beginning of the file
+		std::rewind(file_in);
+		// get the file descriptor of the file
+		fd_file = fileno(file_in);
+		// redirecting fd_file to STDIN
+		dup2(fd_file, STDIN_FILENO);
+		char *args[3];
+		std::string php = "/usr/bin/php-cgi";
+		std::string cgi_path = "/mnt/nfs/homes/chbadad/Documents/webserv/server/cgi-bin/php/form.php";
+		args[0] =  const_cast<char *const>(php.c_str());
+		// args[1] = const_cast<char *const>(request->path_info.c_str());
+		args[1] = const_cast<char *const>(cgi_path.c_str());
+
+		args[2] = NULL;
+		set_cgi_env_variables(request);
+		extern char **environ;
+		execve(*args, args + 1, environ);
+		perror("execve failed\n");
+		exit(0);
+	}
+	else
+	{
+		std::cout << "before wait\n";
+		wait(NULL);
+		std::cout << "After wait\n";
+		std::ifstream cgi_output_file(file_name.c_str());
+		try
+		{
+				if (cgi_output_file.fail())
+					throw std::runtime_error("Failed to send a response from CGI");
+
+			std::stringstream tmp;
+			tmp << cgi_output_file.rdbuf();
+			cgi_output_file.close();
+			response_str = tmp.str();
+			if (response_str.size() >= BUFFER_SIZE)
+			{
+				send_chunked_response(response, response_str, socket_fd);
+				return ;
+			}
+			if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
+				throw std::runtime_error(
+					"Failed to send data to socket " + SSTR(socket_fd));
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+	}
+	// close(fd_file);
+	// fclose(file_in);
 }
 
 void	send_response(request_t* request, const int& socket_fd,
@@ -259,7 +330,7 @@ void	send_response(request_t* request, const int& socket_fd,
 			get_cgi_response(request, response, response_str, socket_fd);
 			return ;
 		}
-		else if (file_extension == "php")
+		else if (file_extension == "php" && request->method == "GET")
 		{
 			std::cout << GREEN "Calling PHP-CGI " + file_extension + "\n" RESET;
 			get_cgi_php_response(request, response, response_str, socket_fd);

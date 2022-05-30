@@ -1,67 +1,7 @@
 HTTP/1.1 200 OK
-content-type: text/html
-content-length: 3642
-date: Fri, 27 May 2022 21:09:06 GMT
-Set-Cookie: session-cookie=5a525483c0839dd2b3f105440c3bc163; Domain=localhost; Path=/noufel_website; SameSite=Lax
+Content-Type: text/html
+Date: Mon, 30 May 2022 09:49:56 GMT
+Content-Length: 228
 
 
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="description" content="" />
-        <meta name="author" content="" />
-        <title>WebServ</title>
-        <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="http://localhost:22222/noufel_website/static/assets/favicon.ico" />
-        <!-- Core theme CSS-->
-        <link href="http://localhost:22222/noufel_website/static/css/styles.css" rel="stylesheet" />
-    </head>
-    <body id="page-top">
-        <!-- Navigation-->
-        <nav class="navbar navbar-expand-lg bg-secondary text-uppercase fixed-top" id="mainNav">
-            <div class="container">
-                <button class="navbar-toggler text-uppercase font-weight-bold bg-primary text-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-                    Menu
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarResponsive">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="http://localhost:22222/noufel_website/index.html">About</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="http://localhost:22222/noufel_website/form.html">Form</a></li>
-                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="http://localhost:22222/noufel_website/download.html">Download</a></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-        <!-- Masthead-->
-        <header class="masthead bg-primary text-white text-center">
-            <div class="container d-flex align-items-center flex-column">
-                <!-- Masthead Avatar Image-->
-                <!-- <img class="rounded-circle mb-5" src="static/assets/img/noufel_resized.jpeg" alt="..." /> -->
-                <!-- Masthead Heading-->
-                <h1 class="masthead-heading title mb-0">Hello, I'm noufel 👋</h1>
-                <!-- Icon Divider-->
-                <div class="divider-custom divider-light">
-                    <div class="divider-custom-line"></div>
-                    <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
-                    <div class="divider-custom-line"></div>
-                </div>
-                <!-- Masthead Subheading-->
-                <p class="masthead-subheading font-weight-light mb-0">I'm currently studying Computer Science <a class="nav-link-on-green-background rounded" href="https://42.fr/en/homepage/">@School 42</a></p>
-                <p class="text fond-weight-small mb-0"> This portfolio website is still under construction</p>
-                <p class="text fond-weight-small mb-0"> but leave me a message if you wana connect!</p>
-            </div>
-        </header>
-        <!-- Copyright Section-->
-        <div class="copyright py-4 text-center text-white">
-            <div class="container"><small>Warning: (ugly) site under construction</small></div>
-        </div>
-        <!-- Bootstrap core JS-->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Core theme JS-->
-        <script src="http://localhost:22222/noufel_website/js/scripts.js"></script>
-    </body>
-</html>
-
+<!DOCTYPE html><html><p>Thank to have complete the survey. The information about you :</p><p><b>First name:</b> d</p><p><b>Last name:</b> d</p><p><b>Email:</b> s</p><p><b>Organization:</b> d</p><p><b>Browser:</b> HTML</p></html>
