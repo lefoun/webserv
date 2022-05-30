@@ -1,9 +1,5 @@
 #!/usr/bin/php-cgi
 <?php
-	if ($_SERVER['REQUEST_METHOD'] == 'POST'){echo $_SERVER['REQUEST_METHOD'] . "\n";
-	echo "Variable :" . $_POST['first_name'] . "\n";
-	echo "Variable :" . $_POST['last_name'] . "\n";
-	echo "Variable :" . $_POST['org'] . "\n";}
 	if (!isset($_SERVER['REQUEST_METHOD'])) {
 		$status = "HTTP/1.1 500 Internal Server Error";
 		$rep = "<!DOCTYPE html><html><title>500 Internal Server Error</title><h1>Internal Server Error</h1></html>";
@@ -11,7 +7,7 @@
 	else if ($_SERVER['REQUEST_METHOD'] == 'POST'
 		&& isset($_POST['first_name'])
 		&& isset($_POST['last_name'])
-		&&  isset($_POST['org'])) {
+		&& isset($_POST['org'])) {
 		$first_name = $_POST['first_name'];
 		$last_name = $_POST['last_name'];
 		$org = $_POST['org'];
