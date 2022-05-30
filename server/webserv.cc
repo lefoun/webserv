@@ -330,7 +330,7 @@ void	send_response(request_t* request, const int& socket_fd,
 			get_cgi_response(request, response, response_str, socket_fd);
 			return ;
 		}
-		else if (file_extension == "php" && request->method == "GET")
+		else if (file_extension == "php")
 		{
 			std::cout << GREEN "Calling PHP-CGI " + file_extension + "\n" RESET;
 			get_cgi_php_response(request, response, response_str, socket_fd);
