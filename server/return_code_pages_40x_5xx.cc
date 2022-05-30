@@ -2,6 +2,7 @@
 
 void initialize_html_return_code_page(t_return_codes *return_codes)
 {
+	return_codes->ok_200  = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>200 Request accomplished</title>\n</head>\n<body><h1>The request was properly executed.</h1></body>\n</html>";
 	return_codes->err_400 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>400 Bad Request</title>\n</head>\n<body><h1>The request sent by the client (you) is probably malformed.</h1></body>\n</html>";
 	return_codes->err_401 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>401 Unauthorized</title>\n</head>\n<body><h1>You must authenticate.</h1></body>\n</html>";
 	return_codes->err_403 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>403 Forbidden</title>\n</head>\n<body><h1>Forbidden. Take a walk on the wild side</h1></body>\n</html>";
@@ -9,6 +10,7 @@ void initialize_html_return_code_page(t_return_codes *return_codes)
 	return_codes->err_405 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>405 Method Not Allowed</title>\n</head>\n<body><h1>The method you choose is not allowed here. :(</h1></body>\n</html>";
 	return_codes->err_406 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>406 Not Acceptable</title>\n</head>\n<body><h1>THIS ABSOLUTLY <br>NOT</br> ACCEPTABLE.</h1></body>\n</html>";
 	return_codes->err_408 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>408 Request Timeout</title>\n</head>\n<body><h1>Time, It's a tick tock on the clock</h1></body>\n</html>";
+	return_codes->err_409 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>409 Conflict</title>\n</head>\n<body><h1>Conflict in request.</h1></body>\n</html>";
 	return_codes->err_413 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>413 Payload Too Large</title>\n</head>\n<body><h1>(De)Enlarge your payload.</h1></body>\n</html>";
 	return_codes->err_414 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>414 URI Too Long</title>\n</head>\n<body><h1>Toooooooooooooooooooooooooooooooooooooooooooooooooooooooooo looooooooooooooooooooooooooooooo..</h1></body>\n</html>";
 	return_codes->err_429 = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<title>429 Too Many Requests</title>\n</head>\n<body><h1>Stop !</h1></body>\n</html>";

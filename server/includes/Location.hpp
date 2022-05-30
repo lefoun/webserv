@@ -9,6 +9,7 @@ typedef std::pair<uint16_t, std::string>	uint16_str_pair;
 
 typedef struct	s_return_codes
 {
+	std::string ok_200;
 	std::string err_400;
 	std::string err_401;
 	std::string err_403;
@@ -16,6 +17,7 @@ typedef struct	s_return_codes
 	std::string err_405;
 	std::string err_406;
 	std::string err_408;
+	std::string err_409;
 	std::string err_413;
 	std::string err_414;
 	std::string err_429;

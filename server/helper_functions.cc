@@ -139,23 +139,63 @@ std::string get_current_time(int years)
 int remove_files_and_dir(const char *fpath, const struct stat *sb,
                    int typeflag, struct FTW *ftwbuf)
 {
-    std::cout << fpath << " " << typeflag << std::endl;
-    (void)ftwbuf;
-    (void)sb;
- /*   if (typeflag == FTW_F)
-        if (unlink(fpath) == -1)
-            return (-1);
-    if (typeflag == FTW_D)
-
-        if (rmdir(fpath) == -1)
-            return (-1);*/
-    // if (remove(fpath))
-    //     return -1;
+	(void)sb;
+	(void)typeflag;
+	(void)ftwbuf;
+	
+	if (remove(fpath) == -1)
+	     return -1;
     return 0;
 }
 
 int remove_dir(const char* dir_path)
 {
-
     return nftw(dir_path, remove_files_and_dir, 64, FTW_DEPTH);
+}
+
+std::string get_body_auto_index(std::string full_path, std::string dir_path)
+{
+	DIR 			*d;
+	struct dirent	*dir;
+	struct stat		file_info;
+
+	
+	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n \
+		<meta charset=\"UTF-8\">\n<title>Index</title>\n</head>\n \
+		<body><h1>Index of " + dir_path + "</h1>\n \
+		<hr style=\"border-style: inset;\">\n";
+
+ 	d = opendir(full_path.c_str());
+  	if (d) {
+    	while ((dir = readdir(d)) != NULL)
+		{
+			std::string path_to_file = full_path + "/" +  dir->d_name;
+			if (stat(path_to_file.c_str(), &file_info) != - 1)
+			{
+				std::string len = std::to_string(file_info.st_size);
+				char *buf = new char[100];
+				std::string name = dir->d_name;
+				if (S_ISDIR(file_info.st_mode))
+				{
+					name = strcat(dir->d_name, "/");
+					len = "_";
+				}
+				body.append("<div style=\"white-space: pre-wrap;\"><div style \
+					=\"display: inline-block; min-width:180px;\"><a href=\"");
+				body.append(name);
+				body.append("\"; > ");
+				body.append(name.c_str());
+				body.append("</a></div>");
+				struct tm *struct_time = gmtime(&file_info.st_mtime);
+				strftime(buf, 200, "%e-%B-%Y %R",struct_time);
+				sprintf(buf, "%-90s%s", buf, len.c_str());
+				body.append (buf);
+				body.append("</div>\n");
+				delete [] buf;
+			}
+			
+  		}
+	}
+	body.append("</hr></body>\n</html>");
+	return body;
 }
