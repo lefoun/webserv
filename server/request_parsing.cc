@@ -9,7 +9,6 @@ void		print_request_content(const request_t& request)
 	std::cout << "CONTENT_LENGTH:" << SSTR(request.content_length)<< std::endl;
 	std::cout << "HTTP_COOKIE:" << request.permanent_cookie<< std::endl;
 	std::cout << "HTTP_SESSION_COOKIE:" << request.session_cookie<< std::endl;
-	std::cout << "HTTP_USER_AGENT:" << request.user_agent<< std::endl;
 	std::cout << "PATH_INFO:" << request.path_info<< std::endl;
 	std::cout << "QUERY_STRING:" << request.query_string<< std::endl;
 	std::cout << "REMOTE_ADDR:" << request.remote_host << std::endl;
@@ -54,14 +53,22 @@ static void	set_ip_port(request_t* request, const std::string& host_port,
 	request->ip = ip_to_number(ip.c_str());
 }
 
-char	get_char_from_hex(const std::string& str, const int& index)
+char	get_char_from_hex(const std::string& str, const size_t& index, const size_t& str_size)
 {
 	long	ret;
 	char	*endptr;
 	char	hex_str[3];
 
-	hex_str[0] = str[index];
-	hex_str[1] = str[index + 1];
+	if (index + 2 <= str_size)
+	{
+		hex_str[0] = str[index + 1];
+		hex_str[1] = str[index + 2];
+	}
+	else
+	{
+		hex_str[0] = '2';
+		hex_str[1] = '5';
+	}
 	hex_str[2] = '\0';
 	ret = strtol(hex_str, &endptr, 16);
 	if (ret < 128)
@@ -79,12 +86,11 @@ std::string replace_percent_encoding(const std::string& str,
 	{
 		if (str[i] == '%' && i < max_pos)
 		{
-			++i;
-			char c = get_char_from_hex(str, i);
+			char c = get_char_from_hex(str, i, str_size);
 			if (c == -1)
 				throw std::invalid_argument("Couldn't parse percent char");
 			replaced_str.push_back(c);
-			++i;
+			i += 2; /* Skip %XX */
 		}
 		else
 			replaced_str.push_back(str[i]);
@@ -172,9 +178,6 @@ void	parse_request_header(std::string& header, request_t* request,
 		if (request->connection.empty()
 			&& line.find(lookup[CONNECTION], 0) != std::string::npos)
 			request->connection = line.substr(strlen(lookup[CONNECTION]));
-		else if (request->user_agent.empty()
-				&& line.find(lookup[USER_AGENT], 0) != std::string::npos)
-			request->user_agent = line.substr(strlen(lookup[USER_AGENT]));
 		else if (!request->is_content_length_set
 				&& line.find(lookup[CONTENT_LENGTH], 0) != std::string::npos)
 			request->content_length = std::atoll(line.substr(
@@ -211,7 +214,6 @@ void	parse_request_header(std::string& header, request_t* request,
 			if (pos != std::string::npos)
 				request->session_cookie = line.substr(
 					pos + strlen(lookup[SESSION_COOKIE]), 32);
-			// skip_crlf_and_space_if_any(ss);
 		}
 		char next_char = ss.peek();
 		if (next_char == '\r' || line == "\r")

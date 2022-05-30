@@ -119,7 +119,7 @@ std::string get_current_time(int years)
 	struct tm *tstruct = std::gmtime(&raw_time);
 
 	tstruct->tm_year += years;
-	std::strftime(output, sizeof(output), "%a, %d %b %G %T GMT", tstruct);
+	std::strftime(output, sizeof(output), "%a, %d %b %Y %H:%M:%S GMT", tstruct);
 	str = output;
 	return (str);
 }

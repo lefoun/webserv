@@ -26,7 +26,6 @@ enum request_keys_e
 	CONTENT_TYPE,
 	CONTENT_LENGTH,
 	COOKIE,
-	USER_AGENT,
 	CONNECTION,
 	HOST,
 	PROTOCOL,
@@ -44,7 +43,6 @@ typedef struct request
 	bool		is_content_length_set;
 	std::string	session_cookie;
 	std::string	permanent_cookie;
-	std::string	user_agent;
 	std::string	path_info;
 	std::string	query_string;
 	std::string	remote_addr;

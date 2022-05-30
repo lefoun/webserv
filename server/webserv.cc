@@ -35,7 +35,6 @@ void	set_cgi_env_variables(const request_t* request)
 		setenv("CONTENT_LENGTH", "", 1);
 	setenv("HTTP_COOKIE", request->permanent_cookie.c_str(), 1);
 	setenv("SESSION_COOKIE", request->session_cookie.c_str(), 1);
-	setenv("HTTP_USER_AGENT", request->user_agent.c_str(), 1);
 	setenv("PATH_INFO", request->path_info.c_str(), 1);
 	setenv("PATH_TRANSLATED", request->path_info.c_str(), 1);
 	setenv("QUERY_STRING", request->query_string.c_str(), 1);
@@ -622,7 +621,6 @@ void clear_request(request_t & request)
 {
 	request.content_type.clear();
 	request.is_content_length_set = false;
-	request.user_agent.clear();
 	request.path_info.clear();
 	request.query_string.clear();
 	request.remote_addr.clear();
@@ -763,7 +761,6 @@ void	init_request_parsing_lookup_tab(const char *lookup[REQUEST_KEYS_SIZE])
 	lookup[HOST] = "Host:";
 	lookup[COOKIE] = "Cookie: ";
 	lookup[CONNECTION] = "Connection: ";
-	lookup[USER_AGENT] = "User-Agent: ";
 	lookup[CONTENT_LENGTH] = "Content-Length: ";
 	lookup[CONTENT_TYPE] = "Content-Type: ";
 	lookup[TRACKING_COOKIE] = "tracking-cookie=";
