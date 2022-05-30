@@ -123,26 +123,14 @@ std::string get_current_time(int years)
 	str = output;
 	return (str);
 }
-// std::string get_current_time(int years)
-// {
-//     time_t now = time(0);
-//     struct tm *tstruct = gmtime(&now);
-//     tstruct->tm_year += years;
-//     char *date = asctime(tstruct);
-//     std::string str(date);
-//     str[3] = ',';
-//     str[str.size() - 1] = ' ';
-//     str.append("GMT");
-//     return (str);
-// }
 
-int remove_files_and_dir(const char *fpath, const struct stat *sb,
-                   int typeflag, struct FTW *ftwbuf)
+int	remove_files_and_dir(const char *fpath, const struct stat *sb,
+						int typeflag, struct FTW *ftwbuf)
 {
 	(void)sb;
 	(void)typeflag;
 	(void)ftwbuf;
-	
+
 	if (remove(fpath) == -1)
 	     return -1;
     return 0;
@@ -159,15 +147,15 @@ std::string get_body_auto_index(std::string full_path, std::string dir_path)
 	struct dirent	*dir;
 	struct stat		file_info;
 
-	
+
 	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n \
 		<meta charset=\"UTF-8\">\n<title>Index</title>\n</head>\n \
 		<body><h1>Index of " + dir_path + "</h1>\n \
 		<hr style=\"border-style: inset;\">\n";
 
- 	d = opendir(full_path.c_str());
-  	if (d) {
-    	while ((dir = readdir(d)) != NULL)
+	d = opendir(full_path.c_str());
+	if (d) {
+		while ((dir = readdir(d)) != NULL)
 		{
 			std::string path_to_file = full_path + "/" +  dir->d_name;
 			if (stat(path_to_file.c_str(), &file_info) != - 1)
@@ -193,7 +181,7 @@ std::string get_body_auto_index(std::string full_path, std::string dir_path)
 				body.append("</div>\n");
 				delete [] buf;
 			}
-			
+
   		}
 	}
 	body.append("</hr></body>\n</html>");

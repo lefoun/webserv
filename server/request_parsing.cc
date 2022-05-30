@@ -18,20 +18,11 @@ void		print_request_content(const request_t& request)
 	std::cout << "SCRIPT_NAME:" << request.script_name << std::endl;
 	std::cout << "SERVER_NAME:" << request.host << std::endl;
 	std::cout << "TARGET:" << request.target << std::endl;
-	// std::cout << "IP:" << ip_to_str(request.ip) << std::endl;
-	// std::cout << "PORT:" << request.port << std::endl;
 	std::cout << "BOUNDARY:" << request.boundary<< std::endl;
 	std::cout << "BODY:" << request.body << std::endl;
 	std::cout << "CONNECTION:" << request.connection << std::endl;
 	std::cout << "TRANSFER-ENCODING:" << request.transfer_encoding << std::endl;
 	std::cout << "REFERER:" << request.referer << std::endl;
-	// std::string	path_info;
-	// std::string	remote_addr;
-	// std::string	remote_host;
-	// std::string	script_path;
-	// std::string	script_name;
-	// std::string	host;
-	// std::string	body;
 }
 
 static void	set_ip_port(request_t* request, const std::string& host_port,
@@ -195,13 +186,13 @@ void	parse_request_header(std::string& header, request_t* request,
 			{
 				request->content_type = line.substr(
 										strlen(lookup[CONTENT_TYPE]),
-										pos - strlen(lookup[CONTENT_TYPE])); 
+										pos - strlen(lookup[CONTENT_TYPE]));
 				request->boundary = "--" + line.substr(
 										pos + strlen(lookup[BOUNDARY]) + 1);
 			}
 			else
 				request->content_type = line.substr(
-										strlen(lookup[CONTENT_TYPE])); 
+										strlen(lookup[CONTENT_TYPE]));
 		}
 		else if ((request->permanent_cookie.empty() || request->session_cookie.empty())
 				&& line.find(lookup[COOKIE], 0) != std::string::npos)

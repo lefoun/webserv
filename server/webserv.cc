@@ -15,41 +15,52 @@ void	send_response()
 std::string	generate_cookie(const size_t size = 32)
 {
 	static const char alphanum[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-    std::string tmp_s;
-    tmp_s.reserve(size);
+	std::string tmp_s;
 
+	tmp_s.reserve(size);
 	srand(time(NULL));
-    for (size_t i = 0; i < size; ++i)
-        tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
-
-    return tmp_s;
+	for (size_t i = 0; i < size; ++i)
+	tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+	return tmp_s;
 }
 
 void	set_cgi_env_variables(const request_t* request)
 {
-	setenv("CONTENT_TYPE", request->method.c_str(), 1);
+	setenv("CONTENT_TYPE", request->content_type.c_str(), 1);
+	std::cout << std::endl << GREEN;
+	std::cout << "CONTENT_TYPE: " << request->content_type << std::endl;
+	std::cout << request->body << std::endl;
 	setenv("REDIRECT_STATUS", "200", 1);
 	if (request->is_content_length_set)
 		setenv("CONTENT_LENGTH", SSTR(request->content_length).c_str(), 1);
 	else
 		setenv("CONTENT_LENGTH", "", 1);
+	std::cout << "CONTENT_LENGTH: " << request->content_length << std::endl;
 	setenv("HTTP_COOKIE", request->permanent_cookie.c_str(), 1);
+	std::cout << "HTTP_COOKIE: " << request->permanent_cookie << std::endl;
 	setenv("SESSION_COOKIE", request->session_cookie.c_str(), 1);
+	std::cout << "SESSION_COOKIE: " << request->session_cookie << std::endl;
 	setenv("PATH_INFO", request->path_info.c_str(), 1);
+	std::cout << "PATH_INFO: " << request->path_info << std::endl;
 	setenv("PATH_TRANSLATED", request->path_info.c_str(), 1);
+	std::cout << "PATH_TRANSLATED: " << request->path_info << std::endl;
 	setenv("QUERY_STRING", request->query_string.c_str(), 1);
+	std::cout << "QUERY_STRING: " << request->query_string << std::endl;
 	setenv("REMOTE_ADDR", request->remote_addr.c_str(), 1);
 	setenv("REMOTE_HOST", request->remote_host.c_str(), 1);
 	setenv("REQUEST_METHOD", request->method.c_str(), 1);
+	std::cout << "REQUEST_METHOD: " << request->method << std::endl;
 	setenv("REQUEST_", request->path_info.c_str(), 1);
-	setenv("SCRIPT_FILENAME", "/mnt/nfs/homes/chbadad/Documents/webserv/server/cgi-bin/php/form.php", 1);
-	// setenv("SCRIPT_NAME", request->script_name.c_str(), 1);
+	setenv("SCRIPT_FILENAME", request->path_info.c_str(), 1);
+	std::cout << "SCRIPT_FILENAME: " << request->path_info << std::endl;
 	setenv("SCRIPT_NAME", request->path_info.c_str(), 1);
+	std::cout << "SCRIPT_NAME: " << request->path_info << std::endl;
 	setenv("SERVER_NAME", request->host.c_str(), 1);
 	setenv("CONNECTION", request->connection.c_str(), 1);
 	setenv("SERVER_SOFTWARE", "WebServ", 1);
 	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
 	setenv("BUFFER_SIZE", SSTR(BUFFER_SIZE).c_str(), 1);
+	std::cout << RESET << std::endl;
 }
 
 void	send_chunked_response(response_t* response, std::string& response_str,
@@ -237,10 +248,7 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 							std::string& response_str, const int& socket_fd)
 {
 	std::string file_name = "cgi-bin/cgi_serv_communication_file.txt";
-
-	//fork
 	pid_t pid= fork();
-
 	if (pid < 0)
 	{
 		std::cout << "Failed to create a new process\n";
@@ -249,26 +257,19 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 	else if (pid == 0)
 	{
 		int fd_file;
-		//creating a temporary file to store the body for get request
 		FILE *file_in = std::tmpfile();
-		//putting the body in the file
-		fputs(request->body.c_str(), file_in);
-		//rewing the offset to the beginning of the file
-		std::rewind(file_in);
-		// get the file descriptor of the file
-		fd_file = fileno(file_in);
-		// redirecting fd_file to STDIN
-		dup2(fd_file, STDIN_FILENO);
-		char *args[3];
 		std::string php = "/usr/bin/php-cgi";
-		std::string cgi_path = "/mnt/nfs/homes/chbadad/Documents/webserv/server/cgi-bin/php/form.php";
+		char *args[3];
+		fputs(request->body.c_str(), file_in);
+		std::rewind(file_in);
+		fd_file = fileno(file_in);
 		args[0] =  const_cast<char *const>(php.c_str());
-		// args[1] = const_cast<char *const>(request->path_info.c_str());
-		args[1] = const_cast<char *const>(cgi_path.c_str());
-
+		args[1] = const_cast<char *const>(request->path_info.c_str());
 		args[2] = NULL;
 		set_cgi_env_variables(request);
 		extern char **environ;
+		if (dup2(fd_file, STDIN_FILENO) == -1)
+			std::cout << RED << "Failed to redirect STDIN\n" << RESET;
 		execve(*args, args + 1, environ);
 		perror("execve failed\n");
 		exit(0);
@@ -281,8 +282,8 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 		std::ifstream cgi_output_file(file_name.c_str());
 		try
 		{
-				if (cgi_output_file.fail())
-					throw std::runtime_error("Failed to send a response from CGI");
+			if (cgi_output_file.fail())
+				throw std::runtime_error("Failed to send a response from CGI");
 
 			std::stringstream tmp;
 			tmp << cgi_output_file.rdbuf();
@@ -302,8 +303,6 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 			std::cerr << e.what() << '\n';
 		}
 	}
-	// close(fd_file);
-	// fclose(file_in);
 }
 
 void	send_response(request_t* request, const int& socket_fd,
