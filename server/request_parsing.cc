@@ -95,8 +95,8 @@ static void	parse_target_arguments(request_t* request)
 	std::string::size_type search_end = pos;
 	if (search_end == std::string::npos)
 		search_end = request->target.size();
-	if (std::find(request->target.begin(), request->target.begin() + search_end, '%') != request->target.begin() + search_end)
-		request->target = replace_percent_encoding(request->target, search_end);
+//	if (std::find(request->target.begin(), request->target.begin() + search_end, '%') != request->target.begin() + search_end)
+//		request->target = replace_percent_encoding(request->target, search_end);
 	if ((request->method == "GET" || request->method == "DELETE") && pos == std::string::npos)
 		return ;
 	size_t	path_info_pos = request->target.find("/cgi-bin/");
