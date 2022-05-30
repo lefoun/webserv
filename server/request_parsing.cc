@@ -106,7 +106,7 @@ static void	parse_target_arguments(request_t* request)
 		search_end = request->target.size();
 	if (std::find(request->target.begin(), request->target.begin() + search_end, '%') != request->target.begin() + search_end)
 		request->target = replace_percent_encoding(request->target, search_end);
-	if (request->method == "GET" && pos == std::string::npos)
+	if ((request->method == "GET" || request->method == "DELETE") && pos == std::string::npos)
 		return ;
 	size_t	path_info_pos = request->target.find("/cgi-bin/");
 	if (path_info_pos == std::string::npos)
@@ -249,7 +249,7 @@ void		strip_chunked_encoding_chars(std::string& body)
 
 void		parse_request_body(std::string& client_req, request_t* request)
 {
-	if (request->method == "GET")
+	if (request->method == "GET" || request->method == "DELETE")
 	{
 		/* Assuming we don't take Get request with a body */
 		request->body_parsing_state = COMPLETE;

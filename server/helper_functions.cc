@@ -172,7 +172,7 @@ std::string get_body_auto_index(std::string full_path, std::string dir_path)
 			std::string path_to_file = full_path + "/" +  dir->d_name;
 			if (stat(path_to_file.c_str(), &file_info) != - 1)
 			{
-				std::string len = std::to_string(file_info.st_size);
+				std::string len = SSTR(file_info.st_size);
 				char *buf = new char[100];
 				std::string name = dir->d_name;
 				if (S_ISDIR(file_info.st_mode))
