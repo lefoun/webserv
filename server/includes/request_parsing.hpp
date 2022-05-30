@@ -34,7 +34,6 @@ enum request_keys_e
 	TRACKING_COOKIE,
 	BOUNDARY,
 	TRANSFER_ENCODING,
-	REFERER,
 	REQUEST_KEYS_SIZE
 };
 
@@ -68,6 +67,6 @@ typedef struct request
 
 void		parse_request_header(std::string& header, request_t* request,
 									const std::map<std::string, std::string>&
-									host_ip_lookup);
+									host_ip_lookup, const char* lookup[REQUEST_KEYS_SIZE]);
 void		parse_request_body(std::string& client_req, request_t* request);
 request_t*	get_parsed_request(const std::string& header);

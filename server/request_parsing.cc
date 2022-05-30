@@ -2,6 +2,7 @@
 #include "response.hpp"
 #include "webserver.hpp"
 
+
 void		print_request_content(const request_t& request)
 {
 	std::cout << "CONTENT_TYPE :" << request.content_type << std::endl;
@@ -53,9 +54,52 @@ static void	set_ip_port(request_t* request, const std::string& host_port,
 	request->ip = ip_to_number(ip.c_str());
 }
 
+char	get_char_from_hex(const std::string& str, const int& index)
+{
+	long	ret;
+	char	*endptr;
+	char	hex_str[3];
+
+	hex_str[0] = str[index];
+	hex_str[1] = str[index + 1];
+	hex_str[2] = '\0';
+	ret = strtol(hex_str, &endptr, 16);
+	if (ret < 128)
+		return ret;
+	return -1;
+}
+
+std::string replace_percent_encoding(const std::string& str,
+										const std::string::size_type max_pos)
+{
+	std::string				replaced_str;
+	std::string::size_type	str_size = str.size();
+	replaced_str.reserve(str_size);
+	for (std::string::size_type i = 0; i < str_size; ++i)
+	{
+		if (str[i] == '%' && i < max_pos)
+		{
+			++i;
+			char c = get_char_from_hex(str, i);
+			if (c == -1)
+				throw std::invalid_argument("Couldn't parse percent char");
+			replaced_str.push_back(c);
+			++i;
+		}
+		else
+			replaced_str.push_back(str[i]);
+	}
+	return replaced_str;
+}
+
 static void	parse_target_arguments(request_t* request)
 {
-	size_t pos = request->target.find('?', 0);	
+	std::string::size_type pos = request->target.find('?', 0);
+	std::string::size_type search_end = pos;
+	if (search_end == std::string::npos)
+		search_end = request->target.size();
+	if (std::find(request->target.begin(), request->target.begin() + search_end, '%') != request->target.begin() + search_end)
+		request->target = replace_percent_encoding(request->target, search_end);
 	if (request->method == "GET" && pos == std::string::npos)
 		return ;
 	size_t	path_info_pos = request->target.find("/cgi-bin/");
@@ -87,40 +131,12 @@ static void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
 		throw std::invalid_argument("Unxpected token");
 }
 
-// static void	skip_crlf_and_space_if_any(std::istringstream& ss)
-// {
-// 	char c;
-// 	c = ss.peek();
-// 	if (c == '\r')
-// 	{
-// 		ss >> c;
-// 		ss >> c;
-// 	}
-// 	else if (c == '\n' || c == ' ')
-// 		ss >> c;
-// }
-
 void	parse_request_header(std::string& header, request_t* request,
 								const std::map<std::string, std::string>&
-								host_ip_lookup)
+								host_ip_lookup,
+								const char *lookup[REQUEST_KEYS_SIZE])
 {
 	/* Lookup table to avoid typos when searching for keys inside request */
-	static const char *lookup[REQUEST_KEYS_SIZE];
-	lookup[GET] = "GET";
-	lookup[POST] = "POST";
-	lookup[DELETE] = "DELETE";
-	lookup[PROTOCOL] = "HTTP/1.1";
-	lookup[HOST] = "Host:";
-	lookup[COOKIE] = "Cookie: ";
-	lookup[CONNECTION] = "Connection: ";
-	lookup[USER_AGENT] = "User-Agent: ";
-	lookup[CONTENT_LENGTH] = "Content-Length: ";
-	lookup[CONTENT_TYPE] = "Content-Type: ";
-	lookup[TRACKING_COOKIE] = "tracking-cookie=";
-	lookup[SESSION_COOKIE] = "session-cookie=";
-	lookup[BOUNDARY] = " boundary=";
-	lookup[TRANSFER_ENCODING] = "Transfer-Encoding: ";
-	lookup[REFERER] = "Referer: ";
 	std::string			line;
 	std::istringstream	ss(header);
 

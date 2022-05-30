@@ -1,0 +1,9 @@
+<html>
+<h1>Thanks for filling out the survey</h1>
+We will record your information as follows:<p>
+<b>Name:</b>
+<br><b>Last Name:</b> 
+<br><b>Organization:</b> 
+<b>Email:</b> 
+<br><b>The browser you used:</b> 
+<br><b>Bye !</b>

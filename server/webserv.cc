@@ -556,7 +556,8 @@ void	bind_sockets(std::vector<SockListen>& listen_sockets,
 
 bool	is_complete_request(std::string& request, request_t *rqst,
 							const std::map<std::string, std::string>&
-							host_ip_lookup)
+							host_ip_lookup,
+							const char *req_parsing_lookup[REQUEST_KEYS_SIZE])
 {
 	// read_buf(const_cast<char *>(request.c_str()), request.size());
 	if (rqst->method.empty()) /* Request header is not parsed yet */
@@ -566,7 +567,7 @@ bool	is_complete_request(std::string& request, request_t *rqst,
 			/* parse_request_body:
 			 * Parses the request and put teh values in the struct rqst and
 			 * trunks the request string to leave only the body */
-			parse_request_header(request, rqst, host_ip_lookup);
+			parse_request_header(request, rqst, host_ip_lookup, req_parsing_lookup);
 			parse_request_body(request, rqst);
 		}
 		else
@@ -640,7 +641,8 @@ void clear_request(request_t & request)
 }
 
 void	launch_server(std::vector<Server>& servers,
-						std::map<std::string, std::string>& host_ip_lookup)
+						std::map<std::string, std::string>& host_ip_lookup,
+						const char *req_parsing_lookup[REQUEST_KEYS_SIZE])
 {
 	SockComm*				new_connect;
 	std::vector<SockListen> listen_sockets;
@@ -721,7 +723,7 @@ void	launch_server(std::vector<Server>& servers,
 								<< socket_fd << "\n"RESET;
 					if (is_complete_request(socket_it->get_client_request(),
 											&socket_it->get_request(),
-											host_ip_lookup))
+											host_ip_lookup, req_parsing_lookup))
 					{
 						std::cout << BLUE "Sending data To client " << socket_fd
 							<< "\n"RESET;
@@ -752,11 +754,31 @@ void	launch_server(std::vector<Server>& servers,
 	}
 }
 
+void	init_request_parsing_lookup_tab(const char *lookup[REQUEST_KEYS_SIZE])
+{
+	lookup[GET] = "GET";
+	lookup[POST] = "POST";
+	lookup[DELETE] = "DELETE";
+	lookup[PROTOCOL] = "HTTP/1.1";
+	lookup[HOST] = "Host:";
+	lookup[COOKIE] = "Cookie: ";
+	lookup[CONNECTION] = "Connection: ";
+	lookup[USER_AGENT] = "User-Agent: ";
+	lookup[CONTENT_LENGTH] = "Content-Length: ";
+	lookup[CONTENT_TYPE] = "Content-Type: ";
+	lookup[TRACKING_COOKIE] = "tracking-cookie=";
+	lookup[SESSION_COOKIE] = "session-cookie=";
+	lookup[BOUNDARY] = " boundary=";
+	lookup[TRANSFER_ENCODING] = "Transfer-Encoding: ";
+}
+
+
 int main(int argc, char **argv)
 {
 	std::vector<Server>					servers;
 	std::map<std::string, std::string>	host_ip_lookup;
 	std::string							config_file;
+	static const char					*req_parsing_lookup[REQUEST_KEYS_SIZE];
 	if (argc < 2)
 		config_file = "server_config.conf";
 	else
@@ -764,9 +786,10 @@ int main(int argc, char **argv)
 	try
 	{
 		parse_config_file(config_file, servers, host_ip_lookup);
+		init_request_parsing_lookup_tab(req_parsing_lookup);
 		std::cout << GREEN "Loaded config file.\n\n"
 					<< "Starting WebServer...\n"RESET;
-		launch_server(servers, host_ip_lookup);
+		launch_server(servers, host_ip_lookup, req_parsing_lookup);
 		return 0;
 	}
 	catch (std::exception &e) { std::cout << e.what() << std::endl; }
