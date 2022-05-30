@@ -309,30 +309,30 @@ static void	handle_location(std::istream_iterator<std::string>& token,
 	context.push("location");
 }
 
-static void    handle_redirection(std::istream_iterator<std::string>& token,
-                            const std::stack<std::string>& context,
-                            Server& server)
+static void		handle_redirection(std::istream_iterator<std::string>& token,
+								const std::stack<std::string>& context,
+								Server& server)
 {
 	std::cout << "This is toekn redirection " << *token << std::endl;
-    check_valid_token(token);
-    if (*(--(*token).end()) != ';')
-        throw std::invalid_argument("Expected token ';'");
-    const std::string new_url = token->substr(0, token->size() - 1);
-    if (context.top() == "server")
-    {
-        if (!server.get_redirections().empty())
-            throw std::invalid_argument("Found multipe redirections in block server");
-        server.get_redirections() = new_url;
-        std::cout << server.get_redirections() << std::endl;
-    }
-    else if (context.top() == "location")
-    {
-        if (!server.get_locations().back().get_redirections().empty())
-            throw std::invalid_argument("Found multipe redirections in block location");
-        server.get_locations().back().get_redirections() = new_url;
-        std::cout << server.get_locations().back().get_redirections() << std::endl;
-    }
-    ++token;
+	check_valid_token(token);
+	if (*(--(*token).end()) != ';')
+		throw std::invalid_argument("Expected token ';'");
+	const std::string new_url = token->substr(0, token->size() - 1);
+	if (context.top() == "server")
+	{
+		if (!server.get_redirections().empty())
+			throw std::invalid_argument("Found multipe redirections in block server");
+		server.get_redirections() = new_url;
+		std::cout << server.get_redirections() << std::endl;
+	}
+	else if (context.top() == "location")
+	{
+		if (!server.get_locations().back().get_redirections().empty())
+			throw std::invalid_argument("Found multipe redirections in block location");
+		server.get_locations().back().get_redirections() = new_url;
+		std::cout << server.get_locations().back().get_redirections() << std::endl;
+	}
+	++token;
 }
 
 static void	handle_allow(std::istream_iterator<std::string>& token,

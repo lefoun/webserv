@@ -15,14 +15,13 @@ void	send_response()
 std::string	generate_cookie(const size_t size = 32)
 {
 	static const char alphanum[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-    std::string tmp_s;
-    tmp_s.reserve(size);
+	std::string tmp_s;
 
+	tmp_s.reserve(size);
 	srand(time(NULL));
-    for (size_t i = 0; i < size; ++i)
-        tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
-
-    return tmp_s;
+	for (size_t i = 0; i < size; ++i)
+	tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+	return tmp_s;
 }
 
 void	set_cgi_env_variables(const request_t* request)
@@ -42,8 +41,7 @@ void	set_cgi_env_variables(const request_t* request)
 	setenv("REMOTE_HOST", request->remote_host.c_str(), 1);
 	setenv("REQUEST_METHOD", request->method.c_str(), 1);
 	setenv("REQUEST_", request->path_info.c_str(), 1);
-	setenv("SCRIPT_FILENAME", "/mnt/nfs/homes/chbadad/Documents/webserv/server/cgi-bin/php/form.php", 1);
-	// setenv("SCRIPT_NAME", request->script_name.c_str(), 1);
+	setenv("SCRIPT_FILENAME", request->path_info.c_str(), 1);
 	setenv("SCRIPT_NAME", request->path_info.c_str(), 1);
 	setenv("SERVER_NAME", request->host.c_str(), 1);
 	setenv("CONNECTION", request->connection.c_str(), 1);
@@ -237,10 +235,29 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 							std::string& response_str, const int& socket_fd)
 {
 	std::string file_name = "cgi-bin/cgi_serv_communication_file.txt";
-
+	int fd_file;
+	//creating a temporary file to store the body for get request
+	FILE *file_in = std::tmpfile();
+	//putting the body in the file
+	fputs(request->body.c_str(), file_in);
+	//rewing the offset to the beginning of the file
+	std::rewind(file_in);
+	// get the file descriptor of the file
+	fd_file = fileno(file_in);
+	// redirecting fd_file to STDIN
 	//fork
+	char *args[3];
+	extern char **environ;
+	std::string php = "/usr/bin/php-cgi";
+	args[0] =  const_cast<char *const>(php.c_str());
+	args[1] = const_cast<char *const>(request->path_info.c_str());
+	args[2] = NULL;
+	set_cgi_env_variables(request);
+
+
 	pid_t pid= fork();
 
+	std::cout << request->body.c_str() << std::endl;
 	if (pid < 0)
 	{
 		std::cout << "Failed to create a new process\n";
@@ -248,27 +265,7 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 	}
 	else if (pid == 0)
 	{
-		int fd_file;
-		//creating a temporary file to store the body for get request
-		FILE *file_in = std::tmpfile();
-		//putting the body in the file
-		fputs(request->body.c_str(), file_in);
-		//rewing the offset to the beginning of the file
-		std::rewind(file_in);
-		// get the file descriptor of the file
-		fd_file = fileno(file_in);
-		// redirecting fd_file to STDIN
 		dup2(fd_file, STDIN_FILENO);
-		char *args[3];
-		std::string php = "/usr/bin/php-cgi";
-		std::string cgi_path = "/mnt/nfs/homes/chbadad/Documents/webserv/server/cgi-bin/php/form.php";
-		args[0] =  const_cast<char *const>(php.c_str());
-		// args[1] = const_cast<char *const>(request->path_info.c_str());
-		args[1] = const_cast<char *const>(cgi_path.c_str());
-
-		args[2] = NULL;
-		set_cgi_env_variables(request);
-		extern char **environ;
 		execve(*args, args + 1, environ);
 		perror("execve failed\n");
 		exit(0);
