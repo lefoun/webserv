@@ -10,7 +10,7 @@
 #include <stack>
 #include <dirent.h>
 #include "helper_functions.hpp"
-#include "Server.hpp"
+#include "class_Server.hpp"
 #include "webserver.hpp"
 
 enum DIRECTIVES {
@@ -31,6 +31,7 @@ enum DIRECTIVES {
 
 const std::vector<std::string> init_directives();
 void	init_host_ip_lookup(std::map<std::string, std::string>& host_ip_lookup);
+
 template<typename T>
 bool is_duplicate (std::vector<T> tab1, std::vector<T> tab2)
 {

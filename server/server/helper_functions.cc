@@ -141,49 +141,34 @@ int remove_dir(const char* dir_path)
     return nftw(dir_path, remove_files_and_dir, 64, FTW_DEPTH);
 }
 
-std::string get_body_auto_index(std::string full_path, std::string dir_path)
+char	get_char_from_hex(const std::string& str, const size_t& index, const size_t& str_size)
 {
-	DIR 			*d;
-	struct dirent	*dir;
-	struct stat		file_info;
+	long	ret;
+	char	*endptr;
+	char	hex_str[3];
 
-
-	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n \
-		<meta charset=\"UTF-8\">\n<title>Index</title>\n</head>\n \
-		<body><h1>Index of " + dir_path + "</h1>\n \
-		<hr style=\"border-style: inset;\">\n";
-
-	d = opendir(full_path.c_str());
-	if (d) {
-		while ((dir = readdir(d)) != NULL)
-		{
-			std::string path_to_file = full_path + "/" +  dir->d_name;
-			if (stat(path_to_file.c_str(), &file_info) != - 1)
-			{
-				std::string len = SSTR(file_info.st_size);
-				char *buf = new char[100];
-				std::string name = dir->d_name;
-				if (S_ISDIR(file_info.st_mode))
-				{
-					name = strcat(dir->d_name, "/");
-					len = "_";
-				}
-				body.append("<div style=\"white-space: pre-wrap;\"><div style \
-					=\"display: inline-block; min-width:180px;\"><a href=\"");
-				body.append(name);
-				body.append("\"; > ");
-				body.append(name.c_str());
-				body.append("</a></div>");
-				struct tm *struct_time = gmtime(&file_info.st_mtime);
-				strftime(buf, 200, "%e-%B-%Y %R",struct_time);
-				sprintf(buf, "%-90s%s", buf, len.c_str());
-				body.append (buf);
-				body.append("</div>\n");
-				delete [] buf;
-			}
-
-  		}
+	if (index + 2 <= str_size)
+	{
+		hex_str[0] = str[index + 1];
+		hex_str[1] = str[index + 2];
 	}
-	body.append("</hr></body>\n</html>");
-	return body;
+	else
+	{
+		hex_str[0] = '2';
+		hex_str[1] = '5';
+	}
+	hex_str[2] = '\0';
+	ret = strtol(hex_str, &endptr, 16);
+	if (ret < 128)
+		return ret;
+	return -1;
+}
+
+void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
+{
+	char tmp;
+
+	ss >> tmp;
+	if (tmp != delimiter)
+		throw std::invalid_argument("Unxpected token");
 }

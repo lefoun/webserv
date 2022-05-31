@@ -68,3 +68,6 @@ void		parse_request_header(std::string& header, request_t* request,
 									host_ip_lookup, const char* lookup[REQUEST_KEYS_SIZE]);
 void		parse_request_body(std::string& client_req, request_t* request);
 request_t*	get_parsed_request(const std::string& header);
+void		print_request_content(const request_t& request);
+void clear_request(request_t & request);
+void	init_request_parsing_lookup_tab(const char *lookup[REQUEST_KEYS_SIZE]);

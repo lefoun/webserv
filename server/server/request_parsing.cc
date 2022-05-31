@@ -44,28 +44,6 @@ static void	set_ip_port(request_t* request, const std::string& host_port,
 	request->ip = ip_to_number(ip.c_str());
 }
 
-char	get_char_from_hex(const std::string& str, const size_t& index, const size_t& str_size)
-{
-	long	ret;
-	char	*endptr;
-	char	hex_str[3];
-
-	if (index + 2 <= str_size)
-	{
-		hex_str[0] = str[index + 1];
-		hex_str[1] = str[index + 2];
-	}
-	else
-	{
-		hex_str[0] = '2';
-		hex_str[1] = '5';
-	}
-	hex_str[2] = '\0';
-	ret = strtol(hex_str, &endptr, 16);
-	if (ret < 128)
-		return ret;
-	return -1;
-}
 
 std::string replace_percent_encoding(const std::string& str,
 										const std::string::size_type max_pos)
@@ -95,8 +73,8 @@ static void	parse_target_arguments(request_t* request)
 	std::string::size_type search_end = pos;
 	if (search_end == std::string::npos)
 		search_end = request->target.size();
-//	if (std::find(request->target.begin(), request->target.begin() + search_end, '%') != request->target.begin() + search_end)
-//		request->target = replace_percent_encoding(request->target, search_end);
+	if (std::find(request->target.begin(), request->target.begin() + search_end, '%') != request->target.begin() + search_end)
+		request->target = replace_percent_encoding(request->target, search_end);
 	if ((request->method == "GET" || request->method == "DELETE") && pos == std::string::npos)
 		return ;
 	size_t	path_info_pos = request->target.find("/cgi-bin/");
@@ -117,15 +95,6 @@ static void	parse_target_arguments(request_t* request)
 	request->script_name = request->path_info;
 	std::string tmp = request->target.substr(0, pos);
 	request->target = tmp;
-}
-
-static void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
-{
-	char tmp;
-
-	ss >> tmp;
-	if (tmp != delimiter)
-		throw std::invalid_argument("Unxpected token");
 }
 
 void	parse_request_header(std::string& header, request_t* request,
@@ -309,4 +278,42 @@ void		parse_request_body(std::string& client_req, request_t* request)
 	}
 	if (request->transfer_encoding != "chunked")
 		client_req.clear();
+}
+
+void clear_request(request_t & request)
+{
+	request.content_type.clear();
+	request.is_content_length_set = false;
+	request.path_info.clear();
+	request.query_string.clear();
+	request.remote_addr.clear();
+	request.remote_host.clear();
+	request.method.clear();
+	request.script_path.clear();
+	request.script_name.clear();
+	request.target.clear();
+	request.host.clear();
+	request.connection.clear();
+	request.body.clear();
+	request.boundary.clear();
+	request.transfer_encoding.clear();
+	request.ip = 0;
+	request.port = 0;
+}
+
+void	init_request_parsing_lookup_tab(const char *lookup[REQUEST_KEYS_SIZE])
+{
+	lookup[GET] = "GET";
+	lookup[POST] = "POST";
+	lookup[DELETE] = "DELETE";
+	lookup[PROTOCOL] = "HTTP/1.1";
+	lookup[HOST] = "Host:";
+	lookup[COOKIE] = "Cookie: ";
+	lookup[CONNECTION] = "Connection: ";
+	lookup[CONTENT_LENGTH] = "Content-Length: ";
+	lookup[CONTENT_TYPE] = "Content-Type: ";
+	lookup[TRACKING_COOKIE] = "tracking-cookie=";
+	lookup[SESSION_COOKIE] = "session-cookie=";
+	lookup[BOUNDARY] = " boundary=";
+	lookup[TRANSFER_ENCODING] = "Transfer-Encoding: ";
 }

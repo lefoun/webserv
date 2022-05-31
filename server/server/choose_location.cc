@@ -3,14 +3,8 @@
 #include "webserver.hpp"
 #include "response.hpp"
 #include "helper_functions.hpp"
+
 #define DEFAULT_ROOT_PATH "../www"
-
-
-//Changer ca pour le bon return code
-//Comment fait on pour transmettre le file ?
-//Comment fait on pour differencier deux 200 ?? autoindex ok ou file a renvoyer ok
-//Il faut check si les methodes sont autorisees quand il n'y a pas
-//de location (le serveur sans options)
 
 void	fill_response(response_t* response,
 						const int& return_code = 200,

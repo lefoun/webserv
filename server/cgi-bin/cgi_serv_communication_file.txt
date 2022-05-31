@@ -1,7 +1,1 @@
-HTTP/1.1 200 OK
-Content-Type: text/html
-Date: Tue, 31 May 2022 08:25:40 GMT
-Content-Length: 172
-
-
-<!DOCTYPE html><html><p>Thank to have complete the survey. The information about you :</p><p><b>First name:</b> d</p><p><b>Last name:</b> d</p><p><b>Email:</b> d</p></html>
+first_name=sx&field_of_study=sx

@@ -50,4 +50,7 @@ int remove_dir(const char* dir_path);
 
 int remove_files_and_dir(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf);
 
-std::string get_body_auto_index(std::string full_path, std::string dir_path);
+char	get_char_from_hex(const std::string& str, const size_t& index, const size_t& str_size);
+
+void	check_char_in_stream(const char& delimiter, std::istringstream& ss);
+

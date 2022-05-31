@@ -1,5 +1,7 @@
-SRCS = webserv.cc helper_functions.cc parser/config_parser.cc parser/handle_directives.cc parser/parser_utils.cc request_parsing.cc choose_location.cc return_code_pages_40x_5xx.cc
-
+#SRCS = webserv.cc helper_functions.cc parser/config_parser.cc parser/handle_directives.cc parser/parser_utils.cc request_parsing.cc choose_location.cc return_code_pages_40x_5xx.cc
+SRCS = webserv.cc \
+	server/cgi.cc server/make_response.cc server/return_code_pages_40x_5xx.cc server/choose_location.cc server/request_parsing.cc server/sockets.cc server/helper_functions.cc\
+	parser/config_parser.cc parser/handle_directives.cc parser/parser_utils.cc
 GREEN        = \033[1;32m
 RESET		 = \033[0m
 
