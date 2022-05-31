@@ -172,3 +172,25 @@ void	check_char_in_stream(const char& delimiter, std::istringstream& ss)
 	if (tmp != delimiter)
 		throw std::invalid_argument("Unxpected token");
 }
+
+void		print_request_content(const request_t& request)
+{
+	std::cout << "CONTENT_TYPE :" << request.content_type << std::endl;
+	std::cout << "CONTENT_LENGTH:" << SSTR(request.content_length)<< std::endl;
+	std::cout << "HTTP_COOKIE:" << request.permanent_cookie<< std::endl;
+	std::cout << "HTTP_SESSION_COOKIE:" << request.session_cookie<< std::endl;
+	std::cout << "PATH_INFO:" << request.path_info<< std::endl;
+	std::cout << "QUERY_STRING:" << request.query_string<< std::endl;
+	std::cout << "REMOTE_ADDR:" << request.remote_host << std::endl;
+	std::cout << "REMOTE_HOST:" << request.remote_host << std::endl;
+	std::cout << "REQUEST_METHOD:" << request.method << std::endl;
+	std::cout << "SCRIPT_FILENAME:" << request.script_path << std::endl;
+	std::cout << "SCRIPT_NAME:" << request.script_name << std::endl;
+	std::cout << "SERVER_NAME:" << request.host << std::endl;
+	std::cout << "TARGET:" << request.target << std::endl;
+	std::cout << "BOUNDARY:" << request.boundary<< std::endl;
+	std::cout << "BODY:" << request.body << std::endl;
+	std::cout << "CONNECTION:" << request.connection << std::endl;
+	std::cout << "TRANSFER-ENCODING:" << request.transfer_encoding << std::endl;
+	std::cout << "REFERER:" << request.referer << std::endl;
+}

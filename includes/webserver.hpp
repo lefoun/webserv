@@ -36,6 +36,9 @@
 #include "response.hpp"
 #include "class_Socket.hpp"
 #include "sockets.hpp"
+#include "class_Location.hpp"
+#include "config_parser.hpp"
+#include "helper_functions.hpp"
 
 /* for the buffer that reads the clients' message */
 // #define BUFFER_SIZE 30

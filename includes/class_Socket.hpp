@@ -1,6 +1,5 @@
 #pragma once
-
-#include "webserver.hpp"
+#include "helper_functions.hpp"
 
 class Socket
 {

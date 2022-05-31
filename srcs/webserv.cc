@@ -6,122 +6,8 @@
 	* INADDR_ANY = let the os decide
 	* htons converts host to network short and htonl to long.
 	*/
-Server*	get_server_associated_with_request(std::vector<Server>& servers,
-											const request_t *request)
-{
-	const std::map<std::string, std::string>&	host_ip_lookup = *(servers[0].get_host_lookup_map());
-	std::string ip = request->host;
-	std::string host;
-	u_int32_t port = 80;
-	size_t pos = request->host.find(':');
-	if (pos != std::string::npos)
-	{
-		ip = request->host.substr(0, pos);
-		if (pos < request->host.size())
-			port = atoi(request->host.substr(pos + 1, request->host.size() - pos).c_str());
 
-	}
-	if (!is_ip_address(ip))
-	{
-		host = ip;
-		ip = host_ip_lookup.at(ip);
-	}
-	if (ip == "0.0.0.0")
-		ip = "127.0.0.1";
-	Server* associated_serv = NULL;
-	std::vector<Server>::iterator it = servers.begin();
-	while (it != servers.end())
-	{
-		std::cout << "ip=" << it->get_listening_ips().back()  << std::endl;
-		std::vector<Server::ip_port_pair>::iterator it_explicit_ip_port = it->get_ip_port_pairs().begin();
-		while (it->get_ip_port_pairs().size() && it_explicit_ip_port != it->get_ip_port_pairs().end())
-		{
-			if (it_explicit_ip_port->first == ip && it_explicit_ip_port->second == port)
-				return &(*it);
 
-			++it_explicit_ip_port;
-		}
-		std::vector<std::string>::iterator it_listening_ip = it->get_listening_ips().begin();
-		while (it->get_listening_ips().size() && it_listening_ip != it->get_listening_ips().end())
-		{
-			if (*it_listening_ip == ip && port == 8000)
-				return &(*it);
-			++it_listening_ip;
-		}
-		std::vector<Server::ip_port_pair>::iterator it_implicit_ip_port = it->get_implicit_port_ip_pairs().begin();
-		while (it->get_implicit_port_ip_pairs().size() &&  it_implicit_ip_port != it->get_implicit_port_ip_pairs().end())
-		{
-			if (it_implicit_ip_port->first == ip && it_implicit_ip_port->second == port)
-			{
-				if (!associated_serv)
-					associated_serv = &(*it);
-				else if (!host.empty())
-				{
-					std::vector<std::string>::iterator it_server_names = it->get_server_names().begin();
-					while (it_server_names != it->get_server_names().end())
-					{
-						if (*it_server_names == host)
-							return &(*it);
-						++it_server_names;
-					}
-				}
-			}
-			++ it_implicit_ip_port;
-		}
-		it++;
-	}
-	return associated_serv;
-}
-
-bool	is_complete_request(std::string& request, request_t *rqst,
-							const std::map<std::string, std::string>&
-							host_ip_lookup,
-							const char *req_parsing_lookup[REQUEST_KEYS_SIZE])
-{
-	// read_buf(const_cast<char *>(request.c_str()), request.size());
-	if (rqst->method.empty()) /* Request header is not parsed yet */
-	{
-		if (request.find(DOUBLE_CRLF) != std::string::npos)
-		{
-			/* parse_request_body:
-			 * Parses the request and put teh values in the struct rqst and
-			 * trunks the request string to leave only the body */
-			parse_request_header(request, rqst, host_ip_lookup, req_parsing_lookup);
-			parse_request_body(request, rqst);
-		}
-		else
-			return false;
-	}
-	if (rqst->body_parsing_state == NOT_STARTED)
-	{
-		/* we parsed the request header but request_body is not yet parsed*/
-		if (rqst->transfer_encoding == "chunked")
-		{
-
-			std::string::size_type pos = request.find(DOUBLE_CRLF, 57);
-			if (pos != std::string::npos)
-				if (request.find(DOUBLE_CRLF, pos + 4) != std::string::npos)
-				{
-					parse_request_body(request, rqst);
-					return true;
-				}
-			return false;
-		}
-		else /* Request is unchunked */
-		{
-			/*
-			 * Either content_type is multiform data which comes in many steps
-			 * or comes in a single time
-			*/
-			parse_request_body(request, rqst);
-		}
-	} /* Need to add Delete Request */
-	if (rqst->body_parsing_state == INCOMPLETE)
-		parse_request_body(request, rqst);
-	if (rqst->body_parsing_state == COMPLETE)
-		return true;
-	return false;
-}
 
 
 void	launch_server(std::vector<Server>& servers,
@@ -214,8 +100,9 @@ void	launch_server(std::vector<Server>& servers,
 						if (socket_it->get_request().transfer_encoding != "chunked"
 							|| socket_it->get_request().body_parsing_state == COMPLETE)
 						{
-							Server* serv = get_server_associated_with_request(servers, &socket_it->get_request());
-							std::cout << "chosen server = " << serv->get_server_names().back() << std::endl;
+							Server* serv = get_server_associated_with_request(servers,
+									&socket_it->get_request());
+							std::cout << "chosen server = " << serv->get_server_names().back()<< std::endl;
 							if (serv == NULL)
 								std::cout << "NULL" << std::endl;
 							try

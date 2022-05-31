@@ -21,17 +21,16 @@ typedef struct
 
 
 std::string	generate_cookie(const size_t size = 32);
-
 void	send_chunked_response(response_t* response, std::string& response_str,
 								const int& socket_fd);
-
 void	construct_header(response_t* response, request_t* request,
 							std::string& header);
-
 std::string	get_content_type(const std::string& file_extension);
-
 void	send_response(request_t* request, const int& socket_fd,
 						response_t* response);
+void	initialize_html_return_code_page(t_return_codes *return_codes);
+void		set_response(Server & server, request_t* request,
+									response_t* response);
 
 
 void	set_cgi_env_variables(const request_t* request);

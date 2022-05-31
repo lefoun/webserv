@@ -1,5 +1,8 @@
 #pragma once
 
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -16,9 +19,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h> 
+#include "webserver.hpp"
+#include "request_parsing.hpp"
 
-#define SSTR( x ) static_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
+
 
 /* for ip_to_number function*/
 #define INVALID 0
@@ -54,3 +58,4 @@ char	get_char_from_hex(const std::string& str, const size_t& index, const size_t
 
 void	check_char_in_stream(const char& delimiter, std::istringstream& ss);
 
+void		print_request_content(const request_t& request);

@@ -29,7 +29,8 @@ void	fill_response(response_t* response,
 
 }
 
-void	choose_return_code_for_requested_ressource(Server& server, request_t* request, response_t* response)
+void	choose_return_code_for_requested_ressource(Server& server,
+								request_t* request, response_t* response)
 {
 	if (!server.get_allowed_methods().empty())
 	{
@@ -44,7 +45,8 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 		{
 			//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 			std::cout << server.return_codes.err_405 << std::endl;
-			return fill_response(response, 405, "Method Not Allowed" ,COMPLETE, false, "", "", server.return_codes.err_405);
+			return fill_response(response, 405, "Method Not Allowed" ,COMPLETE, false,
+					"", "", server.return_codes.err_405);
 		}
 	}
 	if (request->method == "GET" || request->method == "POST")
@@ -55,7 +57,8 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return fill_response(response, 302, "Found" ,COMPLETE, false, request->target.append("/"));
+				return fill_response(response, 302, "Found" ,COMPLETE, false,
+					request->target.append("/"));
 			else
 			{
 				std::string old_path = full_path;
@@ -63,17 +66,21 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 				if (access(index_file.c_str(), F_OK) == 0 && access(index_file.c_str(), R_OK) == 0)
 					return fill_response(response, 200, "OK",NOT_STARTED, false, "", index_file);
 				else if (server.get_auto_index() == true)
-					return fill_response(response, 200, "OK", COMPLETE, true, "", "", get_body_auto_index(old_path, request->target));
+					return fill_response(response, 200, "OK", COMPLETE, true,
+							"", "", get_body_auto_index(old_path, request->target));
 				else
-					return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
+					return fill_response(response, 403, "Forbidden",COMPLETE, false,
+							"", "", server.return_codes.err_403);
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
 			return fill_response(response, 200, "OK",NOT_STARTED, false, full_path);
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-			return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
+			return fill_response(response, 403, "Forbidden",COMPLETE, false,
+					"", "", server.return_codes.err_403);
 		else
-			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false,
+					"", "", server.return_codes.err_404);
 	}
 	if (request->method == "DELETE")
 	{
@@ -83,21 +90,28 @@ void	choose_return_code_for_requested_ressource(Server& server, request_t* reque
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return fill_response(response, 409, "Conflict",COMPLETE, false, "", "", server.return_codes.err_409);
+				return fill_response(response, 409, "Conflict",COMPLETE, false,
+						"", "", server.return_codes.err_409);
 			if (remove_dir(full_path.c_str()) == -1)
-				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
-			return fill_response(response, 200, "Ok", COMPLETE, false, "", "", server.return_codes.ok_200);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false,
+						"", "", server.return_codes.err_403);
+			return fill_response(response, 200, "Ok", COMPLETE, false,
+					"", "", server.return_codes.ok_200);
 		}
 		else if (access(full_path.c_str(), F_OK) == 0)
 		{
 			if (remove(full_path.c_str()) != 0)
-				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
-			return fill_response(response, 200, "Ok", COMPLETE, false, "", "", server.return_codes.ok_200);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false,
+						"", "", server.return_codes.err_403);
+			return fill_response(response, 200, "Ok", COMPLETE, false,
+					"", "", server.return_codes.ok_200);
 		}
 		else
-			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false,
+					"", "", server.return_codes.err_404);
 	}
-	fill_response(response, 501, "Not Implemented",COMPLETE, false, "", "", server.return_codes.err_501);
+	fill_response(response, 501, "Not Implemented",COMPLETE, false,
+			"", "", server.return_codes.err_501);
 }
 
 void	set_location_options(Server & server, request_t* request, Location & location, response_t* response)
@@ -120,7 +134,8 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		{
 			//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
 			std::cout << location.return_codes.err_405 << std::endl;
-			return fill_response(response, 405, "Method Not Allowed",COMPLETE, false, "", "", server.return_codes.err_405);
+			return fill_response(response, 405, "Method Not Allowed",COMPLETE, false,
+					"", "", server.return_codes.err_405);
 		}
 	}
 	if (request->method.compare("GET") == 0 || request->method.compare("POST") == 0)
@@ -145,7 +160,8 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return fill_response(response, 302, "Found",COMPLETE, false, request->target.append("/"));
+				return fill_response(response, 302, "Found",COMPLETE, false,
+						request->target.append("/"));
 			else
 			{
 				std::string old_path = full_path;
@@ -153,17 +169,21 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 				if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
 					return fill_response(response, 200, "OK",NOT_STARTED, false, "", full_path);
 				else if (autoindex == true)
-					return fill_response(response, 200, "OK", COMPLETE, true, "", "", get_body_auto_index(old_path, request->target));
+					return fill_response(response, 200, "OK", COMPLETE, true,
+							"", "", get_body_auto_index(old_path, request->target));
 				else
-					return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
+					return fill_response(response, 403, "Forbidden",COMPLETE, false,
+							"", "", server.return_codes.err_403);
 			}
 		}
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) == 0)
 			return fill_response(response, 200, "OK",NOT_STARTED, false, "", full_path);
 		else if (access(full_path.c_str(), F_OK) == 0 && access(full_path.c_str(), R_OK) != 0)
-				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false,
+						"", "", server.return_codes.err_403);
 		else
-			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false,
+					"", "", server.return_codes.err_404);
 	}
 	if (request->method.compare("DELETE") == 0)
 	{
@@ -175,21 +195,28 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 		{
 			closedir(dir);
 			if (*(--full_path.end()) != '/')
-				return fill_response(response, 409, "Conflict",COMPLETE, false, "", "", server.return_codes.err_409);
+				return fill_response(response, 409, "Conflict",COMPLETE, false,
+						"", "", server.return_codes.err_409);
 			if (remove_dir(full_path.c_str()) == -1)
-				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
-			return fill_response(response, 200, "Ok", COMPLETE, false, "", "", server.return_codes.ok_200);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false,
+						"", "", server.return_codes.err_403);
+			return fill_response(response, 200, "Ok", COMPLETE, false,
+					"", "", server.return_codes.ok_200);
 		}
 		else if (access(full_path.c_str(), F_OK) == 0)
 		{
 			if (remove(full_path.c_str()) != 0)
-				return fill_response(response, 403, "Forbidden",COMPLETE, false, "", "", server.return_codes.err_403);
-			return fill_response(response, 200, "Ok", COMPLETE, false, "", "", server.return_codes.ok_200);
+				return fill_response(response, 403, "Forbidden",COMPLETE, false,
+						"", "", server.return_codes.err_403);
+			return fill_response(response, 200, "Ok", COMPLETE, false,
+					"", "", server.return_codes.ok_200);
 		}
 		else
-			return fill_response(response, 404, "Not Found",COMPLETE, false, "", "", server.return_codes.err_404);
+			return fill_response(response, 404, "Not Found",COMPLETE, false,
+					"", "", server.return_codes.err_404);
 	}
-	fill_response(response, 501, "Not Implemented",COMPLETE, false, "", "", server.return_codes.err_501);
+	fill_response(response, 501, "Not Implemented",COMPLETE, false,
+			"", "", server.return_codes.err_501);
 }
 
 /**

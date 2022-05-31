@@ -2,29 +2,6 @@
 #include "response.hpp"
 #include "webserver.hpp"
 
-
-void		print_request_content(const request_t& request)
-{
-	std::cout << "CONTENT_TYPE :" << request.content_type << std::endl;
-	std::cout << "CONTENT_LENGTH:" << SSTR(request.content_length)<< std::endl;
-	std::cout << "HTTP_COOKIE:" << request.permanent_cookie<< std::endl;
-	std::cout << "HTTP_SESSION_COOKIE:" << request.session_cookie<< std::endl;
-	std::cout << "PATH_INFO:" << request.path_info<< std::endl;
-	std::cout << "QUERY_STRING:" << request.query_string<< std::endl;
-	std::cout << "REMOTE_ADDR:" << request.remote_host << std::endl;
-	std::cout << "REMOTE_HOST:" << request.remote_host << std::endl;
-	std::cout << "REQUEST_METHOD:" << request.method << std::endl;
-	std::cout << "SCRIPT_FILENAME:" << request.script_path << std::endl;
-	std::cout << "SCRIPT_NAME:" << request.script_name << std::endl;
-	std::cout << "SERVER_NAME:" << request.host << std::endl;
-	std::cout << "TARGET:" << request.target << std::endl;
-	std::cout << "BOUNDARY:" << request.boundary<< std::endl;
-	std::cout << "BODY:" << request.body << std::endl;
-	std::cout << "CONNECTION:" << request.connection << std::endl;
-	std::cout << "TRANSFER-ENCODING:" << request.transfer_encoding << std::endl;
-	std::cout << "REFERER:" << request.referer << std::endl;
-}
-
 static void	set_ip_port(request_t* request, const std::string& host_port,
 						const std::map<std::string, std::string>& host_ip_lookup)
 {
@@ -73,9 +50,11 @@ static void	parse_target_arguments(request_t* request)
 	std::string::size_type search_end = pos;
 	if (search_end == std::string::npos)
 		search_end = request->target.size();
-	if (std::find(request->target.begin(), request->target.begin() + search_end, '%') != request->target.begin() + search_end)
+	if (std::find(request->target.begin(), request->target.begin() +
+			search_end, '%') != request->target.begin() + search_end)
 		request->target = replace_percent_encoding(request->target, search_end);
-	if ((request->method == "GET" || request->method == "DELETE") && pos == std::string::npos)
+	if ((request->method == "GET" || request->method == "DELETE")
+			&& pos == std::string::npos)
 		return ;
 	size_t	path_info_pos = request->target.find("/cgi-bin/");
 	if (path_info_pos == std::string::npos)
@@ -316,4 +295,129 @@ void	init_request_parsing_lookup_tab(const char *lookup[REQUEST_KEYS_SIZE])
 	lookup[SESSION_COOKIE] = "session-cookie=";
 	lookup[BOUNDARY] = " boundary=";
 	lookup[TRANSFER_ENCODING] = "Transfer-Encoding: ";
+}
+
+bool	is_complete_request(std::string& request, request_t *rqst,
+							const std::map<std::string, std::string>&
+							host_ip_lookup,
+							const char *req_parsing_lookup[REQUEST_KEYS_SIZE])
+{
+	// read_buf(const_cast<char *>(request.c_str()), request.size());
+	if (rqst->method.empty()) /* Request header is not parsed yet */
+	{
+		if (request.find(DOUBLE_CRLF) != std::string::npos)
+		{
+			/* parse_request_body:
+			 * Parses the request and put teh values in the struct rqst and
+			 * trunks the request string to leave only the body */
+			parse_request_header(request, rqst, host_ip_lookup, req_parsing_lookup);
+			parse_request_body(request, rqst);
+		}
+		else
+			return false;
+	}
+	if (rqst->body_parsing_state == NOT_STARTED)
+	{
+		/* we parsed the request header but request_body is not yet parsed*/
+		if (rqst->transfer_encoding == "chunked")
+		{
+
+			std::string::size_type pos = request.find(DOUBLE_CRLF, 57);
+			if (pos != std::string::npos)
+				if (request.find(DOUBLE_CRLF, pos + 4) != std::string::npos)
+				{
+					parse_request_body(request, rqst);
+					return true;
+				}
+			return false;
+		}
+		else /* Request is unchunked */
+		{
+			/*
+			 * Either content_type is multiform data which comes in many steps
+			 * or comes in a single time
+			*/
+			parse_request_body(request, rqst);
+		}
+	} /* Need to add Delete Request */
+	if (rqst->body_parsing_state == INCOMPLETE)
+		parse_request_body(request, rqst);
+	if (rqst->body_parsing_state == COMPLETE)
+		return true;
+	return false;
+}
+
+Server*	get_server_associated_with_request(std::vector<Server>& servers,
+											const request_t *request)
+{
+	const std::map<std::string, std::string>&	host_ip_lookup =
+			*(servers[0].get_host_lookup_map());
+	std::string ip = request->host;
+	std::string host;
+	u_int32_t port = 80;
+	size_t pos = request->host.find(':');
+	if (pos != std::string::npos)
+	{
+		ip = request->host.substr(0, pos);
+		if (pos < request->host.size())
+			port = atoi(request->host.substr(pos + 1, request->host.size() - pos).c_str());
+
+	}
+	if (!is_ip_address(ip))
+	{
+		host = ip;
+		ip = host_ip_lookup.at(ip);
+	}
+	if (ip == "0.0.0.0")
+		ip = "127.0.0.1";
+	Server* associated_serv = NULL;
+	std::vector<Server>::iterator it = servers.begin();
+	while (it != servers.end())
+	{
+		std::cout << "ip=" << it->get_listening_ips().back()  << std::endl;
+		std::vector<Server::ip_port_pair>::iterator it_explicit_ip_port =
+				it->get_ip_port_pairs().begin();
+		while (it->get_ip_port_pairs().size() && it_explicit_ip_port
+				!= it->get_ip_port_pairs().end())
+		{
+			if (it_explicit_ip_port->first == ip && it_explicit_ip_port->second == port)
+				return &(*it);
+
+			++it_explicit_ip_port;
+		}
+		std::vector<std::string>::iterator it_listening_ip =
+				it->get_listening_ips().begin();
+		while (it->get_listening_ips().size() && it_listening_ip !=
+				it->get_listening_ips().end())
+		{
+			if (*it_listening_ip == ip && port == 8000)
+				return &(*it);
+			++it_listening_ip;
+		}
+		std::vector<Server::ip_port_pair>::iterator it_implicit_ip_port
+				= it->get_implicit_port_ip_pairs().begin();
+		while (it->get_implicit_port_ip_pairs().size() &&  it_implicit_ip_port
+				!= it->get_implicit_port_ip_pairs().end())
+		{
+			if (it_implicit_ip_port->first == ip && it_implicit_ip_port->second == port)
+			{
+				if (!associated_serv)
+					associated_serv = &(*it);
+				else if (!host.empty())
+				{
+					std::vector<std::string>::iterator it_server_names
+							= it->get_server_names().begin();
+					while (it_server_names != it->get_server_names().end())
+					{
+						if (*it_server_names == host)
+							return &(*it);
+						++it_server_names;
+					}
+				}
+			}
+			++ it_implicit_ip_port;
+		}
+		it++;
+	}
+	return associated_serv;
 }

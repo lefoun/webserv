@@ -137,14 +137,15 @@ void	enriche_configuration(std::vector<Server>& servers,
 		{
 			try
 			{
-				DIR *dir = opendir("./www"); // peut-etre trouver une meilleure facon de trouver le dossier www plutot que de faire un truc de schlag avec le chemin relatif
+				DIR *dir = opendir("./www");
 				if (dir)
 				{
 					it->set_root_path("./www");
 					closedir(dir);
 				}
 				else
-					throw std::invalid_argument("You probably erased the default root path damn stupid.");
+					throw std::invalid_argument("You probably erased the\
+						default root path damn stupid.");
 			}
 			catch (std::exception& e)
 			{
@@ -203,7 +204,7 @@ bool	parse_config_file(const std::string& file_name,
 			{
 				std::cout << "Failed to parse config file\n"
 						<< e.what() << "\n";
-				return false;
+				exit (1);
 			}
 		}
 		++token;

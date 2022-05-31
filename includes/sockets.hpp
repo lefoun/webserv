@@ -1,3 +1,5 @@
+#pragma once
+
 #include "webserver.hpp"
 
 /* 2 typedefs to make code more readable by reducing the length of it */

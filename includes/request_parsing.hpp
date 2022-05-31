@@ -5,10 +5,10 @@
 #include <limits>
 #include <sys/types.h>
 #include <sstream>
-#include "helper_functions.hpp"
 #include "colors.hpp"
 #include <netinet/in.h>
 #include <map>
+#include "class_Server.hpp"
 
 #define NOT_STARTED 0
 #define INCOMPLETE 1
@@ -66,8 +66,19 @@ typedef struct request
 void		parse_request_header(std::string& header, request_t* request,
 									const std::map<std::string, std::string>&
 									host_ip_lookup, const char* lookup[REQUEST_KEYS_SIZE]);
+
 void		parse_request_body(std::string& client_req, request_t* request);
 request_t*	get_parsed_request(const std::string& header);
-void		print_request_content(const request_t& request);
+
 void clear_request(request_t & request);
+
 void	init_request_parsing_lookup_tab(const char *lookup[REQUEST_KEYS_SIZE]);
+
+bool	is_complete_request(std::string& request, request_t *rqst,
+							const std::map<std::string, std::string>&
+							host_ip_lookup,
+							const char *req_parsing_lookup[REQUEST_KEYS_SIZE]);
+
+Server*	get_server_associated_with_request(std::vector<Server>& servers,
+											const request_t *request);
+
