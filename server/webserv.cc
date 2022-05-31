@@ -31,7 +31,7 @@ void	set_cgi_env_variables(const request_t* request)
 	std::cout << "CONTENT_TYPE: " << request->content_type << std::endl;
 	std::cout << request->body << std::endl;
 	setenv("REDIRECT_STATUS", "200", 1);
-	if (request->is_content_length_set)
+	if (request->method == "POST")
 		setenv("CONTENT_LENGTH", SSTR(request->content_length).c_str(), 1);
 	else
 		setenv("CONTENT_LENGTH", "", 1);
@@ -249,7 +249,7 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 {
 	std::string file_name = "cgi-bin/cgi_serv_communication_file.txt";
 	FILE *body = std::tmpfile();
-	std::string	php = "php-cgi";
+	std::string	php = "/usr/bin/php-cgi";
 	fputs(request->body.c_str(), body);
 	int fd_restore_in = dup(STDIN_FILENO);
 	std::rewind(body);
@@ -265,10 +265,9 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 	}
 	else if (pid == 0)
 	{
-		char *args[3];
+		char *args[2];
 		args[0] =  const_cast<char *const>(php.c_str());
-		args[1] = const_cast<char *const>(request->path_info.c_str());
-		args[2] = NULL;
+		args[1] = NULL;
 		set_cgi_env_variables(request);
 		extern char **environ;
 		if (dup2(fd_body, STDIN_FILENO) == -1)
