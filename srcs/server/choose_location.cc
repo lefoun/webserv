@@ -37,17 +37,12 @@ void	choose_return_code_for_requested_ressource(Server& server,
 		std::vector<std::string>::iterator it = server.get_allowed_methods().begin();
 		for (; it != server.get_allowed_methods().end(); ++it)
 		{
-			std::cout << "allowed method : " << *it << std::endl;
 			if (request->method.compare(*it) == 0)
 				break;
 		}
 		if  (it == server.get_allowed_methods().end())
-		{
-			//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
-			std::cout << server.return_codes.err_405 << std::endl;
 			return fill_response(response, 405, "Method Not Allowed" ,COMPLETE, false,
 					"", "", server.return_codes.err_405);
-		}
 	}
 	if (request->method == "GET" || request->method == "POST")
 	{
@@ -119,28 +114,20 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 	(void)response;
 	bool autoindex = location.get_auto_index();
 
-	std::cout << location.get_path() << std::endl;
-
 	if (!location.get_allowed_methods().empty())
 	{
 		std::vector<std::string>::iterator it = location.get_allowed_methods().begin();
 		for (; it != location.get_allowed_methods().end(); ++it)
 		{
-			std::cout << "allowed method : " << *it << std::endl;
 			if (request->method.compare(*it) == 0)
 				break;
 		}
 		if  (it == location.get_allowed_methods().end())
-		{
-			//PENSER A AJOUTER UN THROW QUAND E PROJET SERA PLUS PROPRE
-			std::cout << location.return_codes.err_405 << std::endl;
 			return fill_response(response, 405, "Method Not Allowed",COMPLETE, false,
 					"", "", server.return_codes.err_405);
-		}
 	}
 	if (request->method.compare("GET") == 0 || request->method.compare("POST") == 0)
 	{
-		std::cout << "GET request->inside set_location_options" << std::endl;
 		if (!location.get_redirections().empty())
 		{
 			std::string root = "/";
@@ -151,7 +138,6 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 				root = "";
 			std::string new_uri = request->target.erase(0, location.get_path().length());
 			std::string new_url = root + location.get_redirections() + new_uri;
-			std::cout << "302 REDIRECTION (new URL = " << new_url << " )" << std::endl;
 			return fill_response(response, 302, "Found",COMPLETE, false, new_url);
 		}
 		std::string full_path = location.get_root_path() + request->target;
@@ -187,10 +173,8 @@ void	set_location_options(Server & server, request_t* request, Location & locati
 	}
 	if (request->method.compare("DELETE") == 0)
 	{
-		std::cout << "DELETE request->inside set_location_options" << std::endl;
 		std::string full_path = location.get_root_path() + request->target;
 		DIR *dir = opendir(full_path.c_str());
-		std::cout << "FULLL path " << full_path << std::endl;
 		if (dir != NULL)
 		{
 			closedir(dir);
@@ -272,8 +256,4 @@ void	set_response(Server& server, request_t* request, response_t* response)
 		choose_return_code_for_requested_ressource(server, request, response);
 	else
 		set_location_options(server, request, *location, response);
-
-	/* call function to create response(return_code, location, server) */
-	if (location)
-		std::cout << "The choosen location is : " << location->get_path() << std::endl;
 }

@@ -55,8 +55,6 @@ void	send_chunked_response(response_t* response, std::string& response_str,
 		else
 			rsp_str.append("\r\n");
 
-		// std::cout << "response to send:\n" << rsp_str << std::endl;
-
 		if (send(socket_fd, rsp_str.c_str(), rsp_str.size(), 0) < 0)
 			throw std::runtime_error("Failed to send data to socket " +
 										SSTR(socket_fd));
@@ -108,7 +106,6 @@ void	construct_header(response_t* response, request_t* request,
 		header.append("Set-Cookie: tracking-cookie=" + generate_cookie()
 						+ "; Expires=" + get_current_time(1));
 		header.append(CRLF);
-		std::cout << "Appending time\n\n";
 	}
 	header.append(CRLF);
 }
@@ -162,7 +159,7 @@ void	send_response(request_t* request, const int& socket_fd,
 		{
 			if (file_extension == "html" && !request->session_cookie.empty())
 			{
-				std::cout << "Found Session Cookies: Calling CGI " << std::endl;
+				std::cout << GREEN "Found Session Cookies: Calling CGI \n" RESET;
 				get_cgi_response(request, response, response_str, socket_fd);
 				return ;
 				/* If the file is not download.html serve CGI output file */

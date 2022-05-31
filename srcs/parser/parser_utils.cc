@@ -100,10 +100,7 @@ void	get_server(std::istream_iterator<std::string>& token,
 		if (*(token->begin()) == '}')
 		{
 			if (context.top() == "server")
-			{
-				std::cout << "Exiting Server block\n";
 				return ;
-			}
 			context.pop(); /*out of the location block */
 			++token;
 			continue ;
@@ -153,7 +150,6 @@ void	get_server(std::istream_iterator<std::string>& token,
 
 void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 {
-	int i = 1;
 	for (std::vector<Server>::iterator serv_it = servers.begin();
 			serv_it != servers.end(); ++serv_it)
 	{
@@ -172,14 +168,5 @@ void	set_implicit_ip_port_pairs(std::vector<Server>& servers)
 
 			}
 		}
-		/* printing implicit ip port */
-		for (std::vector<Server::ip_port_pair>::iterator imp_it =
-				serv_it->get_implicit_port_ip_pairs().begin(); imp_it !=
-				serv_it->get_implicit_port_ip_pairs().end(); ++imp_it)
-		{
-			std::cout << "IP: " << imp_it->first << " Port: " << imp_it->second << "\n";
-		}
-
-		std::cout << "Server number " << i++ << std::endl;
 	}
 }

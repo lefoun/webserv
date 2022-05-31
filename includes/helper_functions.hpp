@@ -45,7 +45,7 @@ bool	        is_ip_address(const std::string &ip_str);
 in_addr_t		ip_to_number(const char * ip);
 
 std::string		ip_to_str(in_addr_t ip);
-/* Reads size from buffer or till buffer[index] == '\0' if no size was given */
+
 void			read_buf(char buffer[], size_t size = 0);
 
 std::string		get_current_time(int years);

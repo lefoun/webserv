@@ -28,8 +28,8 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 		{
 			if (!is_socket_already_open(sockets, *it_port, INADDR_ANY))
 			{
-				std::cout << "Opening Socket PORT: " << *it_port
-							<< " IP: ALL\n";
+				std::cout << GREEN "Opening Socket PORT: " << *it_port
+							<< " IP: ALL\n" RESET;
 				sockets.push_back(SockListen(*it_port, INADDR_ANY));
 			}
 		}
@@ -46,8 +46,8 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 			if (!is_socket_already_open(sockets, 8000,
 				ip_to_number(it_ip->c_str())))
 			{
-				std::cout << "Opening Socket PORT: 8000"
-							<< " IP: " << *it_ip << "\n";
+				std::cout << GREEN "Opening Socket PORT: 8000"
+							<< " IP: " << *it_ip << "\n" RESET;
 				sockets.push_back(
 					SockListen(8000, ip_to_number(it_ip->c_str())));
 			}
@@ -66,9 +66,9 @@ void	open_listening_sockets(std::vector<SockListen>& sockets,
 				&& !is_socket_already_open(sockets, it_pair->second,
 				ip_to_number(it_pair->first.c_str())))
 			{
-				std::cout << "Opening Socket pair PORT: "
+				std::cout << GREEN "Opening Socket pair PORT: "
 							<< it_pair->second
-							<< " IP: " << it_pair->first << "\n";
+							<< " IP: " << it_pair->first << "\n" RESET;
 				sockets.push_back(SockListen(it_pair->second,
 									ip_to_number(it_pair->first.c_str())));
 			}

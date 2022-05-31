@@ -3,40 +3,27 @@
 void	set_cgi_env_variables(const request_t* request)
 {
 	setenv("CONTENT_TYPE", request->content_type.c_str(), 1);
-	std::cout << std::endl << GREEN;
-	std::cout << "CONTENT_TYPE: " << request->content_type << std::endl;
-	std::cout << request->body << std::endl;
 	setenv("REDIRECT_STATUS", "200", 1);
 	if (request->method == "POST")
 		setenv("CONTENT_LENGTH", SSTR(request->content_length).c_str(), 1);
 	else
 		setenv("CONTENT_LENGTH", "", 1);
-	std::cout << "CONTENT_LENGTH: " << request->content_length << std::endl;
 	setenv("HTTP_COOKIE", request->permanent_cookie.c_str(), 1);
-	std::cout << "HTTP_COOKIE: " << request->permanent_cookie << std::endl;
 	setenv("SESSION_COOKIE", request->session_cookie.c_str(), 1);
-	std::cout << "SESSION_COOKIE: " << request->session_cookie << std::endl;
 	setenv("PATH_INFO", request->path_info.c_str(), 1);
-	std::cout << "PATH_INFO: " << request->path_info << std::endl;
 	setenv("PATH_TRANSLATED", request->path_info.c_str(), 1);
-	std::cout << "PATH_TRANSLATED: " << request->path_info << std::endl;
 	setenv("QUERY_STRING", request->query_string.c_str(), 1);
-	std::cout << "QUERY_STRING: " << request->query_string << std::endl;
 	setenv("REMOTE_ADDR", request->remote_addr.c_str(), 1);
 	setenv("REMOTE_HOST", request->remote_host.c_str(), 1);
 	setenv("REQUEST_METHOD", request->method.c_str(), 1);
-	std::cout << "REQUEST_METHOD: " << request->method << std::endl;
 	setenv("REQUEST_", request->path_info.c_str(), 1);
 	setenv("SCRIPT_FILENAME", request->path_info.c_str(), 1);
-	std::cout << "SCRIPT_FILENAME: " << request->path_info << std::endl;
 	setenv("SCRIPT_NAME", request->path_info.c_str(), 1);
-	std::cout << "SCRIPT_NAME: " << request->path_info << std::endl;
 	setenv("SERVER_NAME", request->host.c_str(), 1);
 	setenv("CONNECTION", request->connection.c_str(), 1);
 	setenv("SERVER_SOFTWARE", "WebServ", 1);
 	setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
 	setenv("BUFFER_SIZE", SSTR(BUFFER_SIZE).c_str(), 1);
-	std::cout << RESET << std::endl;
 }
 
 void	get_cgi_response(const request_t* request, response_t* response,
@@ -67,15 +54,11 @@ void	get_cgi_response(const request_t* request, response_t* response,
 			else
 			{
 				cgi_communication_file << request->body;
-				std::cout << "This is request body: " << request->body << std::endl;
 				cgi_communication_file.close();
 			}
 		}
 		set_cgi_env_variables(request);
-		std::cout << "Executed process CGI TEST\n";
-		std::cout << request->path_info << std::endl;
 		execve(*args, args + 1, environ);
-		perror("execve failed\n");
 		exit(0);
 	}
 	else /* parent */
@@ -116,10 +99,7 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 	if (body == NULL)
 		throw std::runtime_error("Failed to create a temporary file");
 	if (pid < 0)
-	{
-		std::cout << "Failed to create a new process\n";
-		return ;
-	}
+		throw std::runtime_error("Failed to create a new process");
 	else if (pid == 0)
 	{
 		char *args[2];
@@ -128,19 +108,16 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 		set_cgi_env_variables(request);
 		extern char **environ;
 		if (dup2(fd_body, STDIN_FILENO) == -1)
-			std::cout << RED << "Failed to redirect STDIN\n" << RESET;
+			throw (std::runtime_error("System error : Failed to redirect STDIN\n"));
 		close(fd_body);
 		close(fd_restore_in);
 		fclose(body);
 		execve(*args, args + 1, environ);
-		perror("execve failed\n");
 		exit(0);
 	}
 	else
 	{
-		std::cout << "before wait\n";
 		wait(NULL);
-		std::cout << "After wait\n";
 		std::ifstream cgi_output_file(file_name.c_str());
 		if (cgi_output_file.fail())
 			throw std::runtime_error("Failed to send a response from CGI");

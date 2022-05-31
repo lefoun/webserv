@@ -42,14 +42,12 @@ class SockComm : public Socket
 		SockComm(const SockComm& copy)
 		{
 			*this = copy;
-			std::cout << RED "Callign copy constructor\n" RESET;
 			_parsed_request.body_parsing_state = NOT_STARTED;
 			_parsed_request.is_content_length_set = false;
 		}
 
 		SockComm&	operator=(const SockComm& cop)
 		{
-			std::cout << RED "Calling assignment operator\n" RESET;
 			this->_port = cop.get_port();
 			this->_ip = cop.get_ip();
 			this->_socket_fd = cop.get_socket_fd();
@@ -62,9 +60,7 @@ class SockComm : public Socket
 
 		~SockComm()
 		{
-			std::cout << RED "Calling Sock Com destructor\n" RESET<< std::endl;
-			// std::cout << "closing socket comm " << get_socket_fd() << std::endl;
-			// close(_socket_fd);
+				;
 		}
 
 		Server*			get_server() { return _server; }
@@ -98,7 +94,6 @@ class SockListen : public Socket
 				throw std::runtime_error(
 					"Failed to convert IP address to in_addr_t");
 			_init_socket(port, ip_int);
-			std::cout << "Socket " << _socket_fd << "created successfuly\n";
 		}
 		SockListen(const uint16_t port = 80, const in_addr_t ip = INADDR_ANY) : Socket()
 		{
@@ -107,13 +102,11 @@ class SockListen : public Socket
 
 		SockListen(const SockListen& copy)
 		{
-			// std::cout << RED "Calling copy operator of SockListen\n" RESET;
 			*this = copy;
 		}
 
 		SockListen& operator=(const SockListen& copy)
 		{
-			// std::cout << RED "Calling assignment operator of SockListen\n" RESET;
 			this->_port = copy.get_port();
 			this->_ip = copy.get_ip();
 			this->_socket_fd = copy.get_socket_fd();
@@ -123,8 +116,7 @@ class SockListen : public Socket
 		}
 		~SockListen()
 		{
-			// std::cout << "CLOSED SOCKET " << _socket_fd << '\n';
-			// close(_socket_fd);
+			;
 		}
 
 	/* Class Getters : Return const because we don't need to modify the values*/

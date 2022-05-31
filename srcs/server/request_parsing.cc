@@ -158,9 +158,6 @@ void	parse_request_header(std::string& header, request_t* request,
 		if (next_char == '\r' || line == "\r")
 			break ;
 	}
-	std::cout << GREEN "Request Parsing Done\n" RESET;
-	print_request_content(*request);
-	std::cout << "This is position " << ss.tellg() << std::endl;
 	std::string::size_type pos = ss.tellg();
 	if (pos == std::string::npos)
 		header.clear();
@@ -168,8 +165,6 @@ void	parse_request_header(std::string& header, request_t* request,
 		header = header.substr(pos + 2); /* to take what's \r\n only */
 	else
 		header = header.substr(pos);
-	std::cout << GREEN "This is the rest of the body\n" RESET;
-	std::cout << header << std::endl;
 }
 
 void		strip_chunked_encoding_chars(std::string& body)
@@ -203,7 +198,6 @@ void		parse_request_body(std::string& client_req, request_t* request)
 			std::string::size_type	pos = client_req.find(DOUBLE_CRLF);
 			if (pos != std::string::npos)
 				client_req = client_req.substr(pos + 4);
-			std::cout << "This is chunked:" << client_req << std::endl;
 			request->body_parsing_state = INCOMPLETE;
 		}
 		else if (request->content_type == "multipart/form-data")
@@ -212,7 +206,6 @@ void		parse_request_body(std::string& client_req, request_t* request)
 			client_req = client_req.substr(client_req.find(request->boundary)
 											+ request->boundary.size() + 2);
 			request->body_parsing_state = INCOMPLETE;
-			std::cout << "this is the rest of the body\n" << client_req << std::endl;
 		}
 		else
 		{
@@ -302,7 +295,6 @@ bool	is_complete_request(std::string& request, request_t *rqst,
 							host_ip_lookup,
 							const char *req_parsing_lookup[REQUEST_KEYS_SIZE])
 {
-	// read_buf(const_cast<char *>(request.c_str()), request.size());
 	if (rqst->method.empty()) /* Request header is not parsed yet */
 	{
 		if (request.find(DOUBLE_CRLF) != std::string::npos)
@@ -374,7 +366,6 @@ Server*	get_server_associated_with_request(std::vector<Server>& servers,
 	std::vector<Server>::iterator it = servers.begin();
 	while (it != servers.end())
 	{
-		std::cout << "ip=" << it->get_listening_ips().back()  << std::endl;
 		std::vector<Server::ip_port_pair>::iterator it_explicit_ip_port =
 				it->get_ip_port_pairs().begin();
 		while (it->get_ip_port_pairs().size() && it_explicit_ip_port

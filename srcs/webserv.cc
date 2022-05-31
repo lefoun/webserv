@@ -59,7 +59,6 @@ void	launch_server(std::vector<Server>& servers,
 					try
 					{
 						new_connect = listen_sockets[index].accept_connection();
-						std::cout << "Before closing any socket\n";
 						communication_sockets.push_back(*new_connect);
 						FD_SET(new_connect->get_socket_fd(), &master_socket_list);
 						if (new_connect->get_socket_fd() > fd_max_nb)
@@ -85,10 +84,6 @@ void	launch_server(std::vector<Server>& servers,
 					}
 					if (nb_bytes > -1)
 						socket_it->get_client_request().append(buffer, nb_bytes);
-					std::cout << "This is header\n" <<
-								socket_it->get_client_request()
-								<< std::endl;
-					std::cout << "This is buffer size " << nb_bytes << std::endl;
 					std::cout << BLUE "Received data from client "
 								<< socket_fd << "\n"RESET;
 					if (is_complete_request(socket_it->get_client_request(),
@@ -102,9 +97,8 @@ void	launch_server(std::vector<Server>& servers,
 						{
 							Server* serv = get_server_associated_with_request(servers,
 									&socket_it->get_request());
-							std::cout << "chosen server = " << serv->get_server_names().back()<< std::endl;
 							if (serv == NULL)
-								std::cout << "NULL" << std::endl;
+								throw std::runtime_error("System error");
 							try
 							{
 								set_response(*serv, &socket_it->get_request(),
