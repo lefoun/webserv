@@ -248,7 +248,16 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 							std::string& response_str, const int& socket_fd)
 {
 	std::string file_name = "cgi-bin/cgi_serv_communication_file.txt";
+	FILE *body = std::tmpfile();
+	std::string	php = "php-cgi";
+	fputs(request->body.c_str(), body);
+	int fd_restore_in = dup(STDIN_FILENO);
+	std::rewind(body);
+	int fd_body = fileno(body);
 	pid_t pid= fork();
+
+	if (body == NULL)
+		throw std::runtime_error("Failed to create a temporary file");
 	if (pid < 0)
 	{
 		std::cout << "Failed to create a new process\n";
@@ -256,20 +265,17 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 	}
 	else if (pid == 0)
 	{
-		int fd_file;
-		FILE *file_in = std::tmpfile();
-		std::string php = "/usr/bin/php-cgi";
 		char *args[3];
-		fputs(request->body.c_str(), file_in);
-		std::rewind(file_in);
-		fd_file = fileno(file_in);
 		args[0] =  const_cast<char *const>(php.c_str());
 		args[1] = const_cast<char *const>(request->path_info.c_str());
 		args[2] = NULL;
 		set_cgi_env_variables(request);
 		extern char **environ;
-		if (dup2(fd_file, STDIN_FILENO) == -1)
+		if (dup2(fd_body, STDIN_FILENO) == -1)
 			std::cout << RED << "Failed to redirect STDIN\n" << RESET;
+		close(fd_body);
+		close(fd_restore_in);
+		fclose(body);
 		execve(*args, args + 1, environ);
 		perror("execve failed\n");
 		exit(0);
@@ -280,29 +286,25 @@ void	get_cgi_php_response(request_t* request, response_t* response,
 		wait(NULL);
 		std::cout << "After wait\n";
 		std::ifstream cgi_output_file(file_name.c_str());
-		try
+		if (cgi_output_file.fail())
+			throw std::runtime_error("Failed to send a response from CGI");
+		std::stringstream tmp;
+		tmp << cgi_output_file.rdbuf();
+		cgi_output_file.close();
+		response_str = tmp.str();
+		if (response_str.size() >= BUFFER_SIZE)
 		{
-			if (cgi_output_file.fail())
-				throw std::runtime_error("Failed to send a response from CGI");
-
-			std::stringstream tmp;
-			tmp << cgi_output_file.rdbuf();
-			cgi_output_file.close();
-			response_str = tmp.str();
-			if (response_str.size() >= BUFFER_SIZE)
-			{
-				send_chunked_response(response, response_str, socket_fd);
-				return ;
-			}
-			if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
-				throw std::runtime_error(
-					"Failed to send data to socket " + SSTR(socket_fd));
+			send_chunked_response(response, response_str, socket_fd);
+			return ;
 		}
-		catch(const std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-		}
+		if (send(socket_fd, response_str.c_str(), response_str.size(), 0) < 0)
+			throw std::runtime_error(
+				"Failed to send data to socket " + SSTR(socket_fd));
 	}
+	dup2(fd_restore_in, STDIN_FILENO);
+	close(fd_restore_in);
+	close(fd_body);
+	fclose(body);
 }
 
 void	send_response(request_t* request, const int& socket_fd,

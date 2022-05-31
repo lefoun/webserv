@@ -1,7 +1,7 @@
-HTTP/1.1 400 Bad Request
+HTTP/1.1 200 OK
 Content-Type: text/html
-Date: Mon, 30 May 2022 15:08:43 GMT
-Content-Length: 128
+Date: Tue, 31 May 2022 08:25:40 GMT
+Content-Length: 172
 
 
-<!DOCTYPE html><html><title>400 Bad request</title><p>Sorry, it seems that there is an error. Please try again later.</p></html>
+<!DOCTYPE html><html><p>Thank to have complete the survey. The information about you :</p><p><b>First name:</b> d</p><p><b>Last name:</b> d</p><p><b>Email:</b> d</p></html>
